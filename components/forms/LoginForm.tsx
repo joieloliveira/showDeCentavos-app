@@ -1,0 +1,6 @@
+'use client';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginFormValues } from '@/schemas/auth';
+export function LoginForm(){const {register,handleSubmit,formState:{errors}}=useForm<LoginFormValues>({resolver:zodResolver(loginSchema)});return <div className="panel form-panel"><span className="eyebrow">Bem-vindo de volta</span><h1>Entre na sua conta</h1><p>Faça login para acessar sua conta quando a integração estiver disponível.</p><form onSubmit={handleSubmit(()=>{})}><label className="field"><span>E-mail</span><input type="email" autoComplete="email" placeholder="voce@exemplo.com" {...register('email')}/>{errors.email&&<div className="field-error">{errors.email.message}</div>}</label><label className="field"><span>Senha</span><input type="password" autoComplete="current-password" placeholder="Sua senha" {...register('password')}/>{errors.password&&<div className="field-error">{errors.password.message}</div>}</label><button className="btn-primary full-btn" type="submit" disabled style={{opacity:.65}}>Login em integração</button></form><p className="center-note">Ainda não tem conta? <Link href="/register">Cadastre-se</Link></p></div>}

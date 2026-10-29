@@ -1,0 +1,5 @@
+'use client';
+import Link from 'next/link';
+import { ArrowUpRight, CircleUserRound, Menu, Wallet, Zap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+export function Header(){const {user}=useAuth();return <header className="site-header"><div className="site-container header-inner"><Link className="brand" href="/"><span className="brand-symbol"><Zap size={23} fill="currentColor" /></span><span>SHOW<span className="brand-em">DE</span>CENTAVOS<small>LEILÕES COM EMOÇÃO</small></span></Link><nav className="desktop-nav"><Link href="/">Início</Link><Link href="/auctions">Leilões</Link><Link href="/how-it-works">Como funciona</Link><Link href="/winners">Ganhadores</Link></nav><div className="header-actions"><Link className="header-wallet" href="/wallet"><Wallet size={17}/> Minha carteira</Link><Link className="sign-in" href="/login"><CircleUserRound size={18}/>{user?.name ?? 'Entrar'}<ArrowUpRight size={14}/></Link><Link className="mobile-menu" href="/auctions" aria-label="Ver leilões"><Menu/></Link></div></div></header>}

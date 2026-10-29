@@ -1,0 +1,2 @@
+export const metadata={title:'Ganhadores'};
+export default function Winners(){return <div className="site-container page-content"><div className="page-heading"><span className="eyebrow">Histórico transparente</span><h1>Ganhadores</h1><p>Quando os leilões forem lançados, os resultados públicos elegíveis aparecerão aqui.</p></div><div className="panel"><p>Nenhum leilão real foi concluído nesta versão de desenvolvimento.</p></div></div>}
