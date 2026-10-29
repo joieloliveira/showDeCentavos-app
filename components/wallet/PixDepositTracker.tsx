@@ -5,6 +5,12 @@ import { fetchWalletDeposit, type WalletDeposit } from '@/services/wallet';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
 
+function formatDepositDate(value: string | null | undefined) {
+  if (!value) return 'Data não disponível';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? 'Data não disponível' : parsed.toLocaleString('pt-BR');
+}
+
 const statusLabels: Record<WalletDeposit['status'], string> = {
   pending: 'Aguardando pagamento', approved: 'Pagamento aprovado',
   failed: 'Pagamento falhou', cancelled: 'Pagamento cancelado',
@@ -44,8 +50,8 @@ export function PixDepositTracker() {
       <p>Valor: <strong>{money(deposit.amountCents)}</strong></p>
       <p>Identificador: <code style={{ overflowWrap: 'anywhere' }}>{deposit.id}</code></p>
       <p>Provedor: {deposit.provider === 'mercadopago' ? 'Mercado Pago' : 'Teste manual'}</p>
-      <p>Solicitado em: {new Date(deposit.createdAt).toLocaleString('pt-BR')}</p>
-      {deposit.processedAt && <p>Processado em: {new Date(deposit.processedAt).toLocaleString('pt-BR')}</p>}
+      <p>Solicitado em: {formatDepositDate(deposit.createdAt)}</p>
+      {deposit.processedAt && <p>Processado em: {formatDepositDate(deposit.processedAt)}</p>}
       {deposit.status === 'pending' && deposit.provider === 'mercadopago' && deposit.pix?.qrCode && <>
         <label className="field"><span>PIX copia e cola</span><textarea value={deposit.pix.qrCode} readOnly rows={3} style={{ width: '100%', maxWidth: 600 }} /></label>
         <button type="button" className="btn-secondary" onClick={() => { void navigator.clipboard.writeText(deposit.pix!.qrCode!).then(() => setCopyStatus('Código copiado.')).catch(() => setCopyStatus('Não foi possível copiar o código.')); }}>Copiar código PIX</button>
