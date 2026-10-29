@@ -25,3 +25,19 @@ export async function fetchWalletTransactions(token: string, page = 1, limit = 1
   if (!Array.isArray(data.transactions) || !data.pagination) throw new Error('Histórico inválido retornado pela API.');
   return data;
 }
+
+export type WalletDeposit = {
+  id: string;
+  amountCents: number;
+  status: 'pending' | 'approved' | 'failed' | 'cancelled';
+  provider: 'mercadopago' | 'manual_test';
+  createdAt: string;
+  processedAt: string | null;
+  pix: { qrCode?: string | null; qrCodeBase64?: string | null; ticketUrl?: string | null } | null;
+};
+export async function fetchWalletDeposit(token: string, depositId: string) {
+  const { data } = await api.get<{ deposit: WalletDeposit }>(`/wallet/deposits/${encodeURIComponent(depositId)}`, bearer(token));
+  if (!data?.deposit || typeof data.deposit.id !== 'string' || !Number.isSafeInteger(data.deposit.amountCents) ||
+    !['pending', 'approved', 'failed', 'cancelled'].includes(data.deposit.status)) throw new Error('Resposta de depósito inválida.');
+  return data.deposit;
+}
