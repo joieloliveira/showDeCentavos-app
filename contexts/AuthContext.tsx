@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { loginRequest, meRequest, type AuthUser } from '@/services/auth';
 const TOKEN_KEY = 'showdecentavos:dev-session';
 type AuthValue = {
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
-  const getToken = () => typeof window === 'undefined' ? null : sessionStorage.getItem(TOKEN_KEY);
+  const getToken = useCallback(() => typeof window === 'undefined' ? null : sessionStorage.getItem(TOKEN_KEY), []);
   return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, getToken }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
