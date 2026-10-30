@@ -235,3 +235,10 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .admin-auction-product>span{display:grid;place-items:center;width:44px;height:44px;background:#f4f5f8;border-radius:9px;font-size:24px}
 .admin-auction-product strong{color:#252b3e}
 @media(max-width:700px){.admin-auction-stats{grid-template-columns:1fr}.admin-auction-panel{padding:18px}}
+
+/* Cadastro administrativo de leilões */
+.admin-auction-create-fields{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin:20px 0}
+.admin-auction-create-fields label{display:flex;flex-direction:column;gap:9px;min-width:0;font-size:12px;font-weight:800;color:#293249}
+.admin-auction-create-fields input,.admin-auction-create-fields select{width:100%;min-width:0;min-height:45px;padding:11px 13px;border:1px solid #dfe4ec;border-radius:9px;background:#fff;color:#263045;font:inherit;font-weight:500}
+.admin-auction-create-fields input:focus-visible,.admin-auction-create-fields select:focus-visible{outline:2px solid #ee7548;outline-offset:2px}
+@media(max-width:760px){.admin-auction-create-fields{grid-template-columns:1fr}}
