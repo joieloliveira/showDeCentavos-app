@@ -13,3 +13,12 @@ export async function listAdminAuctions(token: string, page: number, status: str
   });
   return data;
 }
+
+export type AuctionProduct = { _id: string; name: string; price: number; stock: number; reservedStock: number };
+export async function listAuctionProducts(token: string): Promise<AuctionProduct[]> {
+  const response = await api.get('/admin/auctions/products', { headers: { Authorization: 'Bearer ' + token } });
+  return response.data.products;
+}
+export async function createAdminAuction(token: string, product: string, startPriceCents: number, bidCostCents: number): Promise<void> {
+  await api.post('/auctions', { product, startPriceCents, bidCostCents }, { headers: { Authorization: 'Bearer ' + token } });
+}
