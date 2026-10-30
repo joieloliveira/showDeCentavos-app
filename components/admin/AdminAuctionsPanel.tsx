@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
 import { listAdminAuctions, type AdminAuction, type AdminAuctionList } from '@/services/adminAuctions';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
@@ -10,6 +11,7 @@ const labels: Record<string, string> = { scheduled: 'Agendado', active: 'Ativo',
 export function AdminAuctionsPanel() {
   const { user, isLoading, getToken } = useAuth();
   const [page, setPage] = useState(1);
+  const [refresh, setRefresh] = useState(0);
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [result, setResult] = useState<AdminAuctionList | null>(null);
@@ -28,7 +30,7 @@ export function AdminAuctionsPanel() {
       .catch(err => { if (active) setError(getApiError(err)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [getToken, isAdmin, isLoading, page, status]);
+  }, [getToken, isAdmin, isLoading, page, status, refresh]);
   if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
   if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
@@ -36,6 +38,7 @@ export function AdminAuctionsPanel() {
   return <div className="admin-auctions">
     <div className="admin-auction-notice"><strong>Consulta administrativa · somente leitura</strong><p>Dados reais do MongoDB. Esta tela não permite criar, publicar ou iniciar leilões. A busca por nome filtra apenas a página carregada.</p></div>
     <div className="admin-auction-stats"><div><span>Total de leilões cadastrados {status ? '(filtro atual)' : ''}</span><strong>{result?.pagination.total ?? '—'}</strong></div><div><span>Registros nesta página</span><strong>{result?.auctions.length ?? '—'}</strong></div><div><span>Página atual</span><strong>{page}</strong></div></div>
+    <AdminAuctionCreateForm onCreated={() => { setPage(1); setRefresh(n => n + 1); }} />
     <section className="panel admin-auction-panel"><h2>Leilões cadastrados</h2>
       <div className="admin-auction-filters"><label>Buscar nesta página<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome do produto..." /></label><label>Situação<select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">Todas</option><option value="scheduled">Agendado</option><option value="active">Ativo</option><option value="finished">Encerrado</option><option value="cancelled">Cancelado</option></select></label></div>
       {loading && <p role="status">Carregando leilões...</p>}
