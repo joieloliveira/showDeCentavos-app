@@ -29,6 +29,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const serverOffsetMs = useRef(0);
   const lastLiveCheckMs = useRef(0);
   const liveStatusRef = useRef<string | null>(null);
+  const latestRequestRef = useRef(0);
+  const latestAppliedRef = useRef(0);
   useEffect(() => {
     if (!user) return;
     const token = getToken();
@@ -51,9 +53,12 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     // Product/gallery data is stable; avoid downloading it every few seconds.
     const refreshLive = async () => {
       try {
+        const requestId = ++latestRequestRef.current;
         const sentAt = Date.now();
         const { data } = await api.get<{ auction: Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents'>; serverTime: string }>(`/auctions/${encodeURIComponent(id)}/live`);
         const receivedAt = Date.now();
+        if (!active || requestId < latestAppliedRef.current) return;
+        latestAppliedRef.current = requestId;
         const serverTime = Date.parse(data.serverTime);
         if (Number.isFinite(serverTime)) {
           serverOffsetMs.current = serverTime - (sentAt + receivedAt) / 2;
