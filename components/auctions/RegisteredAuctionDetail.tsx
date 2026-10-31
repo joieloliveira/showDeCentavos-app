@@ -17,12 +17,19 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const tick = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
     let active = true;
-    api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`)
-      .then(({ data }) => { if (active) { setAuction(data.auction); setSelectedImage(null); } })
-      .catch(() => { if (active) setError('Não foi possível carregar este leilão.'); });
-    return () => { active = false; };
+    const refresh = async () => {
+      try {
+        const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
+        if (active) { setAuction(data.auction); setError(''); }
+      } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
+    };
+    void refresh();
+    const polling = setInterval(() => { void refresh(); }, 10000);
+    return () => { active = false; clearInterval(polling); };
   }, [id]);
   if (error) return <p role="alert">{error}</p>;
   if (!auction) return <p role="status">Carregando leilão...</p>;
@@ -33,6 +40,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const gallery = cover && !images.some(image => image.url === cover) ? [{ url: cover, key: 'cover' }, ...images] : images;
   const mainImage = selectedImage && gallery.some(image => image.url === selectedImage) ? selectedImage : (cover || gallery[0]?.url);
   const label = statusLabels[auction.status] ?? auction.status;
+  const secondsUntilStart = auction.status === 'scheduled' && auction.startsAt ? Math.max(0, Math.ceil((new Date(auction.startsAt).getTime() - now) / 1000)) : null;
+  const secondsUntilEnd = auction.status === 'active' && auction.endsAt ? Math.max(0, Math.ceil((new Date(auction.endsAt).getTime() - now) / 1000)) : null;
+  const clock = (seconds: number) => `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
   return <div className="registered-detail">
     <div className="registered-detail-gallery">
       <div className="registered-main-image">
@@ -50,6 +60,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       <div className="registered-detail-panel">
         <span className="registered-status"><Clock3 size={15}/>{label}</span>
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
+        {secondsUntilStart !== null && <div className="registered-clock" role="timer"><span>{secondsUntilStart > 0 ? "Início previsto em" : "Horário previsto atingido · aguardando atualização do servidor"}</span><strong>{clock(secondsUntilStart)}</strong></div>}
+        {secondsUntilEnd !== null && <div className="registered-clock" role="timer"><span>{secondsUntilEnd > 0 ? "Tempo restante registrado" : "Tempo esgotado · aguardando encerramento no servidor"}</span><strong>{clock(secondsUntilEnd)}</strong></div>}
         <div className="registered-price-block">
           <span>Preço atual do leilão</span>
           <strong>{money(auction.currentPriceCents)}</strong>
