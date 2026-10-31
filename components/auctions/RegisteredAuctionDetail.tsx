@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Clock3, Gavel, ImageIcon, LockKeyhole, ShieldCheck, Tag } from 'lucide-react';
+import { Clock3, Gavel, ImageIcon, LockKeyhole, ShieldCheck, Tag, Wallet } from 'lucide-react';
 import { api } from '@/services/api';
 import { money } from '@/utils/format';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchWalletBalance } from '@/services/wallet';
 
 type ProductImage = { key?: string; url?: string };
 type Auction = {
@@ -14,10 +16,22 @@ const statusLabels: Record<string, string> = {
   scheduled: 'Agendado', active: 'Em andamento', finished: 'Encerrado', cancelled: 'Cancelado',
 };
 export function RegisteredAuctionDetail({ id }: { id: string }) {
+  const { user, isLoading: authLoading, getToken } = useAuth();
+  const [balance, setBalance] = useState<number | null>(null);
+  const [balanceError, setBalanceError] = useState('');
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!user) return;
+    const token = getToken();
+    if (!token) return;
+    let active = true;
+    fetchWalletBalance(token).then(value => { if (active) { setBalance(value); setBalanceError(''); } })
+      .catch(() => { if (active) setBalanceError('Saldo indisponível no momento.'); });
+    return () => { active = false; };
+  }, [user, getToken]);
   useEffect(() => { const tick = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
     let active = true;
@@ -74,6 +88,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {typeof product?.price === 'number' && <p className="registered-reference">Valor de referência: <strong>{product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></p>}
         {auction.startsAt && <p className="registered-date">Início registrado: {new Date(auction.startsAt).toLocaleString('pt-BR')}</p>}
         {auction.endsAt && <p className="registered-date">Término registrado: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
+        <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span></div></div>
         <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances indisponíveis</button>
         <p className="registered-safety"><ShieldCheck size={18}/> Visualização informativa. Esta página não permite realizar lances ou pagamentos.</p>
       </div>
