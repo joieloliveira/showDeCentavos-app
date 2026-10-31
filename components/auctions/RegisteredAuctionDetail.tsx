@@ -19,6 +19,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const { user, isLoading: authLoading, getToken } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceError, setBalanceError] = useState('');
+  const [showBidInfo, setShowBidInfo] = useState(false);
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
@@ -90,7 +91,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {auction.startsAt && <p className="registered-date">Início registrado: {new Date(auction.startsAt).toLocaleString('pt-BR')}</p>}
         {auction.endsAt && <p className="registered-date">Término registrado: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span></div></div>
+        <button type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
         <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances indisponíveis</button>
+        {showBidInfo && <div className="registered-bid-dialog-backdrop" onClick={() => setShowBidInfo(false)}><section role="dialog" aria-modal="true" aria-labelledby="bid-info-title" className="registered-bid-dialog" onClick={event => event.stopPropagation()}><h3 id="bid-info-title">Confirmação de lance — prévia</h3><p>Quando os lances forem liberados, cada lance neste leilão custará <strong>{money(auction.bidCostCents)}</strong> e aumentará o preço em <strong>R$ 0,01</strong>.</p><p>Saldo atual: <strong>{balance === null ? "Não disponível" : money(balance)}</strong></p><p>Nenhum valor será debitado nesta demonstração.</p><button type="button" onClick={() => setShowBidInfo(false)}>Entendi, fechar</button></section></div>}
         <p className="registered-safety"><ShieldCheck size={18}/> Visualização informativa. Esta página não permite realizar lances ou pagamentos.</p>
       </div>
     </div>
