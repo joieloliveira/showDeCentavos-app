@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-type Product = {_id:string;name:string;slug:string;price:number;stock:number;status:string};
+type Product = {_id:string;name:string;slug:string;description:string;price:number;stock:number;status:string};
 export default function AdminProductsPage() {
  const {user,isLoading,getToken}=useAuth();
  const [products,setProducts]=useState<Product[]>([]);
@@ -25,7 +25,7 @@ export default function AdminProductsPage() {
    .catch(()=>{if(active)setMessage('Não foi possível carregar os produtos.');});
   return ()=>{active=false;};
  },[user?.role,getToken,refresh]);
- async function editProduct(p:Product){setEditing(p._id);setName(p.name);setPrice(String(p.price));setStock(String(p.stock));setEditStatus(p.status);setDescription('');setMessage('Informe a descrição para atualizar o produto.');}
+ async function editProduct(p:Product){setEditing(p._id);setName(p.name);setPrice(String(p.price));setStock(String(p.stock));setEditStatus(p.status);setDescription(p.description);setMessage('');}
  async function save(){
   const token=getToken();
   const numericPrice=Number(price.replace(',','.'));
