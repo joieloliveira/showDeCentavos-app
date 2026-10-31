@@ -248,3 +248,10 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .admin-product-form input,.admin-product-form textarea{width:100%;padding:12px 13px;border:1px solid #dfe4ec;border-radius:9px;background:white;color:#263045;font:inherit;font-weight:500}
 .admin-product-description{grid-column:1/-1}
 @media(max-width:760px){.admin-product-form{grid-template-columns:1fr}.admin-product-description{grid-column:auto}}
+
+.admin-product-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px;margin:18px 0}
+.admin-product-image{border:1px solid #e2e6ef;border-radius:10px;padding:10px;min-width:0}
+.admin-product-image img{display:block;width:100%;aspect-ratio:1;object-fit:contain;border-radius:7px;background:#f4f5f8}
+.admin-product-image p{font-size:12px;margin:8px 0}
+.admin-product-image button{margin:3px;padding:7px;border:1px solid #e4d6d1;border-radius:6px;background:white;cursor:pointer}
+.admin-product-image button:disabled{opacity:.5;cursor:not-allowed}
