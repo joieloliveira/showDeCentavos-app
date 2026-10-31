@@ -1,5 +1,6 @@
 'use client';
 import { useState, type ChangeEvent } from 'react';
+import axios from 'axios';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 type Image = {key:string;url:string};
@@ -17,8 +18,8 @@ export function AdminProductImages({product,onChanged}:{product:{_id:string;name
   try{
    const data=new FormData();files.forEach(file=>data.append('images',file));
    await api.post('/admin/products/'+product._id+'/images',data,{headers:headers()});
-   setFiles([]);setPreviews([]);setMessage('Imagens enviadas.');onChanged();
-  }catch{setMessage('Falha no envio. Confira a configuração do armazenamento R2.');}
+   setFiles([]);setMessage('Imagens enviadas.');onChanged();
+  }catch(error){const detail=axios.isAxiosError(error)?error.response?.data?.message:undefined;setMessage(detail?`Falha no envio: ${detail}`:'Falha no envio. Verifique o console do backend e a aba Rede do navegador.');}
   finally{setBusy(false);}
  }
  async function changeImage(key:string,action:'cover'|'delete'){
