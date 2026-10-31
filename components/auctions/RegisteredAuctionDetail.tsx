@@ -21,7 +21,6 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [balanceError, setBalanceError] = useState('');
   const [showBidInfo, setShowBidInfo] = useState(false);
   const [auction, setAuction] = useState<Auction | null>(null);
-  const [auctionStatus, setAuctionStatus] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
@@ -46,7 +45,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     const refresh = async () => {
       try {
         const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
-        if (active) { setAuction(data.auction); setAuctionStatus(data.auction.status); liveStatusRef.current = data.auction.status; setError(''); }
+        if (active) { setAuction(data.auction); liveStatusRef.current = data.auction.status; setError(''); }
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
     };
     void refresh();
@@ -66,7 +65,6 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         }
         if (active) {
           setAuction(previous => previous ? { ...previous, ...data.auction } : previous);
-          setAuctionStatus(data.auction.status);
           liveStatusRef.current = data.auction.status;
         }
       } catch { /* Keep last verified state; next poll retries. */ }
