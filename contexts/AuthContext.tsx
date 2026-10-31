@@ -9,6 +9,7 @@ type AuthValue = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   getToken: () => string | null;
+  refreshUser: () => Promise<void>;
 };
 const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -40,7 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
   const getToken = useCallback(() => typeof window === 'undefined' ? null : sessionStorage.getItem(TOKEN_KEY), []);
-  return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, getToken }}>{children}</AuthContext.Provider>;
+  const refreshUser = async () => {
+    const token = getToken();
+    if (!token) throw new Error('Sessão não encontrada.');
+    const profile = await meRequest(token);
+    setUser(profile);
+  };
+  return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
   const value = useContext(AuthContext);
