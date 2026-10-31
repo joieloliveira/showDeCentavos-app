@@ -21,6 +21,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [balanceError, setBalanceError] = useState('');
   const [showBidInfo, setShowBidInfo] = useState(false);
   const [auction, setAuction] = useState<Auction | null>(null);
+  const [auctionStatus, setAuctionStatus] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
@@ -40,13 +41,14 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     const refresh = async () => {
       try {
         const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
-        if (active) { setAuction(data.auction); setError(''); }
+        if (active) { setAuction(data.auction); setAuctionStatus(data.auction.status); setError(''); }
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
     };
     void refresh();
-    const polling = setInterval(() => { void refresh(); }, 10000);
+    // Active auctions have 15-second rounds; refresh faster while bidding is open.
+    const polling = setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, auctionStatus === 'active' ? 2000 : 10000);
     return () => { active = false; clearInterval(polling); };
-  }, [id]);
+  }, [id, auctionStatus]);
   if (error) return <p role="alert">{error}</p>;
   if (!auction) return <p role="status">Carregando leilão...</p>;
 
