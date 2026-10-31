@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
-import { listAdminAuctions, type AdminAuction, type AdminAuctionList } from '@/services/adminAuctions';
+import { listAdminAuctions, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList } from '@/services/adminAuctions';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
 
@@ -18,6 +18,20 @@ export function AdminAuctionsPanel() {
   const [selected, setSelected] = useState<AdminAuction | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [waitingMinutes, setWaitingMinutes] = useState(60);
+  const [starting, setStarting] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(interval); }, []);
+  async function beginWaiting(auction: AdminAuction) {
+    const token = getToken();
+    if (!token || starting || auction.status !== 'scheduled' || auction.waitingStartedAt) return;
+    if (!window.confirm(`Iniciar a espera de ${waitingMinutes} minuto(s) para o leilão de ${auction.product?.name ?? 'produto'}? Isso grava a data de início no banco, mas não habilita lances nesta interface.`)) return;
+    setStarting(true); setNotice('');
+    try { await startAdminAuctionWaiting(token, auction._id, waitingMinutes); setNotice('Contagem de espera iniciada.'); setSelected(null); setRefresh(n => n + 1); }
+    catch (err) { setNotice(getApiError(err)); }
+    finally { setStarting(false); }
+  }
   const isAdmin = user?.role === 'admin';
   useEffect(() => {
     if (isLoading || !isAdmin) return;
@@ -36,7 +50,7 @@ export function AdminAuctionsPanel() {
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
   const auctions = result?.auctions.filter(a => (a.product?.name ?? '').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))) ?? [];
   return <div className="admin-auctions">
-    <div className="admin-auction-notice"><strong>Consulta administrativa · somente leitura</strong><p>Dados reais do MongoDB. Esta tela não permite criar, publicar ou iniciar leilões. A busca por nome filtra apenas a página carregada.</p></div>
+    <div className="admin-auction-notice"><strong>Administração de leilões</strong><p>Dados reais do MongoDB. É possível cadastrar e iniciar a contagem de espera manualmente. A interface pública ainda não permite lances. A busca por nome filtra apenas a página carregada.</p></div>
     <div className="admin-auction-stats"><div><span>Total de leilões cadastrados {status ? '(filtro atual)' : ''}</span><strong>{result?.pagination.total ?? '—'}</strong></div><div><span>Registros nesta página</span><strong>{result?.auctions.length ?? '—'}</strong></div><div><span>Página atual</span><strong>{page}</strong></div></div>
     <AdminAuctionCreateForm onCreated={() => { setPage(1); setRefresh(n => n + 1); }} />
     <section className="panel admin-auction-panel"><h2>Leilões cadastrados</h2>
@@ -49,6 +63,6 @@ export function AdminAuctionsPanel() {
         <div className="incident-pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Anterior</button><span>Página {page} de {Math.max(1, result.pagination.totalPages)}</span><button type="button" disabled={page >= result.pagination.totalPages || loading} onClick={() => setPage(p => p + 1)}>Próxima</button></div>
       </>}
     </section>
-    {selected && <section className="panel admin-auction-panel"><h2>{selected.product?.name ?? 'Leilão'}</h2><p><strong>ID:</strong> {selected._id}</p><p><Link href={`/auctions/registered/${selected._id}`} className="incident-action">Abrir página pública do leilão</Link></p><p><strong>Situação:</strong> {labels[selected.status] ?? selected.status}</p><p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p><p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
+    {selected && <section className="panel admin-auction-panel"><h2>{selected.product?.name ?? 'Leilão'}</h2><p><strong>ID:</strong> {selected._id}</p><p><Link href={`/auctions/registered/${selected._id}`} className="incident-action">Abrir página pública do leilão</Link></p><p><strong>Situação:</strong> {labels[selected.status] ?? selected.status}</p><p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p>{selected.status === 'scheduled' && selected.startsAt && <p><strong>Contagem de espera:</strong> {Math.max(0, Math.ceil((new Date(selected.startsAt).getTime() - now) / 1000))} segundos restantes</p>}{selected.status === 'scheduled' && !selected.waitingStartedAt && !selected.startsAt && <div className="admin-auction-create-fields"><label>Tempo de espera (minutos)<input type="number" min="1" max="10080" value={waitingMinutes} onChange={e => setWaitingMinutes(Number(e.target.value))}/></label><button type="button" className="incident-action" disabled={starting || !Number.isSafeInteger(waitingMinutes) || waitingMinutes < 1 || waitingMinutes > 10080} onClick={() => void beginWaiting(selected)}>{starting ? 'Iniciando...' : 'Iniciar contagem de espera'}</button></div>}{notice && <p role="status">{notice}</p>}<p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
   </div>;
 }
