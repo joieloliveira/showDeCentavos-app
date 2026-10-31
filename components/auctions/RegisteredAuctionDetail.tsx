@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Clock3, Gavel, ImageIcon, LockKeyhole, ShieldCheck, Tag, Wallet } from 'lucide-react';
 import { api } from '@/services/api';
 import { money } from '@/utils/format';
@@ -21,6 +21,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [balanceError, setBalanceError] = useState('');
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -62,9 +63,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       <div className="registered-main-image">
         {mainImage ? <img src={mainImage} alt={product?.name ?? 'Imagem do produto'} /> : <div className="registered-no-image"><ImageIcon size={46}/><span>Imagem indisponível</span></div>}
       </div>
-      {gallery.length > 1 && <div className="registered-thumbnails" aria-label="Galeria do produto">
+      {gallery.length > 1 && <div className="registered-gallery-controls"><button type="button" aria-label="Imagens anteriores" onClick={() => thumbnailsRef.current?.scrollBy({ left: -300, behavior: "smooth" })}>‹</button><div className="registered-thumbnails" ref={thumbnailsRef} aria-label="Galeria do produto">
         {gallery.map((image, index) => <button key={image.key ?? image.url} type="button" className={mainImage === image.url ? 'is-selected' : ''} onClick={() => setSelectedImage(image.url)} aria-label={`Visualizar imagem ${index + 1}`} aria-pressed={mainImage === image.url}><img src={image.url} alt={`Vista ${index + 1} do produto`} /></button>)}
-      </div>}
+      </div><button type="button" aria-label="Próximas imagens" onClick={() => thumbnailsRef.current?.scrollBy({ left: 300, behavior: "smooth" })}>›</button></div>}
       <section className="registered-description">
         <h2>Sobre o produto</h2>
         <p>{product?.description || 'Não há descrição cadastrada para este produto.'}</p>
