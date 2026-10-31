@@ -8,10 +8,9 @@ export function AdminProductImages({product,onChanged}:{product:{_id:string;name
  const [files,setFiles]=useState<File[]>([]);
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState('');
- const [previews,setPreviews]=useState<string[]>([]);
  const images=product.images??[];
  const headers=()=>({Authorization:'Bearer '+getToken()});
- const choose=(event:ChangeEvent<HTMLInputElement>)=>{const selected=Array.from(event.target.files??[]);setFiles(selected);setMessage('');setPreviews([]);};
+ const choose=(event:ChangeEvent<HTMLInputElement>)=>{const selected=Array.from(event.target.files??[]);setFiles(selected);setMessage('');};
  async function upload(){
   if(!files.length||files.length+images.length>8){setMessage('Selecione imagens sem ultrapassar o limite de 8.');return;}
   setBusy(true);setMessage('');
