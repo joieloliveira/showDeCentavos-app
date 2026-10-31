@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
-type Product = {_id:string;name:string;slug:string;description:string;price:number;stock:number;status:string};
+import { AdminProductImages } from '@/components/admin/AdminProductImages';
+type Product = {_id:string;name:string;slug:string;description:string;price:number;stock:number;status:string;images?:{key:string;url:string}[];coverImage?:{key:string;url:string}};
 export default function AdminProductsPage() {
  const {user,isLoading,getToken}=useAuth();
  const [products,setProducts]=useState<Product[]>([]);
@@ -14,6 +15,7 @@ export default function AdminProductsPage() {
  const [message,setMessage]=useState('');
  const [busy,setBusy]=useState(false);
  const [editing,setEditing]=useState<string|null>(null);
+ const [imageProductId,setImageProductId]=useState<string|null>(null);
  const [editStatus,setEditStatus]=useState('draft');
  const [refresh,setRefresh]=useState(0);
  useEffect(()=>{
@@ -48,6 +50,7 @@ export default function AdminProductsPage() {
  <label>Estoque<input type="number" min="0" step="1" value={stock} onChange={e=>setStock(e.target.value)}/></label>
  {editing&&<label>Situação<select value={editStatus} onChange={e=>setEditStatus(e.target.value)}><option value="draft">Rascunho</option><option value="active">Ativo</option><option value="inactive">Inativo</option></select></label>}<label className="admin-product-description">Descrição<textarea rows={4} maxLength={5000} value={description} onChange={e=>setDescription(e.target.value)}/></label>
  </div><button className="incident-action" type="button" disabled={busy} onClick={()=>void save()}>{busy?'Salvando...':editing?'Salvar alterações':'Salvar rascunho'}</button>{editing&&<button className="incident-action" type="button" onClick={()=>{setEditing(null);setName('');setDescription('');setPrice('');setStock('1');setMessage('');}}>Cancelar edição</button>}{message&&<p role="status">{message}</p>}</section>
- <section className="panel admin-auction-panel"><h2>Produtos cadastrados</h2><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Identificador</th><th>Preço de referência</th><th>Estoque</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{products.map(p=><tr key={p._id}><td>{p.name}</td><td>{p.slug}</td><td>{p.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td><td>{p.stock}</td><td>{p.status}</td><td><button type="button" className="incident-action" onClick={()=>void editProduct(p)}>Editar</button></td></tr>)}</tbody></table></div>{products.length===0&&<p>Nenhum produto cadastrado.</p>}</section>
+ <section className="panel admin-auction-panel"><h2>Produtos cadastrados</h2><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Identificador</th><th>Preço de referência</th><th>Estoque</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{products.map(p=><tr key={p._id}><td>{p.name}</td><td>{p.slug}</td><td>{p.price.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td><td>{p.stock}</td><td>{p.status}</td><td><button type="button" className="incident-action" onClick={()=>void editProduct(p)}>Editar</button> <button type="button" className="incident-action" onClick={()=>setImageProductId(p._id)}>Imagens</button></td></tr>)}</tbody></table></div>{products.length===0&&<p>Nenhum produto cadastrado.</p>}</section>
+ {imageProductId&&products.find(p=>p._id===imageProductId)&&<AdminProductImages product={products.find(p=>p._id===imageProductId)!} onChanged={()=>setRefresh(n=>n+1)}/>}
  </main>;
 }
