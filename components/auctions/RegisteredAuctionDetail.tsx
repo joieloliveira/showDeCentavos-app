@@ -26,6 +26,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const serverOffsetMs = useRef(0);
+  const lastLiveCheckMs = useRef(0);
+  const liveStatusRef = useRef<string | null>(null);
   useEffect(() => {
     if (!user) return;
     const token = getToken();
@@ -35,40 +38,60 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       .catch(() => { if (active) setBalanceError('Saldo indisponível no momento.'); });
     return () => { active = false; };
   }, [user, getToken]);
-  useEffect(() => { const tick = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(tick); }, []);
+  useEffect(() => { const tick = setInterval(() => setNow(Date.now() + serverOffsetMs.current), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
     let active = true;
     const refresh = async () => {
       try {
         const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
-        if (active) { setAuction(data.auction); setAuctionStatus(data.auction.status); setError(''); }
+        if (active) { setAuction(data.auction); setAuctionStatus(data.auction.status); liveStatusRef.current = data.auction.status; setError(''); }
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
     };
     void refresh();
     // Product/gallery data is stable; avoid downloading it every few seconds.
     const refreshLive = async () => {
       try {
-        const { data } = await api.get<{ auction: Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents'> }>(`/auctions/${encodeURIComponent(id)}/live`);
+        const sentAt = Date.now();
+        const { data } = await api.get<{ auction: Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents'>; serverTime: string }>(`/auctions/${encodeURIComponent(id)}/live`);
+        const receivedAt = Date.now();
+        const serverTime = Date.parse(data.serverTime);
+        if (Number.isFinite(serverTime)) {
+          serverOffsetMs.current = serverTime - (sentAt + receivedAt) / 2;
+          setNow(Date.now() + serverOffsetMs.current);
+        }
         if (active) {
           setAuction(previous => previous ? { ...previous, ...data.auction } : previous);
           setAuctionStatus(data.auction.status);
+          liveStatusRef.current = data.auction.status;
         }
       } catch { /* Keep last verified state; next poll retries. */ }
     };
-    const polling = setInterval(() => { if (document.visibilityState === 'visible') void refreshLive(); }, auctionStatus === 'active' ? 2000 : 10000);
+    const polling = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      const interval = liveStatusRef.current === 'active' ? 2000 : 10000;
+      if (Date.now() - lastLiveCheckMs.current >= interval) {
+        lastLiveCheckMs.current = Date.now();
+        void refreshLive();
+      }
+    }, 1000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') { lastLiveCheckMs.current = Date.now(); void refreshLive(); }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     // SSE pushes confirmed bids immediately. Polling remains the fallback and
     // also handles scheduler changes until it publishes its own events.
     const base = api.defaults.baseURL ?? 'http://localhost:3001/api';
     const events = new EventSource(`${base.replace(/\/$/, '')}/auctions/${encodeURIComponent(id)}/events`);
+    events.addEventListener('open', () => { if (active) void refreshLive(); });
     events.addEventListener('auction-update', (event: MessageEvent) => {
       try {
-        const update = JSON.parse(event.data) as Partial<Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'endsAt'>>;
+        JSON.parse(event.data);
         if (!active) return;
         void refreshLive(); // Fetch authoritative state, avoiding stale/out-of-order pushes.
       } catch { /* Ignore malformed messages; periodic polling continues. */ }
     });
-    return () => { active = false; clearInterval(polling); events.close(); };
-  }, [id, auctionStatus]);
+    return () => { active = false; clearInterval(polling); document.removeEventListener('visibilitychange', onVisibility); events.close(); };
+  }, [id]);
   if (error) return <p role="alert">{error}</p>;
   if (!auction) return <p role="status">Carregando leilão...</p>;
 
