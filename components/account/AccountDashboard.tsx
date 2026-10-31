@@ -6,7 +6,7 @@ import { getApiError } from '@/services/auth';
 import { ArrowRight, CircleUserRound, Clock3, Gavel, ShieldCheck, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 export function AccountDashboard() {
-  const { user, isLoading, getToken } = useAuth();
+  const { user, isLoading, getToken, refreshUser } = useAuth();
   const [nickname, setNickname] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [nicknameMessage, setNicknameMessage] = useState('');
@@ -19,7 +19,12 @@ export function AccountDashboard() {
     try {
       await api.put('/users/me/public-nickname', { publicNickname: value }, { headers: { Authorization: `Bearer ${token}` } });
       setNickname(value);
-      setNicknameMessage('Apelido salvo!');
+      try {
+        await refreshUser();
+        setNicknameMessage('Apelido salvo!');
+      } catch {
+        setNicknameMessage('Apelido salvo. Atualize a página para sincronizar o perfil.');
+      }
     } catch (error) { setNicknameMessage(getApiError(error)); }
     finally { setSaving(false); }
   };
