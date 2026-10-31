@@ -45,8 +45,17 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
     };
     void refresh();
-    // Active auctions have 15-second rounds; refresh faster while bidding is open.
-    const polling = setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, auctionStatus === 'active' ? 2000 : 10000);
+    // Product/gallery data is stable; avoid downloading it every few seconds.
+    const refreshLive = async () => {
+      try {
+        const { data } = await api.get<{ auction: Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents'> }>(`/auctions/${encodeURIComponent(id)}/live`);
+        if (active) {
+          setAuction(previous => previous ? { ...previous, ...data.auction } : previous);
+          setAuctionStatus(data.auction.status);
+        }
+      } catch { /* Keep last verified state; next poll retries. */ }
+    };
+    const polling = setInterval(() => { if (document.visibilityState === 'visible') void refreshLive(); }, auctionStatus === 'active' ? 2000 : 10000);
     return () => { active = false; clearInterval(polling); };
   }, [id, auctionStatus]);
   if (error) return <p role="alert">{error}</p>;
