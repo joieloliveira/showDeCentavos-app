@@ -295,3 +295,5 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 @media(max-width:480px){.registered-detail-gallery,.registered-detail-panel{padding:16px}.registered-main-image{height:290px}.registered-price-block strong{font-size:34px}.registered-metrics{grid-template-columns:1fr 1fr;gap:7px}.registered-metrics>div{padding:9px}}
 
 .registered-clock{display:flex;flex-direction:column;gap:8px;padding:16px 20px;border:1px solid #ffd9c7;background:#fff6f0;border-radius:12px;margin:16px 0}.registered-clock span{font-size:12px;color:#b74b26;font-weight:700}.registered-clock strong{font-size:30px;letter-spacing:1px;color:#1b2236;font-variant-numeric:tabular-nums}
+
+.registered-wallet-preview{display:flex;gap:12px;align-items:center;background:#f7f8fb;border:1px solid #edf0f5;border-radius:12px;padding:15px;margin-top:20px;color:#f26a36}.registered-wallet-preview>div{display:flex;flex-direction:column;gap:5px}.registered-wallet-preview strong{font-size:13px;color:#22283a}.registered-wallet-preview span{font-size:12px;color:#737c8e}
