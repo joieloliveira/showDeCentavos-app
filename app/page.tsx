@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, BadgeCheck, BellRing, CheckCircle2, Clock3, Gift, LockKeyhole, MousePointerClick, ShieldCheck, Sparkles, Trophy, UsersRound, Wallet, Zap } from 'lucide-react';
-import { AuctionGrid } from '@/components/auctions/AuctionGrid';
+import { RegisteredAuctions } from '@/components/auctions/RegisteredAuctions';
 
 const benefits = [
   { icon: ShieldCheck, title: 'Regras claras', description: 'Consulte as condições e os detalhes de cada leilão antes de participar.' },
@@ -42,8 +42,8 @@ export default function Home() {
 
     <section className="section home-featured" id="leiloes"><div className="site-container">
       <div className="home-section-top"><div><span className="eyebrow">Explore a vitrine</span><h2>Leilões em <span>destaque</span></h2><p>Encontre seu próximo favorito e conheça a dinâmica das disputas.</p></div><Link className="home-view-all" href="/auctions">Ver todos os leilões <ArrowUpRight size={17}/></Link></div>
-      <div className="home-demo-note"><BellRing size={17}/><span>Prévia da plataforma: produtos, valores e contadores exibidos nesta vitrine são demonstrativos. Não há lances reais habilitados.</span></div>
-      <AuctionGrid/>
+      <div className="home-demo-note"><BellRing size={17}/><span>Leilões cadastrados na plataforma. A participação por lances ainda não está habilitada nesta vitrine.</span></div>
+      <RegisteredAuctions/>
       <div className="home-after-grid"><Link href="/auctions" className="home-outline-dark">Explorar todos os leilões <ArrowRight size={17}/></Link></div>
     </div></section>
 
