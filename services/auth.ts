@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { api } from '@/services/api';
-export type AuthUser = { id: string; name: string; email: string; role: string };
+export type AuthUser = { id: string; name: string; email: string; role: string; publicNickname?: string | null };
 export type LoginResponse = { token: string; user: AuthUser };
 export type RegisterResponse = { message: string; user: AuthUser };
 export async function loginRequest(email: string, password: string) {
