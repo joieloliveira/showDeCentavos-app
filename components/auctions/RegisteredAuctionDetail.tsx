@@ -56,7 +56,18 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       } catch { /* Keep last verified state; next poll retries. */ }
     };
     const polling = setInterval(() => { if (document.visibilityState === 'visible') void refreshLive(); }, auctionStatus === 'active' ? 2000 : 10000);
-    return () => { active = false; clearInterval(polling); };
+    // SSE pushes confirmed bids immediately. Polling remains the fallback and
+    // also handles scheduler changes until it publishes its own events.
+    const base = api.defaults.baseURL ?? 'http://localhost:3001/api';
+    const events = new EventSource(`${base.replace(/\/$/, '')}/auctions/${encodeURIComponent(id)}/events`);
+    events.addEventListener('auction-update', (event: MessageEvent) => {
+      try {
+        const update = JSON.parse(event.data) as Partial<Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'endsAt'>>;
+        if (!active) return;
+        void refreshLive(); // Fetch authoritative state, avoiding stale/out-of-order pushes.
+      } catch { /* Ignore malformed messages; periodic polling continues. */ }
+    });
+    return () => { active = false; clearInterval(polling); events.close(); };
   }, [id, auctionStatus]);
   if (error) return <p role="alert">{error}</p>;
   if (!auction) return <p role="status">Carregando leilão...</p>;
