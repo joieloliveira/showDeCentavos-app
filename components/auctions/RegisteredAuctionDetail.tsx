@@ -45,7 +45,17 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     const refresh = async () => {
       try {
         const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
-        if (active) { setAuction(data.auction); liveStatusRef.current = data.auction.status; setError(''); }
+        if (active) {
+          // The full detail request may finish after a newer /live response.
+          // Keep the latest verified live fields while loading product/gallery data.
+          setAuction(previous => previous && latestAppliedRef.current > 0
+            ? { ...data.auction, status: previous.status, currentPriceCents: previous.currentPriceCents,
+                bidCount: previous.bidCount, startsAt: previous.startsAt, endsAt: previous.endsAt,
+                bidCostCents: previous.bidCostCents }
+            : data.auction);
+          if (latestAppliedRef.current === 0) liveStatusRef.current = data.auction.status;
+          setError('');
+        }
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
     };
     void refresh();
