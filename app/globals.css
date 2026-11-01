@@ -301,3 +301,16 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .registered-gallery-controls{display:flex;align-items:center;gap:8px;margin-top:16px;min-width:0}.registered-gallery-controls>.registered-thumbnails{flex:1;min-width:0;padding:2px 1px 5px;scrollbar-width:none;scroll-behavior:smooth}.registered-gallery-controls>.registered-thumbnails::-webkit-scrollbar{display:none}.registered-gallery-controls>button{flex:0 0 32px;height:44px;border:1px solid #e7eaf0;background:white;border-radius:9px;font-size:27px;color:#ec6538;cursor:pointer}.registered-gallery-controls>button:hover{background:#fff4ee}
 
 .registered-bid-info-button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:1px solid #ffd4c2;border-radius:10px;background:#fff6f1;color:#c74f24;font-weight:750;padding:13px;cursor:pointer;margin-top:18px}.registered-bid-dialog-backdrop{position:fixed;inset:0;z-index:1000;background:#131a2a99;display:grid;place-items:center;padding:18px}.registered-bid-dialog{background:#fff;border-radius:17px;padding:28px;max-width:460px;width:100%;box-shadow:0 20px 70px #10182733}.registered-bid-dialog h3{margin:0 0 15px;font-size:22px}.registered-bid-dialog p{color:#626c7e;font-size:14px;line-height:1.65}.registered-bid-dialog button{margin-top:12px;padding:12px 20px;border:0;border-radius:9px;background:#f36b39;color:#fff;font-weight:750;cursor:pointer}
+
+/* Auction catalog card refinements */
+.auction-card{display:flex;flex-direction:column;transition:box-shadow .2s ease,transform .2s ease}
+.auction-card:hover{box-shadow:0 14px 32px #20233513;transform:translateY(-2px)}
+.auction-body{display:flex;flex-direction:column;flex:1;gap:10px}
+.auction-body .bid-info{margin:10px 0}
+.auction-body .card-bottom{margin-top:auto}
+.auction-live-note,.auction-scheduled-note{font-size:12px;font-weight:750;margin:0}
+.auction-live-note{color:#d95426}
+.auction-scheduled-note{color:#697182}
+.auction-card .card-cta{min-height:34px;padding:8px 11px;border-radius:8px;background:#fff1e9;justify-content:center}
+.auction-card .card-cta:hover{background:#ffe1d1}
+@media(prefers-reduced-motion:reduce){.auction-card{transition:none}.auction-card:hover{transform:none}}
