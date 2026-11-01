@@ -71,20 +71,22 @@ export function RegisteredAuctions() {
     return <article key={auction._id} className="auction-card">
       <div className="auction-visual" style={{ background: '#f3f5f9' }}>
         {image ? <img src={image} alt={auction.product?.name ?? 'Produto'} style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: 230 }} /> : <span className="auction-emoji" aria-hidden="true">📦</span>}
-        <span className="auction-status">{status}</span>
+        <span className={`auction-status ${auction.status === "active" ? "live" : ""}`}>{status}</span>
         {auction.status === 'active' && <span role="timer" aria-label="Tempo restante do leilão" style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, padding: '9px 13px', borderRadius: 10, background: '#fff', border: '2px solid #ff6b35', color: '#e65320', fontWeight: 800, fontSize: 18, boxShadow: '0 3px 10px #0002' }}>{secondsLeft === null ? 'Aguardando início' : secondsLeft === 0 ? 'Encerrando...' : `⏱ ${secondsLeft}s`}</span>}
       </div>
       <div className="auction-body">
         <div className="auction-title-row"><h3>{auction.product?.name ?? 'Produto indisponível'}</h3></div>
+        {auction.status === "active" && <p className="auction-live-note">● Ao vivo · Acompanhe a contagem regressiva</p>}
+        {auction.status === "scheduled" && <p className="auction-scheduled-note">◷ Aguardando início</p>}
         <p className="retail">Valor de referência: {typeof auction.product?.price === 'number' ? auction.product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado'}</p>
-        <div className="bid-info"><div><span className="metric-label">Preço atual</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
+        <div className="bid-info"><div><span className="metric-label">{auction.status === "finished" ? "Preço final" : "Preço atual"}</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
         {auction.status === 'finished' && <div style={{ padding: '12px 14px', background: '#fff8df', border: '1px solid #f2d783', borderRadius: 10, display: 'grid', gap: 5, textAlign: 'center' }}>
           <strong>🏆 Leilão encerrado</strong>
           <span>{auction.winnerNickname ? <>Ganhador: <strong>{auction.winnerNickname}</strong></> : 'Ganhador não identificado publicamente'}</span>
           <span>Preço de arremate: <strong>{money(auction.currentPriceCents)}</strong></span>
         </div>}
         {auction.status === 'finished' && auction.endsAt && <p className="retail">Encerrado em: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
-        <div className="card-bottom"><span>{auction.bidCount} lance(s)</span><Link className="card-cta" href={`/auctions/registered/${auction._id}`}>Ver detalhes</Link></div>
+        <div className="card-bottom"><span>{auction.bidCount} lance(s)</span><Link className="card-cta" href={`/auctions/registered/${auction._id}`}>{auction.status === "finished" ? "Ver resultado" : auction.status === "active" ? "Acompanhar leilão" : "Ver detalhes"}</Link></div>
       </div>
     </article>;
   })}</div>;
