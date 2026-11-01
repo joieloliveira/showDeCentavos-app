@@ -15,6 +15,7 @@ type RegisteredAuction = {
   winnerNickname?: string | null;
   endsAt?: string | null;
   startsAt?: string | null;
+  waitingStartedAt?: string | null;
   product?: { name: string; coverImage?: Image; images?: Image[]; price?: number } | null;
 };
 export function RegisteredAuctions() {
@@ -67,6 +68,7 @@ export function RegisteredAuctions() {
   const renderCards = (items: RegisteredAuction[]) => <div className="auction-grid">{items.map(auction => {
     const image = auction.product?.coverImage?.url || auction.product?.images?.[0]?.url;
     const status = auction.status === 'active' ? 'Em andamento' : auction.status === 'finished' ? 'Encerrado' : 'Agendado';
+    const scheduledSeconds = auction.status === 'scheduled' && auction.waitingStartedAt && auction.startsAt && now !== null ? Math.max(0, Math.ceil((Date.parse(auction.startsAt) - now) / 1000)) : null;
     const secondsLeft = auction.status === 'active' && auction.endsAt && now !== null ? Math.max(0, Math.ceil((Date.parse(auction.endsAt) - now) / 1000)) : null;
     return <article key={auction._id} className="auction-card">
       <div className="auction-visual" style={{ background: '#f3f5f9' }}>
@@ -77,7 +79,8 @@ export function RegisteredAuctions() {
       <div className="auction-body">
         <div className="auction-title-row"><h3>{auction.product?.name ?? 'Produto indisponível'}</h3></div>
         {auction.status === "active" && <p className="auction-live-note">● Ao vivo · Acompanhe a contagem regressiva</p>}
-        {auction.status === "scheduled" && <p className="auction-scheduled-note">◷ Aguardando início</p>}
+        {auction.status === "scheduled" && <p className="auction-scheduled-note">{scheduledSeconds !== null ? `◷ Início previsto em ${Math.floor(scheduledSeconds / 3600) > 0 ? `${Math.floor(scheduledSeconds / 3600)}h ` : ""}${Math.floor(scheduledSeconds % 3600 / 60)}min ${scheduledSeconds % 60}s` : "◷ Aguardando definição do início"}</p>}
+        {auction.status === "scheduled" && auction.waitingStartedAt && auction.startsAt && <p className="retail">Previsão: {new Date(auction.startsAt).toLocaleString("pt-BR")}</p>}
         <p className="retail">Valor de referência: {typeof auction.product?.price === 'number' ? auction.product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado'}</p>
         <div className="bid-info"><div><span className="metric-label">{auction.status === "finished" ? "Preço final" : "Preço atual"}</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
         {auction.status === 'finished' && <div style={{ padding: '12px 14px', background: '#fff8df', border: '1px solid #f2d783', borderRadius: 10, display: 'grid', gap: 5, textAlign: 'center' }}>
