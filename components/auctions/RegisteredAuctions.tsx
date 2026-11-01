@@ -21,6 +21,12 @@ export function RegisteredAuctions() {
   const [auctions, setAuctions] = useState<RegisteredAuction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     let mounted = true;
     let inFlight = false;
@@ -61,10 +67,12 @@ export function RegisteredAuctions() {
   const renderCards = (items: RegisteredAuction[]) => <div className="auction-grid">{items.map(auction => {
     const image = auction.product?.coverImage?.url || auction.product?.images?.[0]?.url;
     const status = auction.status === 'active' ? 'Em andamento' : auction.status === 'finished' ? 'Encerrado' : 'Agendado';
+    const secondsLeft = auction.status === 'active' && auction.endsAt && now !== null ? Math.max(0, Math.ceil((Date.parse(auction.endsAt) - now) / 1000)) : null;
     return <article key={auction._id} className="auction-card">
       <div className="auction-visual" style={{ background: '#f3f5f9' }}>
         {image ? <img src={image} alt={auction.product?.name ?? 'Produto'} style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: 230 }} /> : <span className="auction-emoji" aria-hidden="true">📦</span>}
         <span className="auction-status">{status}</span>
+        {auction.status === 'active' && <span role="timer" aria-label="Tempo restante do leilão" style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, padding: '9px 13px', borderRadius: 10, background: '#fff', border: '2px solid #ff6b35', color: '#e65320', fontWeight: 800, fontSize: 18, boxShadow: '0 3px 10px #0002' }}>{secondsLeft === null ? 'Aguardando início' : secondsLeft === 0 ? 'Encerrando...' : `⏱ ${secondsLeft}s`}</span>}
       </div>
       <div className="auction-body">
         <div className="auction-title-row"><h3>{auction.product?.name ?? 'Produto indisponível'}</h3></div>
@@ -80,7 +88,14 @@ export function RegisteredAuctions() {
       </div>
     </article>;
   })}</div>;
+  const activeCount = auctions.filter(a => a.status === 'active').length;
   return <div>
+    <div className="page-heading" style={{ textAlign: activeCount > 0 ? 'center' : 'left' }}>
+      <span className="eyebrow">{activeCount > 0 ? 'Acompanhe em tempo real' : 'Descubra oportunidades'}</span>
+      <h1>{activeCount > 0 ? 'Leilões Ativos Agora' : 'Todos os leilões'}</h1>
+      <p>{activeCount > 0 ? 'Acompanhe os leilões em andamento. Cada segundo conta!' : 'Explore os leilões cadastrados. A participação por lances ainda não está habilitada nesta versão.'}</p>
+      {activeCount > 0 && <p style={{ fontSize: 13, marginTop: 8 }}>Participação por lances ainda indisponível nesta versão.</p>}
+    </div>
     {error && <p role="status">Não foi possível atualizar a listagem. Exibindo os últimos dados disponíveis.</p>}
     {upcoming.length === 0 && <p className="empty-state" role="status">Nenhum leilão ativo ou agendado no momento.</p>}
     {renderCards([...upcoming, ...finished])}
