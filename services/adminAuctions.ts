@@ -5,7 +5,7 @@ export type AdminAuction = {
   startsAt?: string | null; endsAt?: string | null; waitingStartedAt?: string | null; waitingMinutes?: number; createdAt?: string;
   product?: { _id: string; name: string; slug?: string; price?: number; coverImage?: string; status?: string } | null;
 };
-export type AdminAuctionList = { auctions: AdminAuction[]; pagination: { page: number; limit: number; total: number; totalPages: number } };
+export type AdminAuctionList = { auctions: AdminAuction[]; statusCounts?: { scheduled: number; active: number; finished: number; cancelled: number }; pagination: { page: number; limit: number; total: number; totalPages: number } };
 export async function listAdminAuctions(token: string, page: number, status: string): Promise<AdminAuctionList> {
   const { data } = await api.get<AdminAuctionList>('/admin/auctions', {
     headers: { Authorization: `Bearer ${token}` },
