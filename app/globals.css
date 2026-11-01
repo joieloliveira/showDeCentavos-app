@@ -327,3 +327,10 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .admin-auction-detail-grid>div{display:flex;flex-direction:column;gap:6px;border:1px solid #e8eaf0;border-radius:10px;padding:12px;min-width:0}
 .admin-auction-detail-grid span{font-size:12px;color:#697182}
 .admin-auction-detail-grid strong{font-size:14px;overflow-wrap:anywhere}
+
+.admin-auction-timeline{margin:24px 0;padding:18px;border:1px solid #e8eaf0;border-radius:12px}
+.admin-auction-timeline h3{margin:0 0 16px}
+.admin-auction-timeline ol{list-style:none;padding:0;margin:0 0 12px;border-left:2px solid #e8eaf0}
+.admin-auction-timeline li{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:0 0 18px 18px}
+.admin-auction-timeline li:before{content:"";position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:#e97932}
+.admin-auction-timeline li span{color:#697182;font-size:13px}
