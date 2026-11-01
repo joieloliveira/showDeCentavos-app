@@ -12,6 +12,7 @@ type RegisteredAuction = {
   startPriceCents: number;
   bidCostCents: number;
   bidCount: number;
+  winnerNickname?: string | null;
   endsAt?: string | null;
   startsAt?: string | null;
   product?: { name: string; coverImage?: Image; images?: Image[]; price?: number } | null;
@@ -47,6 +48,11 @@ export function RegisteredAuctions() {
         <div className="auction-title-row"><h3>{auction.product?.name ?? 'Produto indisponível'}</h3></div>
         <p className="retail">Valor de referência: {typeof auction.product?.price === 'number' ? auction.product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado'}</p>
         <div className="bid-info"><div><span className="metric-label">Preço atual</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
+        {auction.status === 'finished' && <div style={{ padding: '12px 14px', background: '#fff8df', border: '1px solid #f2d783', borderRadius: 10, display: 'grid', gap: 5, textAlign: 'center' }}>
+          <strong>🏆 Leilão encerrado</strong>
+          <span>{auction.winnerNickname ? <>Ganhador: <strong>{auction.winnerNickname}</strong></> : 'Ganhador não identificado publicamente'}</span>
+          <span>Preço de arremate: <strong>{money(auction.currentPriceCents)}</strong></span>
+        </div>}
         {auction.status === 'finished' && auction.endsAt && <p className="retail">Encerrado em: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="card-bottom"><span>{auction.bidCount} lance(s)</span><Link className="card-cta" href={`/auctions/registered/${auction._id}`}>Ver detalhes</Link></div>
       </div>
