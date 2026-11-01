@@ -12,6 +12,8 @@ type RegisteredAuction = {
   startPriceCents: number;
   bidCostCents: number;
   bidCount: number;
+  endsAt?: string | null;
+  startsAt?: string | null;
   product?: { name: string; coverImage?: Image; images?: Image[]; price?: number } | null;
 };
 export function RegisteredAuctions() {
@@ -29,7 +31,13 @@ export function RegisteredAuctions() {
   if (loading) return <p role="status">Carregando leilões cadastrados...</p>;
   if (error) return <p role="alert">Não foi possível carregar os leilões cadastrados. Verifique se a API está disponível.</p>;
   if (!auctions.length) return <p className="empty-state">Ainda não existem leilões cadastrados para exibição.</p>;
-  return <div className="auction-grid">{auctions.map(auction => {
+  const upcoming = auctions.filter(a => a.status === 'active' || a.status === 'scheduled')
+    .sort((a, b) => (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1));
+  const featured = upcoming.slice(0, 3);
+  const remaining = upcoming.slice(3);
+  const finished = auctions.filter(a => a.status === 'finished')
+    .sort((a, b) => Date.parse(b.endsAt || '') - Date.parse(a.endsAt || ''));
+  const renderCards = (items: RegisteredAuction[]) => <div className="auction-grid">{items.map(auction => {
     const image = auction.product?.coverImage?.url || auction.product?.images?.[0]?.url;
     const status = auction.status === 'active' ? 'Em andamento' : auction.status === 'finished' ? 'Encerrado' : 'Agendado';
     return <article key={auction._id} className="auction-card">
@@ -41,8 +49,14 @@ export function RegisteredAuctions() {
         <div className="auction-title-row"><h3>{auction.product?.name ?? 'Produto indisponível'}</h3></div>
         <p className="retail">Valor de referência: {typeof auction.product?.price === 'number' ? auction.product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Não informado'}</p>
         <div className="bid-info"><div><span className="metric-label">Preço atual</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
+        {auction.status === 'finished' && auction.endsAt && <p className="retail">Encerrado em: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="card-bottom"><span>{auction.bidCount} lance(s)</span><Link className="card-cta" href={`/auctions/registered/${auction._id}`}>Ver detalhes</Link></div>
       </div>
     </article>;
   })}</div>;
+  return <div style={{ display: 'grid', gap: 32 }}>
+    <section aria-labelledby="featured-auctions"><h2 id="featured-auctions">Leilões em destaque</h2><p>Em andamento ou aguardando início. Até três cartões em destaque.</p>{featured.length ? renderCards(featured) : <p className="empty-state">Nenhum leilão ativo ou agendado no momento.</p>}</section>
+    {remaining.length > 0 && <section aria-labelledby="other-upcoming"><h2 id="other-upcoming">Outros leilões agendados ou ativos</h2>{renderCards(remaining)}</section>}
+    <section aria-labelledby="finished-auctions"><h2 id="finished-auctions">Leilões encerrados</h2><p>Consulte os resultados e os valores finais dos leilões anteriores.</p>{finished.length ? renderCards(finished) : <p className="empty-state">Ainda não há leilões encerrados.</p>}</section>
+  </div>;
 }
