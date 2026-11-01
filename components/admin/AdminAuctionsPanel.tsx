@@ -22,6 +22,7 @@ export function AdminAuctionsPanel() {
   const [starting, setStarting] = useState(false);
   const [notice, setNotice] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(interval); }, []);
   async function beginWaiting(auction: AdminAuction) {
     const token = getToken();
@@ -38,9 +39,9 @@ export function AdminAuctionsPanel() {
     const token = getToken();
     if (!token) return;
     let active = true;
-    queueMicrotask(() => { if (active) { setLoading(true); setResult(null); setSelected(null); setError(''); } });
+    queueMicrotask(() => { if (active) { setLoading(true); setError(''); } });
     listAdminAuctions(token, page, status)
-      .then(data => { if (active) setResult(data); })
+      .then(data => { if (active) { setResult(data); setLastUpdated(Date.now()); setSelected(previous => previous ? (data.auctions.find(a => a._id === previous._id) ?? null) : null); } })
       .catch(err => { if (active) setError(getApiError(err)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -51,6 +52,7 @@ export function AdminAuctionsPanel() {
   const auctions = result?.auctions.filter(a => (a.product?.name ?? '').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))) ?? [];
   return <div className="admin-auctions">
     <div className="admin-auction-notice"><strong>Administração de leilões</strong><p>Dados reais do MongoDB. É possível cadastrar e iniciar a contagem de espera manualmente. A interface pública ainda não permite lances. A busca por nome filtra apenas a página carregada.</p></div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}><button type="button" className="incident-action" disabled={loading} onClick={() => setRefresh(n => n + 1)}>{loading ? "Atualizando..." : "Atualizar dados"}</button><span className="retail">{lastUpdated ? `Última atualização: ${new Date(lastUpdated).toLocaleTimeString("pt-BR")}` : "Aguardando consulta"}</span></div>
     <div className="admin-auction-stats"><div><span>Total de leilões cadastrados {status ? '(filtro atual)' : ''}</span><strong>{result?.pagination.total ?? '—'}</strong></div><div><span>Registros nesta página</span><strong>{result?.auctions.length ?? '—'}</strong></div><div><span>Página atual</span><strong>{page}</strong></div></div>
     <AdminAuctionCreateForm onCreated={() => { setPage(1); setRefresh(n => n + 1); }} />
     <section className="panel admin-auction-panel"><h2>Leilões cadastrados</h2>
