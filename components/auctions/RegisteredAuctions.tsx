@@ -23,14 +23,36 @@ export function RegisteredAuctions() {
   const [error, setError] = useState(false);
   useEffect(() => {
     let mounted = true;
-    api.get<{ auctions: RegisteredAuction[] }>('/auctions')
-      .then(({ data }) => { if (mounted) setAuctions((data.auctions ?? []).filter(a => a.status !== 'cancelled' && a.product)); })
-      .catch(() => { if (mounted) setError(true); })
-      .finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
+    let inFlight = false;
+    let sequence = 0;
+    const refresh = async () => {
+      if (!mounted || inFlight || document.visibilityState === 'hidden') return;
+      inFlight = true;
+      const requestId = ++sequence;
+      try {
+        const { data } = await api.get<{ auctions: RegisteredAuction[] }>('/auctions');
+        if (!mounted || requestId !== sequence) return;
+        setAuctions((data.auctions ?? []).filter(a => a.status !== 'cancelled' && a.product));
+        setError(false);
+      } catch {
+        if (mounted) setError(true);
+      } finally {
+        inFlight = false;
+        if (mounted) setLoading(false);
+      }
+    };
+    void refresh();
+    const interval = window.setInterval(() => { void refresh(); }, 5000);
+    const onVisibility = () => { if (document.visibilityState === 'visible') void refresh(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
   if (loading) return <p role="status">Carregando leilões cadastrados...</p>;
-  if (error) return <p role="alert">Não foi possível carregar os leilões cadastrados. Verifique se a API está disponível.</p>;
+  if (error && !auctions.length) return <p role="alert">Não foi possível carregar os leilões cadastrados. Verifique se a API está disponível.</p>;
   if (!auctions.length) return <p className="empty-state">Ainda não existem leilões cadastrados para exibição.</p>;
   const upcoming = auctions.filter(a => a.status === 'active' || a.status === 'scheduled')
     .sort((a, b) => (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1));
@@ -59,6 +81,7 @@ export function RegisteredAuctions() {
     </article>;
   })}</div>;
   return <div>
+    {error && <p role="status">Não foi possível atualizar a listagem. Exibindo os últimos dados disponíveis.</p>}
     {upcoming.length === 0 && <p className="empty-state" role="status">Nenhum leilão ativo ou agendado no momento.</p>}
     {renderCards([...upcoming, ...finished])}
   </div>;
