@@ -2,7 +2,7 @@ import { api } from './api';
 export type AdminAuction = {
   _id: string; status: string; startPriceCents: number; currentPriceCents: number;
   bidCostCents: number; bidCount: number; durationSeconds: number;
-  startsAt?: string | null; endsAt?: string | null; waitingStartedAt?: string | null; waitingMinutes?: number; createdAt?: string;
+  startsAt?: string | null; endsAt?: string | null; waitingStartedAt?: string | null; waitingMinutes?: number; createdAt?: string; updatedAt?: string; bidIncrementCents?: number;
   product?: { _id: string; name: string; slug?: string; price?: number; coverImage?: string; status?: string } | null;
 };
 export type AdminAuctionList = { auctions: AdminAuction[]; statusCounts?: { scheduled: number; active: number; finished: number; cancelled: number }; pagination: { page: number; limit: number; total: number; totalPages: number } };
