@@ -33,8 +33,6 @@ export function RegisteredAuctions() {
   if (!auctions.length) return <p className="empty-state">Ainda não existem leilões cadastrados para exibição.</p>;
   const upcoming = auctions.filter(a => a.status === 'active' || a.status === 'scheduled')
     .sort((a, b) => (a.status === 'active' ? 0 : 1) - (b.status === 'active' ? 0 : 1));
-  const featured = upcoming.slice(0, 3);
-  const remaining = upcoming.slice(3);
   const finished = auctions.filter(a => a.status === 'finished')
     .sort((a, b) => Date.parse(b.endsAt || '') - Date.parse(a.endsAt || ''));
   const renderCards = (items: RegisteredAuction[]) => <div className="auction-grid">{items.map(auction => {
@@ -54,9 +52,8 @@ export function RegisteredAuctions() {
       </div>
     </article>;
   })}</div>;
-  return <div style={{ display: 'grid', gap: 32 }}>
-    <section aria-labelledby="featured-auctions"><h2 id="featured-auctions">Leilões em destaque</h2><p>Em andamento ou aguardando início. Até três cartões em destaque.</p>{featured.length ? renderCards(featured) : <p className="empty-state">Nenhum leilão ativo ou agendado no momento.</p>}</section>
-    {remaining.length > 0 && <section aria-labelledby="other-upcoming"><h2 id="other-upcoming">Outros leilões agendados ou ativos</h2>{renderCards(remaining)}</section>}
-    <section aria-labelledby="finished-auctions"><h2 id="finished-auctions">Leilões encerrados</h2><p>Consulte os resultados e os valores finais dos leilões anteriores.</p>{finished.length ? renderCards(finished) : <p className="empty-state">Ainda não há leilões encerrados.</p>}</section>
+  return <div>
+    {upcoming.length === 0 && <p className="empty-state" role="status">Nenhum leilão ativo ou agendado no momento.</p>}
+    {renderCards([...upcoming, ...finished])}
   </div>;
 }
