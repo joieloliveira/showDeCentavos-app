@@ -49,6 +49,20 @@ export function AdminAuctionsPanel() {
   if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
   if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
+  const auctionTimeLabel = (auction: AdminAuction) => {
+    if (auction.status === 'scheduled') {
+      if (!auction.waitingStartedAt || !auction.startsAt) return 'Aguardando início da espera';
+      const remaining = Math.max(0, Math.ceil((new Date(auction.startsAt).getTime() - now) / 1000));
+      return remaining > 0 ? `Início em ${Math.floor(remaining / 60)}m ${remaining % 60}s` : 'Aguardando ativação';
+    }
+    if (auction.status === 'active') {
+      if (!auction.endsAt) return 'Sem término definido';
+      const remaining = Math.max(0, Math.ceil((new Date(auction.endsAt).getTime() - now) / 1000));
+      return remaining > 0 ? `Restam ${Math.floor(remaining / 60)}m ${remaining % 60}s` : 'Aguardando atualização';
+    }
+    if (auction.status === 'finished') return 'Encerrado';
+    return 'Cancelado';
+  };
   const auctions = result?.auctions.filter(a => (a.product?.name ?? '').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))) ?? [];
   return <div className="admin-auctions">
     <div className="admin-auction-notice"><strong>Administração de leilões</strong><p>Dados reais do MongoDB. É possível cadastrar e iniciar a contagem de espera manualmente. A interface pública ainda não permite lances. A busca por nome filtra apenas a página carregada.</p></div>
@@ -59,7 +73,7 @@ export function AdminAuctionsPanel() {
       <div className="admin-auction-filters"><label>Buscar nesta página<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome do produto..." /></label><label>Situação<select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">Todas</option><option value="scheduled">Agendado</option><option value="active">Ativo</option><option value="finished">Encerrado</option><option value="cancelled">Cancelado</option></select></label></div>
       {loading && <p role="status">Carregando leilões...</p>}
       {error && <p role="alert">{error}</p>}
-      {!loading && result && <><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Situação</th><th>Preço inicial</th><th>Preço atual</th><th>Custo do lance</th><th>Detalhes</th></tr></thead><tbody>{auctions.map(a => <tr key={a._id}><td><span className="admin-auction-product"><strong>{a.product?.name ?? 'Produto indisponível'}</strong></span></td><td>{labels[a.status] ?? a.status}</td><td>{money(a.startPriceCents)}</td><td>{money(a.currentPriceCents)}</td><td>{money(a.bidCostCents)}</td><td><button type="button" className="incident-action" onClick={() => setSelected(a)}>Detalhes</button> <Link href={`/auctions/registered/${a._id}`} className="incident-action">Ver na vitrine</Link></td></tr>)}</tbody></table></div>
+      {!loading && result && <><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Situação</th><th>Preço inicial</th><th>Preço atual</th><th>Custo do lance</th><th>Tempo / andamento</th><th>Detalhes</th></tr></thead><tbody>{auctions.map(a => <tr key={a._id}><td><span className="admin-auction-product"><strong>{a.product?.name ?? 'Produto indisponível'}</strong></span></td><td>{labels[a.status] ?? a.status}</td><td>{money(a.startPriceCents)}</td><td>{money(a.currentPriceCents)}</td><td>{money(a.bidCostCents)}</td><td><span role="status">{auctionTimeLabel(a)}</span></td><td><button type="button" className="incident-action" onClick={() => setSelected(a)}>Detalhes</button> <Link href={`/auctions/registered/${a._id}`} className="incident-action">Ver na vitrine</Link></td></tr>)}</tbody></table></div>
         {auctions.length === 0 && <p>Nenhum leilão encontrado nesta página.</p>}
         <p>{result.pagination.total} leilão(ões) no banco para o filtro selecionado.</p>
         <div className="incident-pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Anterior</button><span>Página {page} de {Math.max(1, result.pagination.totalPages)}</span><button type="button" disabled={page >= result.pagination.totalPages || loading} onClick={() => setPage(p => p + 1)}>Próxima</button></div>
