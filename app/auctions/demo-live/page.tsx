@@ -1,49 +1,152 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/services/api';
 
 
+type AuctionLiveState = {
+  auction: {
+    status: string;
+    bidCount: number;
+    currentPriceCents: number;
+    startsAt: string | null;
+    endsAt: string | null;
+  };
+  serverTime: string;
+};
+
+function formatRemaining(ms: number) {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+  return [hours, minutes, remainder].map(value => String(value).padStart(2, '0')).join(':');
+}
+
 function LiveMonitor() {
   const [input, setInput] = useState('');
-  const [id, setId] = useState('');
+  const [selection, setSelection] = useState<{ id: string; revision: number } | null>(null);
   const [status, setStatus] = useState('Desconectado');
-  const [state, setState] = useState<{ auction: { status: string; bidCount: number; currentPriceCents: number }; serverTime: string } | null>(null);
+  const [state, setState] = useState<AuctionLiveState | null>(null);
   const [eventsCount, setEventsCount] = useState(0);
+  const [lastSource, setLastSource] = useState('Nenhuma atualização');
+  const [lastEventAt, setLastEventAt] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [now, setNow] = useState<number | null>(null);
+  const clockOffset = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!/^[0-9a-f]{24}$/i.test(id)) return;
+    const tick = () => setNow(Date.now());
+    tick();
+    const interval = window.setInterval(tick, 250);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const id = selection?.id;
+    if (!id || !/^[0-9a-f]{24}$/i.test(id)) return;
     let active = true;
-    const refresh = async () => {
+    let requestNumber = 0;
+    let appliedNumber = 0;
+
+    const refresh = async (source: 'SSE' | 'Consulta periódica' | 'Conexão') => {
+      const current = ++requestNumber;
+      const sentAt = Date.now();
       try {
-        const { data } = await api.get<typeof state>(`/auctions/${id}/live`);
-        if (active) { setState(data); setError(''); }
-      } catch { if (active) setError('Consulta ao servidor indisponível.'); }
+        const { data } = await api.get<AuctionLiveState>(`/auctions/${id}/live`);
+        const receivedAt = Date.now();
+        if (!active || current < appliedNumber) return;
+        appliedNumber = current;
+        const serverTime = Date.parse(data.serverTime);
+        if (Number.isFinite(serverTime)) {
+          clockOffset.current = serverTime - (sentAt + receivedAt) / 2;
+        }
+        setState(data);
+        setLastSource(source);
+        setError('');
+      } catch {
+        if (active && current >= appliedNumber) setError('Consulta ao servidor indisponível.');
+      }
     };
-    void refresh();
+
+    void refresh('Conexão');
     const base = api.defaults.baseURL ?? 'http://localhost:3001/api';
     const source = new EventSource(`${base.replace(/\/$/, '')}/auctions/${id}/events`);
-    source.onopen = () => { if (active) { setStatus('SSE conectado'); void refresh(); } };
-    source.onerror = () => { if (active) setStatus('SSE reconectando'); };
+    source.onopen = () => {
+      if (!active) return;
+      setStatus('SSE conectado');
+      void refresh('Conexão');
+    };
+    source.onerror = () => {
+      if (active) setStatus('SSE reconectando');
+    };
     source.addEventListener('auction-update', () => {
-      if (active) { setEventsCount(n => n + 1); void refresh(); }
+      if (!active) return;
+      setEventsCount(count => count + 1);
+      setLastEventAt(new Date().toISOString());
+      void refresh('SSE');
     });
-    const interval = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh(); }, 5000);
-    return () => { active = false; source.close(); window.clearInterval(interval); };
-  }, [id]);
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh('Consulta periódica');
+    }, 5000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void refresh('Conexão');
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      active = false;
+      source.close();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [selection]);
+
+  const target = state?.auction.status === 'scheduled'
+    ? state.auction.startsAt
+    : state?.auction.status === 'active'
+      ? state.auction.endsAt
+      : null;
+  const targetTime = target ? Date.parse(target) : NaN;
+  const authoritativeNow = now === null || clockOffset.current === null ? null : now + clockOffset.current;
+  const remaining = authoritativeNow !== null && Number.isFinite(targetTime)
+    ? formatRemaining(targetTime - authoritativeNow)
+    : null;
+
   return <section style={{ marginTop: 24, padding: 24, border: '1px solid #cbd5e1', borderRadius: 16, display: 'grid', gap: 12 }}>
     <h2>Monitor SSE e API (somente leitura)</h2>
     <p>Informe o ID de um leilão existente. Nenhum registro será criado ou alterado.</p>
-    <form onSubmit={e => { e.preventDefault(); setState(null); setEventsCount(0); setStatus('Conectando'); setId(input.trim()); }} style={{ display: 'flex', gap: 8 }}>
+    <form onSubmit={e => {
+      e.preventDefault();
+      const id = input.trim();
+      if (!/^[0-9a-f]{24}$/i.test(id)) return;
+      setState(null);
+      setEventsCount(0);
+      setLastSource('Nenhuma atualização');
+      setLastEventAt(null);
+      setError('');
+      setStatus('Conectando');
+      clockOffset.current = null;
+      setSelection(previous => ({ id, revision: (previous?.revision ?? 0) + 1 }));
+    }} style={{ display: 'flex', gap: 8 }}>
       <input aria-label="ID do leilão" placeholder="ID MongoDB (24 caracteres)" value={input} onChange={e => setInput(e.target.value)} style={{ flex: 1, minWidth: 0, padding: 10 }} />
       <button type="submit" disabled={!/^[0-9a-f]{24}$/i.test(input.trim())}>Monitorar</button>
     </form>
-    {id && <><p role="status">{status} · Eventos recebidos: {eventsCount}</p>{error && <p role="alert">{error}</p>}
-      {state && <><p>Estado no servidor: <strong>{state.auction.status}</strong></p>
+    {selection && <>
+      <p role="status">{status} · Eventos SSE recebidos: {eventsCount}</p>
+      <p>Última atualização: {lastSource}</p>
+      {lastEventAt && <p>Último evento SSE: {new Date(lastEventAt).toLocaleString('pt-BR')}</p>}
+      {error && <p role="alert">{error}</p>}
+      {state && <>
+        <p>Estado no servidor: <strong>{state.auction.status}</strong></p>
         <p>Preço: {(state.auction.currentPriceCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} · Lances: {state.auction.bidCount}</p>
-        <p>Horário do servidor: {new Date(state.serverTime).toLocaleString('pt-BR')}</p></>}</>}
-    <small>Leilões encerrados não mudarão de estado. Transições reais exigem um cenário isolado no backend.</small>
+        {remaining !== null && <p role="timer" aria-label="Tempo restante do leilão no servidor" style={{ fontSize: 32, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>Tempo restante: {remaining}</p>}
+        {state.auction.status === 'active' && !state.auction.endsAt && <p>Leilão ativo, aguardando o primeiro lance para iniciar o cronômetro de encerramento.</p>}
+        <p>Horário do servidor: {new Date(state.serverTime).toLocaleString('pt-BR')}</p>
+      </>}
+    </>}
+    <small>O cronômetro real usa startsAt/endsAt e serverTime da API. A consulta periódica funciona como recuperação quando o SSE é interrompido.</small>
   </section>;
 }
 
