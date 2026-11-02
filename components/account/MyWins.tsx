@@ -49,7 +49,7 @@ export function MyWins() {
           </div>
           <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
           <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
-          <WinShippingAddressForm />
+          <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} />
         </div>
       </article>)}
       {!!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
