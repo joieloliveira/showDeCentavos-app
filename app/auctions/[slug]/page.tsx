@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { RegisteredAuctionDetail } from '@/components/auctions/RegisteredAuctionDetail';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, BadgeCheck, Clock3, Heart, Info, LockKeyhole, MousePointerClick, ShieldCheck, Tag, UsersRound, Wallet } from 'lucide-react';
@@ -9,12 +10,14 @@ type Props = { params: Promise<{ slug: string }> };
 export function generateStaticParams() { return demoAuctions.map((auction) => ({ slug: auction.slug })); }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  if (/^[a-fA-F0-9]{24}$/.test(slug)) return { title: 'Detalhes do leilão' };
   const auction = demoAuctions.find((item) => item.slug === slug);
   return { title: auction ? `${auction.title} | Leilão demonstrativo` : 'Leilão não encontrado' };
 }
 
 export default async function AuctionDetail({ params }: Props) {
   const { slug } = await params;
+  if (/^[a-fA-F0-9]{24}$/.test(slug)) return <RegisteredAuctionDetail id={slug} />;
   const auction = demoAuctions.find((item) => item.slug === slug);
   if (!auction) notFound();
   const isLive = auction.status === 'live';
