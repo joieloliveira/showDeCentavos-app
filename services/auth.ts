@@ -26,3 +26,12 @@ export function getApiError(error: unknown): string {
   }
   return error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
 }
+
+export async function forgotPasswordRequest(email: string) {
+  const { data } = await api.post<{ message: string }>('/auth/forgot-password', { email });
+  return data;
+}
+export async function resetPasswordRequest(token: string, password: string) {
+  const { data } = await api.post<{ message: string }>('/auth/reset-password', { token, password });
+  return data;
+}
