@@ -20,6 +20,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [balanceError, setBalanceError] = useState('');
   const [showBidInfo, setShowBidInfo] = useState(false);
+  const [showSimulation, setShowSimulation] = useState(false);
+  const [simulatedBids, setSimulatedBids] = useState(0);
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
@@ -114,6 +116,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const gallery = cover && !images.some(image => image.url === cover) ? [{ url: cover, key: 'cover' }, ...images] : images;
   const mainImage = selectedImage && gallery.some(image => image.url === selectedImage) ? selectedImage : (cover || gallery[0]?.url);
   const label = statusLabels[auction.status] ?? auction.status;
+  const simulatedPriceCents = auction.currentPriceCents + simulatedBids;
+  const canSimulate = auction.status === 'active';
   const secondsUntilStart = auction.status === 'scheduled' && auction.startsAt ? Math.max(0, Math.ceil((new Date(auction.startsAt).getTime() - now) / 1000)) : null;
   const secondsUntilEnd = auction.status === 'active' && auction.endsAt ? Math.max(0, Math.ceil((new Date(auction.endsAt).getTime() - now) / 1000)) : null;
   const clock = (seconds: number) => `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -151,7 +155,19 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {auction.endsAt && <p className="registered-date">Término registrado: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span></div></div>
         <button type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
-        <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances indisponíveis</button>
+        <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances reais indisponíveis</button>
+        <section aria-label="Simulador de lances" style={{ padding: 16, border: '1px dashed #94a3b8', borderRadius: 12, display: 'grid', gap: 10 }}>
+          <strong>Simulador local de lances</strong>
+          <p style={{ margin: 0, color: '#64748b' }}>Prévia educativa, independente da carteira e do servidor. Não registra lances, não altera o leilão e não cobra valores.</p>
+          <button type="button" onClick={() => { setShowSimulation(previous => !previous); setSimulatedBids(0); }}>{showSimulation ? 'Fechar simulação' : 'Abrir simulação'}</button>
+          {showSimulation && <div style={{ display: 'grid', gap: 8 }} role="region" aria-label="Resultado da simulação">
+            <span>Preço hipotético: <strong>{money(simulatedPriceCents)}</strong></span>
+            <span>Lances simulados: <strong>{simulatedBids}</strong></span>
+            <span>Custo hipotético dos lances: <strong>{money(simulatedBids * auction.bidCostCents)}</strong></span>
+            <button type="button" disabled={!canSimulate} onClick={() => setSimulatedBids(previous => previous + 1)}>{canSimulate ? 'Simular lance de R$ 0,01' : 'Simulação disponível apenas durante leilão ativo'}</button>
+            <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
+          </div>}
+        </section>
         {showBidInfo && <div className="registered-bid-dialog-backdrop" onClick={() => setShowBidInfo(false)}><section role="dialog" aria-modal="true" aria-labelledby="bid-info-title" className="registered-bid-dialog" onClick={event => event.stopPropagation()}><h3 id="bid-info-title">Confirmação de lance — prévia</h3><p>Quando os lances forem liberados, cada lance neste leilão custará <strong>{money(auction.bidCostCents)}</strong> e aumentará o preço em <strong>R$ 0,01</strong>.</p><p>Saldo atual: <strong>{balance === null ? "Não disponível" : money(balance)}</strong></p><p>Nenhum valor será debitado nesta demonstração.</p><button type="button" onClick={() => setShowBidInfo(false)}>Entendi, fechar</button></section></div>}
         <p className="registered-safety"><ShieldCheck size={18}/> Visualização informativa. Esta página não permite realizar lances ou pagamentos.</p>
       </div>
