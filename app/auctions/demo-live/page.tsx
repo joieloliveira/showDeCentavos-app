@@ -9,7 +9,6 @@ const ACTIVE_SECONDS = 25;
 export default function AuctionVisualHomologationPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState<number | null>(null);
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -41,7 +40,7 @@ export default function AuctionVisualHomologationPage() {
         <div role="timer" aria-label="Tempo restante" style={{ fontSize: 44, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{clock}</div>
         <p style={{ margin: 0 }}>{status === 'ready' ? 'Inicie a demonstração para observar as transições.' : status === 'scheduled' ? 'Aguardando início do leilão simulado.' : status === 'active' ? 'Leilão simulado em andamento. Nenhum lance financeiro está disponível.' : 'Demonstração encerrada. Nenhum vencedor ou pagamento foi registrado.'}</p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => { setStartedAt(Date.now()); setPaused(false); }}> {startedAt === null ? 'Iniciar demonstração' : 'Reiniciar demonstração'} </button>
+          <button type="button" onClick={() => { setStartedAt(Date.now()); }}> {startedAt === null ? 'Iniciar demonstração' : 'Reiniciar demonstração'} </button>
         </div>
         <small>10 segundos agendado → 25 segundos ativo → encerrado. O relógio utiliza o tempo decorrido real, inclusive após trocar de aba.</small>
         <small>Este teste verifica somente a apresentação visual e as transições locais. A sincronização com o servidor e o SSE continuam sendo testados separadamente.</small>
