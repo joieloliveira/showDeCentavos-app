@@ -7,8 +7,11 @@ import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Win = { auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; bidCount: number; paymentStatus: string; deliveryStatus: string; fulfillmentAvailable: boolean };
+type ShippingAddress = { recipientName: string; phone: string; zipCode: string; street: string; number: string; complement: string; neighborhood: string; city: string; state: string };
+type Win = { shippingAddress?: ShippingAddress | null; addressSubmittedAt?: string | null; addressEditable?: boolean; auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; bidCount: number; paymentStatus: string; deliveryStatus: string; fulfillmentAvailable: boolean };
 type WinsResponse = { page: number; limit: number; total: number; items: Win[] };
+const paymentLabels: Record<string, string> = { not_started: 'não iniciado', pending: 'pendente', paid: 'pago', failed: 'falhou', refunded: 'reembolsado', cancelled: 'cancelado' };
+const deliveryLabels: Record<string, string> = { not_started: 'não iniciada', preparing: 'em preparação', shipped: 'enviada', delivered: 'entregue', cancelled: 'cancelada' };
 const money = (value: number) => (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function MyWins() {
@@ -45,14 +48,14 @@ export function MyWins() {
           <span>Preço final do leilão: {money(win.finalPriceCents)}</span>
           {win.finishedAt && <span>Encerrado em: {new Date(win.finishedAt).toLocaleString('pt-BR')}</span>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: não iniciado</span>
-            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: não iniciada</span>
+            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: {paymentLabels[win.paymentStatus] ?? 'indisponível'}</span>
+            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
           </div>
           <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
           <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
           </div>
         </div>
-        <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} />
+        <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} initialAddress={win.shippingAddress ?? null} editable={win.addressEditable ?? false} />
       </article>)}
       {!!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Anterior</button>
