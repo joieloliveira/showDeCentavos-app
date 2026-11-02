@@ -26,6 +26,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
   const [now, setNow] = useState(() => Date.now());
   const serverOffsetMs = useRef(0);
   const lastLiveCheckMs = useRef(0);
@@ -97,7 +98,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     // also handles scheduler changes until it publishes its own events.
     const base = api.defaults.baseURL ?? 'http://localhost:3001/api';
     const events = new EventSource(`${base.replace(/\/$/, '')}/auctions/${encodeURIComponent(id)}/events`);
-    events.addEventListener('open', () => { if (active) void refreshLive(); });
+    events.addEventListener('open', () => { if (active) { setConnectionStatus('connected'); void refreshLive(); } });
+    events.addEventListener('error', () => { if (active) setConnectionStatus('reconnecting'); });
     events.addEventListener('auction-update', (event: MessageEvent) => {
       try {
         JSON.parse(event.data);
@@ -137,6 +139,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     <div className="registered-detail-sidebar">
       <div className="registered-detail-panel">
         <span className="registered-status"><Clock3 size={15}/>{label}</span>
+        <p role="status" aria-live="polite" style={{ fontSize: 12, marginTop: 8 }}>
+          {connectionStatus === "connected" ? "Atualizações em tempo real conectadas" : connectionStatus === "reconnecting" ? "Reconectando atualizações; consulta periódica ativa" : "Conectando atualizações em tempo real..."}
+        </p>
         {auction.status === 'finished' && <div role="status" aria-live="polite" style={{ marginTop: 12, padding: '16px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}><strong style={{ display: 'block', fontSize: '1.15rem' }}>Leilão encerrado!</strong><span>O resultado foi confirmado pelo servidor. Preço final: {money(auction.currentPriceCents)}.</span><span style={{ display: 'block', marginTop: 6, fontWeight: 600 }}>{auction.winnerNickname ? `Vencedor: ${auction.winnerNickname}` : auction.bidCount > 0 ? 'Vencedor confirmado · identificação pública indisponível' : 'Nenhum lance vencedor registrado'}</span></div>}
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
         {secondsUntilStart !== null && <div className="registered-clock" role="timer"><span>{secondsUntilStart > 0 ? "Início previsto em" : "Horário previsto atingido · aguardando atualização do servidor"}</span><strong>{clock(secondsUntilStart)}</strong></div>}
