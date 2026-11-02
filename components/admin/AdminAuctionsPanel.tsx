@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
-import { listAdminAuctions, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList } from '@/services/adminAuctions';
+import { listAdminAuctions, listAdminAuctionEvents, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent } from '@/services/adminAuctions';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
 
@@ -16,6 +16,9 @@ export function AdminAuctionsPanel() {
   const [search, setSearch] = useState('');
   const [result, setResult] = useState<AdminAuctionList | null>(null);
   const [selected, setSelected] = useState<AdminAuction | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AdminAuctionEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [waitingMinutes, setWaitingMinutes] = useState(60);
@@ -70,6 +73,20 @@ export function AdminAuctionsPanel() {
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [getToken, isAdmin, isLoading, page, status, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setAuditEvents([]); setAuditError(''); setAuditLoading(false); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setAuditLoading(true);
+    setAuditError('');
+    setAuditEvents([]);
+    listAdminAuctionEvents(token, selected._id)
+      .then(events => { if (alive) setAuditEvents(events); })
+      .catch(err => { if (alive) setAuditError(getApiError(err)); })
+      .finally(() => { if (alive) setAuditLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, isAdmin, getToken, refresh]);
   if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
   if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
@@ -126,6 +143,13 @@ export function AdminAuctionsPanel() {
         ] as { label: string; date?: string | null }[]).map(item => <li key={item.label}><strong>{item.label}</strong><span>{item.date ? new Date(item.date).toLocaleString('pt-BR') : 'Ainda não registrado'}</span></li>)}
       </ol>
       <p><small>Linha do tempo reconstruída a partir das datas existentes. Não é um log de auditoria nem registra todas as transições de estado.</small></p>
+    </section>
+    <section className="admin-auction-timeline" aria-label="Eventos de auditoria persistidos">
+      <h3>Histórico de auditoria</h3>
+      {auditLoading && <p role="status">Carregando eventos...</p>}
+      {auditError && <p role="alert">{auditError}</p>}
+      {!auditLoading && !auditError && auditEvents.length === 0 && <p>Nenhum evento persistido para este leilão. Eventos anteriores à implantação da auditoria não são reconstruídos.</p>}
+      {!auditLoading && !auditError && auditEvents.length > 0 && <ol>{auditEvents.map(event => <li key={event._id}><strong>{({ created: 'Leilão criado', waiting_started: 'Espera iniciada', activated: 'Leilão ativado', finished: 'Leilão encerrado' } as Record<string, string>)[event.eventType] ?? event.eventType} ({event.source === 'scheduler' ? 'automático' : 'administrador'})</strong><span>{new Date(event.occurredAt).toLocaleString('pt-BR')}</span></li>)}</ol>}
     </section><p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p>{selected.status === 'scheduled' && selected.startsAt && <p><strong>Contagem de espera:</strong> {Math.max(0, Math.ceil((new Date(selected.startsAt).getTime() - now) / 1000))} segundos restantes</p>}{selected.status === 'scheduled' && !selected.waitingStartedAt && !selected.startsAt && <div className="admin-auction-create-fields"><label>Tempo de espera (minutos)<input type="number" min="1" max="10080" value={waitingMinutes} onChange={e => setWaitingMinutes(Number(e.target.value))}/></label><button type="button" className="incident-action" disabled={starting || !Number.isSafeInteger(waitingMinutes) || waitingMinutes < 1 || waitingMinutes > 10080} onClick={() => void beginWaiting(selected)}>{starting ? 'Iniciando...' : 'Iniciar contagem de espera'}</button></div>}{notice && <p role="status">{notice}</p>}<p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
   </div>;
 }
