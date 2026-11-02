@@ -49,3 +49,11 @@ export async function listAdminAuctionBids(token: string, id: string, page = 1):
   });
   return response.data;
 }
+
+export type AdminAuctionBidSummary = { total: number; matched: number; missing: number; mismatch: number };
+export async function getAdminAuctionBidSummary(token: string, id: string): Promise<AdminAuctionBidSummary> {
+  const response = await api.get<{ summary: AdminAuctionBidSummary }>('/admin/auctions/' + encodeURIComponent(id) + '/bids/summary', {
+    headers: { Authorization: 'Bearer ' + token },
+  });
+  return response.data.summary;
+}
