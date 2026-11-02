@@ -27,6 +27,6 @@ export function LoginForm() {
       <label className="field"><span>E-mail</span><input type="email" autoComplete="email" placeholder="voce@exemplo.com" {...register('email')} />{errors.email && <div className="field-error">{errors.email.message}</div>}</label>
       <label className="field"><span>Senha</span><input type="password" autoComplete="current-password" placeholder="Sua senha" {...register('password')} />{errors.password && <div className="field-error">{errors.password.message}</div>}</label>
       {apiError && <p className="field-error" role="alert">{apiError}</p>}
-      <button className="btn-primary full-btn" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Entrando...' : 'Entrar'}</button>
+      <p className="center-note"><Link href="/forgot-password">Esqueci minha senha</Link></p><button className="btn-primary full-btn" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Entrando...' : 'Entrar'}</button>
     </form><p className="center-note">Ainda não tem conta? <Link href="/register">Cadastre-se</Link></p></div>;
 }
