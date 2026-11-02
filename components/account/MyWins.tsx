@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Trophy } from 'lucide-react';
+import { WinShippingAddressForm } from './WinShippingAddressForm';
 import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,6 +49,7 @@ export function MyWins() {
           </div>
           <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
           <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
+          <WinShippingAddressForm />
         </div>
       </article>)}
       {!!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
