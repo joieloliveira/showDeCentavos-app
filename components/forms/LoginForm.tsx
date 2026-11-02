@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoogleLoginButton } from '@/components/forms/GoogleLoginButton';
 import { getApiError } from '@/services/auth';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth';
 export function LoginForm() {
@@ -28,5 +29,5 @@ export function LoginForm() {
       <label className="field"><span>Senha</span><input type="password" autoComplete="current-password" placeholder="Sua senha" {...register('password')} />{errors.password && <div className="field-error">{errors.password.message}</div>}</label>
       {apiError && <p className="field-error" role="alert">{apiError}</p>}
       <p className="center-note"><Link href="/forgot-password">Esqueci minha senha</Link></p><button className="btn-primary full-btn" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Entrando...' : 'Entrar'}</button>
-    </form><p className="center-note">Ainda não tem conta? <Link href="/register">Cadastre-se</Link></p></div>;
+    </form><p className="center-note">Ou entre com Google</p><GoogleLoginButton /><p className="center-note">Ainda não tem conta? <Link href="/register">Cadastre-se</Link></p></div>;
 }
