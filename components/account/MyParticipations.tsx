@@ -35,7 +35,7 @@ export function MyParticipations() {
     return () => { active = false; };
   }, [user, page, getToken]);
   if (!user) return null;
-  return <section className="account-details">
+  return <section id="my-participations" className="account-details" style={{ scrollMarginTop: 150 }}>
     <div><span className="eyebrow">Seus leilões</span><h2>Minhas participações</h2><p>Histórico de lances e resultados dos leilões em que você participou.</p></div>
     <div style={{ display: 'grid', gap: 12 }}>
       {loading && <p role="status">Carregando participações...</p>}
