@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
-import { listAdminAuctions, listAdminAuctionEvents, listAdminAuctionBids, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent, type AdminAuctionBidHistory } from '@/services/adminAuctions';
+import { listAdminAuctions, listAdminAuctionEvents, listAdminAuctionBids, getAdminAuctionBidSummary, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent, type AdminAuctionBidHistory, type AdminAuctionBidSummary } from '@/services/adminAuctions';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
 
@@ -18,6 +18,9 @@ export function AdminAuctionsPanel() {
   const [selected, setSelected] = useState<AdminAuction | null>(null);
   const [auditEvents, setAuditEvents] = useState<AdminAuctionEvent[]>([]);
   const [bidHistory, setBidHistory] = useState<AdminAuctionBidHistory | null>(null);
+  const [bidSummary, setBidSummary] = useState<AdminAuctionBidSummary | null>(null);
+  const [bidSummaryLoading, setBidSummaryLoading] = useState(false);
+  const [bidSummaryError, setBidSummaryError] = useState('');
   const [bidPage, setBidPage] = useState(1);
   const [bidLoading, setBidLoading] = useState(false);
   const [bidError, setBidError] = useState('');
@@ -104,6 +107,20 @@ export function AdminAuctionsPanel() {
       .finally(() => { if (alive) setBidLoading(false); });
     return () => { alive = false; };
   }, [selected?._id, bidPage, isAdmin, getToken, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setBidSummary(null); setBidSummaryError(''); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setBidSummary(null);
+    setBidSummaryLoading(true);
+    setBidSummaryError('');
+    getAdminAuctionBidSummary(token, selected._id)
+      .then(summary => { if (alive) setBidSummary(summary); })
+      .catch(err => { if (alive) setBidSummaryError(getApiError(err)); })
+      .finally(() => { if (alive) setBidSummaryLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, isAdmin, getToken, refresh]);
   if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
   if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
@@ -170,6 +187,14 @@ export function AdminAuctionsPanel() {
     </section>
     <section className="admin-auction-timeline" aria-label="Histórico financeiro de lances">
       <h3>Histórico financeiro de lances</h3>
+      {bidSummaryLoading && <p role="status">Calculando conciliação...</p>}
+      {bidSummaryError && <p role="alert">Resumo indisponível: {bidSummaryError}</p>}
+      {bidSummary && <div className="admin-auction-detail-grid" aria-label="Resumo de conciliação financeira">
+        <div><span>Total de lances</span><strong>{bidSummary.total}</strong></div>
+        <div><span>Conciliados</span><strong>{bidSummary.matched}</strong></div>
+        <div><span>Sem movimentação</span><strong>{bidSummary.missing}</strong></div>
+        <div><span>Divergências</span><strong>{bidSummary.mismatch}</strong></div>
+      </div>}
       <p><small>Conciliação somente de leitura entre lances e movimentações da carteira. A ausência de movimentação pode indicar dados legados ou uma inconsistência a investigar.</small></p>
       {bidLoading && <p role="status">Carregando lances...</p>}
       {bidError && <p role="alert">{bidError}</p>}
