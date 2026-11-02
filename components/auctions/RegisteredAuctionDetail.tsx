@@ -30,6 +30,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [liveDataStatus, setLiveDataStatus] = useState<'ok' | 'unavailable'>('ok');
   const [now, setNow] = useState(() => Date.now());
   const serverOffsetMs = useRef(0);
+  const lastClockSyncMs = useRef(0);
+  const [clockSyncedAt, setClockSyncedAt] = useState<number | null>(null);
   const lastLiveCheckMs = useRef(0);
   const liveStatusRef = useRef<string | null>(null);
   const latestRequestRef = useRef(0);
@@ -75,7 +77,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         latestAppliedRef.current = requestId;
         const serverTime = Date.parse(data.serverTime);
         if (Number.isFinite(serverTime)) {
+          // Midpoint compensates for request round-trip latency.
           serverOffsetMs.current = serverTime - (sentAt + receivedAt) / 2;
+          lastClockSyncMs.current = receivedAt;
+          setClockSyncedAt(receivedAt);
           setNow(Date.now() + serverOffsetMs.current);
         }
         if (active) {
@@ -128,6 +133,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const canSimulate = auction.status === 'active';
   const secondsUntilStart = auction.status === 'scheduled' && auction.startsAt ? Math.max(0, Math.ceil((new Date(auction.startsAt).getTime() - now) / 1000)) : null;
   const secondsUntilEnd = auction.status === 'active' && auction.endsAt ? Math.max(0, Math.ceil((new Date(auction.endsAt).getTime() - now) / 1000)) : null;
+  const clockStale = auction.status === 'active' && auction.endsAt && (clockSyncedAt === null || Date.now() - clockSyncedAt > 15000);
   const clock = (seconds: number) => `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${Math.floor((seconds % 3600) / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
   return <div className="registered-detail">
     <div className="registered-detail-gallery">
@@ -151,7 +157,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {auction.status === 'finished' && <div role="status" aria-live="polite" style={{ marginTop: 12, padding: '16px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}><strong style={{ display: 'block', fontSize: '1.15rem' }}>Leilão encerrado!</strong><span>O resultado foi confirmado pelo servidor. Preço final: {money(auction.currentPriceCents)}.</span><span style={{ display: 'block', marginTop: 6, fontWeight: 600 }}>{auction.winnerNickname ? `Vencedor: ${auction.winnerNickname}` : auction.bidCount > 0 ? 'Vencedor confirmado · identificação pública indisponível' : 'Nenhum lance vencedor registrado'}</span></div>}
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
         {secondsUntilStart !== null && <div className="registered-clock" role="timer"><span>{secondsUntilStart > 0 ? "Início previsto em" : "Horário previsto atingido · aguardando atualização do servidor"}</span><strong>{clock(secondsUntilStart)}</strong></div>}
-        {secondsUntilEnd !== null && <div className="registered-clock" role="timer"><span>{secondsUntilEnd > 0 ? "Tempo restante registrado" : "Tempo esgotado · aguardando encerramento no servidor"}</span><strong>{clock(secondsUntilEnd)}</strong></div>}
+        {secondsUntilEnd !== null && <div className="registered-clock" role="timer"><span>{secondsUntilEnd > 0 ? "Tempo restante registrado" : "Tempo esgotado · aguardando encerramento no servidor"}</span><strong>{clock(secondsUntilEnd)}</strong>{clockStale && <small role="status" style={{ display: "block", marginTop: 8 }}>Sincronização do cronômetro pendente; horário sujeito a atualização.</small>}</div>}
         <div className="registered-price-block">
           <span>Preço atual do leilão</span>
           <strong>{money(auction.currentPriceCents)}</strong>
