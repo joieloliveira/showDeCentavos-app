@@ -6,7 +6,7 @@ import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Win = { auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; bidCount: number; fulfillmentStatus: 'not_available' };
+type Win = { auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; bidCount: number; paymentStatus: string; deliveryStatus: string; fulfillmentAvailable: boolean };
 type WinsResponse = { page: number; limit: number; total: number; items: Win[] };
 const money = (value: number) => (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -42,7 +42,11 @@ export function MyWins() {
           <span style={{ color: '#166534', fontWeight: 700 }}>Vitória confirmada</span>
           <span>Preço final do leilão: {money(win.finalPriceCents)}</span>
           {win.finishedAt && <span>Encerrado em: {new Date(win.finishedAt).toLocaleString('pt-BR')}</span>}
-          <span style={{ color: '#64748b' }}>Pagamento e entrega: ainda não disponíveis nesta versão.</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: não iniciado</span>
+            <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: não iniciada</span>
+          </div>
+          <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
           <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
         </div>
       </article>)}
