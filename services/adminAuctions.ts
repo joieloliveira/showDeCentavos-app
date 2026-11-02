@@ -32,3 +32,20 @@ export async function listAdminAuctionEvents(token: string, id: string): Promise
   const response = await api.get('/admin/auctions/' + encodeURIComponent(id) + '/events', { headers: { Authorization: 'Bearer ' + token } });
   return response.data.events;
 }
+
+export type AdminAuctionBid = {
+  bidId: string; userId: string; bidCostCents: number;
+  priceBeforeCents: number; priceAfterCents: number; balanceAfterCents: number;
+  expiresAt: string; createdAt: string; ledgerStatus: 'matched' | 'missing' | 'mismatch';
+  transactionId: string | null;
+};
+export type AdminAuctionBidHistory = {
+  bids: AdminAuctionBid[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+};
+export async function listAdminAuctionBids(token: string, id: string, page = 1): Promise<AdminAuctionBidHistory> {
+  const response = await api.get<AdminAuctionBidHistory>('/admin/auctions/' + encodeURIComponent(id) + '/bids', {
+    headers: { Authorization: 'Bearer ' + token }, params: { page, limit: 20 },
+  });
+  return response.data;
+}
