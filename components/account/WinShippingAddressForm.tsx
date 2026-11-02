@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 
@@ -24,14 +24,15 @@ const fields: { key: keyof Address; label: string; required?: boolean; maxLength
   { key: 'state', label: 'UF', required: true, maxLength: 2 }
 ];
 
-export function WinShippingAddressForm({ auctionId, getToken }: { auctionId: string; getToken: () => string | null }) {
-  const [address, setAddress] = useState<Address>(initial);
+export function WinShippingAddressForm({ auctionId, getToken, initialAddress, editable }: { auctionId: string; getToken: () => string | null; initialAddress: Address | null; editable: boolean }) {
+  const [address, setAddress] = useState<Address>(() => initialAddress ? { ...initial, ...initialAddress } : initial);
+  useEffect(() => { setAddress(initialAddress ? { ...initial, ...initialAddress } : initial); }, [initialAddress]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const enabled = process.env.NEXT_PUBLIC_AUCTION_ADDRESS_COLLECTION_ENABLED === 'true';
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!enabled || pending) return;
+    if (!enabled || !editable || pending) return;
     const token = getToken();
     if (!token) { setMessage('Sua sessão expirou. Faça login novamente.'); return; }
     setPending(true); setMessage('');
@@ -43,7 +44,7 @@ export function WinShippingAddressForm({ auctionId, getToken }: { auctionId: str
   }
   return <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
     <h3 style={{ margin: '0 0 8px' }}>Endereço de entrega</h3>
-    <p style={{ color: '#64748b', marginBottom: 12 }}>{enabled ? 'Confira os dados antes de salvar.' : 'Formulário em preparação. Não informe dados pessoais reais nesta etapa: o envio está desabilitado.'}</p>
+    <p style={{ color: '#64748b', marginBottom: 12 }}>{!editable ? 'Endereço disponível apenas para consulta: a entrega já foi iniciada.' : enabled ? 'Confira os dados antes de salvar.' : initialAddress ? 'Endereço já cadastrado. Edição temporariamente desabilitada.' : 'Formulário em preparação. Não informe dados pessoais reais nesta etapa: o envio está desabilitado.'}</p>
     <form onSubmit={save} style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         {fields.map(field => <label key={field.key} style={{ display: 'grid', gap: 4 }}>
@@ -54,13 +55,14 @@ export function WinShippingAddressForm({ auctionId, getToken }: { auctionId: str
             onChange={event => setAddress(previous => ({ ...previous, [field.key]: event.target.value }))}
             maxLength={field.maxLength}
             required={field.required}
+            disabled={!enabled || !editable}
             autoComplete="off"
             placeholder={field.key === 'zipCode' ? '00000-000' : field.key === 'state' ? 'PA' : undefined}
             style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', width: '100%', boxSizing: 'border-box' }}
           />
         </label>)}
       </div>
-      <button type="submit" disabled={!enabled || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: 'not-allowed', opacity: 0.55, justifySelf: 'start' }}>
+      <button type="submit" disabled={!enabled || !editable || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: 'not-allowed', opacity: 0.55, justifySelf: 'start' }}>
         {pending ? 'Salvando...' : enabled ? 'Salvar endereço' : 'Salvar endereço (em breve)'}
       </button>
       {message && <p role="status">{message}</p>}
