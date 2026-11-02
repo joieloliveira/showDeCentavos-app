@@ -26,3 +26,9 @@ export async function createAdminAuction(token: string, product: string, startPr
 export async function startAdminAuctionWaiting(token: string, id: string, waitingMinutes: number): Promise<void> {
   await api.post(`/auctions/${encodeURIComponent(id)}/start-waiting`, { waitingMinutes }, { headers: { Authorization: `Bearer ${token}` } });
 }
+
+export type AdminAuctionEvent = { _id: string; eventType: string; occurredAt: string; source: string };
+export async function listAdminAuctionEvents(token: string, id: string): Promise<AdminAuctionEvent[]> {
+  const response = await api.get('/admin/auctions/' + encodeURIComponent(id) + '/events', { headers: { Authorization: 'Bearer ' + token } });
+  return response.data.events;
+}
