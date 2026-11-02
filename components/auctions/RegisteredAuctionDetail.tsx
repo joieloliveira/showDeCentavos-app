@@ -27,6 +27,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const thumbnailsRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
+  const [liveDataStatus, setLiveDataStatus] = useState<'ok' | 'unavailable'>('ok');
   const [now, setNow] = useState(() => Date.now());
   const serverOffsetMs = useRef(0);
   const lastLiveCheckMs = useRef(0);
@@ -70,6 +71,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         const { data } = await api.get<{ auction: Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents' | 'winnerNickname'>; serverTime: string }>(`/auctions/${encodeURIComponent(id)}/live`);
         const receivedAt = Date.now();
         if (!active || requestId < latestAppliedRef.current) return;
+        setLiveDataStatus('ok');
         latestAppliedRef.current = requestId;
         const serverTime = Date.parse(data.serverTime);
         if (Number.isFinite(serverTime)) {
@@ -80,7 +82,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
           setAuction(previous => previous ? { ...previous, ...data.auction } : previous);
           liveStatusRef.current = data.auction.status;
         }
-      } catch { /* Keep last verified state; next poll retries. */ }
+      } catch { if (active) setLiveDataStatus('unavailable'); /* Keep last verified state; next poll retries. */ }
     };
     const polling = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
@@ -90,6 +92,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         void refreshLive();
       }
     }, 1000);
+    const onOffline = () => { if (active) { setConnectionStatus('reconnecting'); setLiveDataStatus('unavailable'); } };
+    const onOnline = () => { if (active) { setConnectionStatus('connecting'); void refreshLive(); } };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
     const onVisibility = () => {
       if (document.visibilityState === 'visible') { lastLiveCheckMs.current = Date.now(); void refreshLive(); }
     };
@@ -107,7 +113,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         void refreshLive(); // Fetch authoritative state, avoiding stale/out-of-order pushes.
       } catch { /* Ignore malformed messages; periodic polling continues. */ }
     });
-    return () => { active = false; clearInterval(polling); document.removeEventListener('visibilitychange', onVisibility); events.close(); };
+    return () => { active = false; clearInterval(polling); document.removeEventListener('visibilitychange', onVisibility); window.removeEventListener('offline', onOffline); window.removeEventListener('online', onOnline); events.close(); };
   }, [id]);
   if (error) return <p role="alert">{error}</p>;
   if (!auction) return <p role="status">Carregando leilão...</p>;
@@ -140,7 +146,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       <div className="registered-detail-panel">
         <span className="registered-status"><Clock3 size={15}/>{label}</span>
         <p role="status" aria-live="polite" style={{ fontSize: 12, marginTop: 8 }}>
-          {connectionStatus === "connected" ? "Atualizações em tempo real conectadas" : connectionStatus === "reconnecting" ? "Reconectando atualizações; consulta periódica ativa" : "Conectando atualizações em tempo real..."}
+          {liveDataStatus === "unavailable" ? "Sem comunicação com o servidor; tentando reconectar" : connectionStatus === "connected" ? "Atualizações em tempo real conectadas" : connectionStatus === "reconnecting" ? "Canal em reconexão; consultas ao servidor disponíveis" : "Conectando atualizações em tempo real..."}
         </p>
         {auction.status === 'finished' && <div role="status" aria-live="polite" style={{ marginTop: 12, padding: '16px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}><strong style={{ display: 'block', fontSize: '1.15rem' }}>Leilão encerrado!</strong><span>O resultado foi confirmado pelo servidor. Preço final: {money(auction.currentPriceCents)}.</span><span style={{ display: 'block', marginTop: 6, fontWeight: 600 }}>{auction.winnerNickname ? `Vencedor: ${auction.winnerNickname}` : auction.bidCount > 0 ? 'Vencedor confirmado · identificação pública indisponível' : 'Nenhum lance vencedor registrado'}</span></div>}
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
