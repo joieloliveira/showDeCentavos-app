@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
-import { listAdminAuctions, listAdminAuctionEvents, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent } from '@/services/adminAuctions';
+import { listAdminAuctions, listAdminAuctionEvents, listAdminAuctionBids, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent, type AdminAuctionBidHistory } from '@/services/adminAuctions';
 import { getApiError } from '@/services/auth';
 import { money } from '@/utils/format';
 
@@ -17,6 +17,10 @@ export function AdminAuctionsPanel() {
   const [result, setResult] = useState<AdminAuctionList | null>(null);
   const [selected, setSelected] = useState<AdminAuction | null>(null);
   const [auditEvents, setAuditEvents] = useState<AdminAuctionEvent[]>([]);
+  const [bidHistory, setBidHistory] = useState<AdminAuctionBidHistory | null>(null);
+  const [bidPage, setBidPage] = useState(1);
+  const [bidLoading, setBidLoading] = useState(false);
+  const [bidError, setBidError] = useState('');
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,6 +91,19 @@ export function AdminAuctionsPanel() {
       .finally(() => { if (alive) setAuditLoading(false); });
     return () => { alive = false; };
   }, [selected?._id, isAdmin, getToken, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setBidHistory(null); setBidError(''); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setBidLoading(true);
+    setBidError('');
+    listAdminAuctionBids(token, selected._id, bidPage)
+      .then(data => { if (alive) setBidHistory(data); })
+      .catch(err => { if (alive) setBidError(getApiError(err)); })
+      .finally(() => { if (alive) setBidLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, bidPage, isAdmin, getToken, refresh]);
   if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
   if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
   if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
@@ -117,7 +134,7 @@ export function AdminAuctionsPanel() {
       <div className="admin-auction-filters"><label>Buscar nesta página<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome do produto..." /></label><label>Situação<select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">Todas</option><option value="scheduled">Agendado</option><option value="active">Ativo</option><option value="finished">Encerrado</option><option value="cancelled">Cancelado</option></select></label></div>
       {loading && <p role="status">Carregando leilões...</p>}
       {error && <p role="alert">{error}</p>}
-      {!loading && result && <><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Situação</th><th>Preço inicial</th><th>Preço atual</th><th>Custo do lance</th><th>Tempo / andamento</th><th>Detalhes</th></tr></thead><tbody>{auctions.map(a => <tr key={a._id}><td><span className="admin-auction-product"><strong>{a.product?.name ?? 'Produto indisponível'}</strong></span></td><td>{labels[a.status] ?? a.status}</td><td>{money(a.startPriceCents)}</td><td>{money(a.currentPriceCents)}</td><td>{money(a.bidCostCents)}</td><td><span role="status">{auctionTimeLabel(a)}</span></td><td><button type="button" className="incident-action" onClick={() => setSelected(a)}>Detalhes</button> <Link href={`/auctions/registered/${a._id}`} className="incident-action">Ver na vitrine</Link></td></tr>)}</tbody></table></div>
+      {!loading && result && <><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Situação</th><th>Preço inicial</th><th>Preço atual</th><th>Custo do lance</th><th>Tempo / andamento</th><th>Detalhes</th></tr></thead><tbody>{auctions.map(a => <tr key={a._id}><td><span className="admin-auction-product"><strong>{a.product?.name ?? 'Produto indisponível'}</strong></span></td><td>{labels[a.status] ?? a.status}</td><td>{money(a.startPriceCents)}</td><td>{money(a.currentPriceCents)}</td><td>{money(a.bidCostCents)}</td><td><span role="status">{auctionTimeLabel(a)}</span></td><td><button type="button" className="incident-action" onClick={() => { setBidPage(1); setBidHistory(null); setSelected(a); }}>Detalhes</button> <Link href={`/auctions/registered/${a._id}`} className="incident-action">Ver na vitrine</Link></td></tr>)}</tbody></table></div>
         {auctions.length === 0 && <p>Nenhum leilão encontrado nesta página.</p>}
         <p>{result.pagination.total} leilão(ões) no banco para o filtro selecionado.</p>
         <div className="incident-pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Anterior</button><span>Página {page} de {Math.max(1, result.pagination.totalPages)}</span><button type="button" disabled={page >= result.pagination.totalPages || loading} onClick={() => setPage(p => p + 1)}>Próxima</button></div>
@@ -150,6 +167,33 @@ export function AdminAuctionsPanel() {
       {auditError && <p role="alert">{auditError}</p>}
       {!auditLoading && !auditError && auditEvents.length === 0 && <p>Nenhum evento persistido para este leilão. Eventos anteriores à implantação da auditoria não são reconstruídos.</p>}
       {!auditLoading && !auditError && auditEvents.length > 0 && <ol>{auditEvents.map(event => <li key={event._id}><strong>{({ created: 'Leilão criado', waiting_started: 'Espera iniciada', activated: 'Leilão ativado', finished: 'Leilão encerrado' } as Record<string, string>)[event.eventType] ?? event.eventType} ({event.source === 'scheduler' ? 'automático' : 'administrador'})</strong><span>{new Date(event.occurredAt).toLocaleString('pt-BR')}</span></li>)}</ol>}
-    </section><p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p>{selected.status === 'scheduled' && selected.startsAt && <p><strong>Contagem de espera:</strong> {Math.max(0, Math.ceil((new Date(selected.startsAt).getTime() - now) / 1000))} segundos restantes</p>}{selected.status === 'scheduled' && !selected.waitingStartedAt && !selected.startsAt && <div className="admin-auction-create-fields"><label>Tempo de espera (minutos)<input type="number" min="1" max="10080" value={waitingMinutes} onChange={e => setWaitingMinutes(Number(e.target.value))}/></label><button type="button" className="incident-action" disabled={starting || !Number.isSafeInteger(waitingMinutes) || waitingMinutes < 1 || waitingMinutes > 10080} onClick={() => void beginWaiting(selected)}>{starting ? 'Iniciando...' : 'Iniciar contagem de espera'}</button></div>}{notice && <p role="status">{notice}</p>}<p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
+    </section>
+    <section className="admin-auction-timeline" aria-label="Histórico financeiro de lances">
+      <h3>Histórico financeiro de lances</h3>
+      <p><small>Conciliação somente de leitura entre lances e movimentações da carteira. A ausência de movimentação pode indicar dados legados ou uma inconsistência a investigar.</small></p>
+      {bidLoading && <p role="status">Carregando lances...</p>}
+      {bidError && <p role="alert">{bidError}</p>}
+      {!bidLoading && !bidError && bidHistory && <>
+        <p>{bidHistory.pagination.total} lance(s) registrado(s).</p>
+        {bidHistory.bids.length === 0 ? <p>Nenhum lance nesta página.</p> : <div className="admin-auction-table-wrap"><table className="admin-auction-table">
+          <thead><tr><th>Data</th><th>Participante (ID)</th><th>Custo</th><th>Preço antes</th><th>Preço depois</th><th>Saldo após</th><th>Conciliação</th></tr></thead>
+          <tbody>{bidHistory.bids.map(bid => <tr key={bid.bidId}>
+            <td>{new Date(bid.createdAt).toLocaleString('pt-BR')}</td>
+            <td title={bid.userId}>{bid.userId}</td>
+            <td>{money(bid.bidCostCents)}</td>
+            <td>{money(bid.priceBeforeCents)}</td>
+            <td>{money(bid.priceAfterCents)}</td>
+            <td>{money(bid.balanceAfterCents)}</td>
+            <td>{({ matched: 'Conciliado', missing: 'Sem movimentação', mismatch: 'Divergência' } as const)[bid.ledgerStatus]}</td>
+          </tr>)}</tbody>
+        </table></div>}
+        <div className="incident-pagination">
+          <button type="button" disabled={bidPage <= 1} onClick={() => setBidPage(p => p - 1)}>Anterior</button>
+          <span>Página {bidPage} de {Math.max(1, bidHistory.pagination.totalPages)}</span>
+          <button type="button" disabled={bidPage >= bidHistory.pagination.totalPages} onClick={() => setBidPage(p => p + 1)}>Próxima</button>
+        </div>
+      </>}
+    </section>
+<p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p>{selected.status === 'scheduled' && selected.startsAt && <p><strong>Contagem de espera:</strong> {Math.max(0, Math.ceil((new Date(selected.startsAt).getTime() - now) / 1000))} segundos restantes</p>}{selected.status === 'scheduled' && !selected.waitingStartedAt && !selected.startsAt && <div className="admin-auction-create-fields"><label>Tempo de espera (minutos)<input type="number" min="1" max="10080" value={waitingMinutes} onChange={e => setWaitingMinutes(Number(e.target.value))}/></label><button type="button" className="incident-action" disabled={starting || !Number.isSafeInteger(waitingMinutes) || waitingMinutes < 1 || waitingMinutes > 10080} onClick={() => void beginWaiting(selected)}>{starting ? 'Iniciando...' : 'Iniciar contagem de espera'}</button></div>}{notice && <p role="status">{notice}</p>}<p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
   </div>;
 }
