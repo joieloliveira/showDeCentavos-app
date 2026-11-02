@@ -35,3 +35,9 @@ export async function resetPasswordRequest(token: string, password: string) {
   const { data } = await api.post<{ message: string }>('/auth/reset-password', { token, password });
   return data;
 }
+
+export async function googleLoginRequest(credential: string) {
+  const { data } = await api.post<LoginResponse>('/auth/google', { credential });
+  if (!data.token || !data.user?.id) throw new Error('Resposta de autenticação Google inválida.');
+  return data;
+}
