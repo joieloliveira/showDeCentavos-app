@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { api } from '@/services/api';
+import { getApiError } from '@/services/auth';
 
 type Address = {
   recipientName: string; phone: string; zipCode: string; street: string;
@@ -22,12 +24,27 @@ const fields: { key: keyof Address; label: string; required?: boolean; maxLength
   { key: 'state', label: 'UF', required: true, maxLength: 2 }
 ];
 
-export function WinShippingAddressForm() {
+export function WinShippingAddressForm({ auctionId, getToken }: { auctionId: string; getToken: () => string | null }) {
   const [address, setAddress] = useState<Address>(initial);
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState('');
+  const enabled = process.env.NEXT_PUBLIC_AUCTION_ADDRESS_COLLECTION_ENABLED === 'true';
+  async function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!enabled || pending) return;
+    const token = getToken();
+    if (!token) { setMessage('Sua sessão expirou. Faça login novamente.'); return; }
+    setPending(true); setMessage('');
+    try {
+      await api.put(`/auctions/my/wins/${encodeURIComponent(auctionId)}/address`, address, { headers: { Authorization: `Bearer ${token}` } });
+      setMessage('Endereço salvo com sucesso.');
+    } catch (error) { setMessage(getApiError(error)); }
+    finally { setPending(false); }
+  }
   return <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
     <h3 style={{ margin: '0 0 8px' }}>Endereço de entrega</h3>
-    <p style={{ color: '#64748b', marginBottom: 12 }}>Formulário em preparação. Não informe dados pessoais reais nesta etapa: o envio está desabilitado.</p>
-    <form onSubmit={event => event.preventDefault()} style={{ display: 'grid', gap: 12 }}>
+    <p style={{ color: '#64748b', marginBottom: 12 }}>{enabled ? 'Confira os dados antes de salvar.' : 'Formulário em preparação. Não informe dados pessoais reais nesta etapa: o envio está desabilitado.'}</p>
+    <form onSubmit={save} style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         {fields.map(field => <label key={field.key} style={{ display: 'grid', gap: 4 }}>
           <span>{field.label}{field.required ? ' *' : ''}</span>
@@ -43,9 +60,10 @@ export function WinShippingAddressForm() {
           />
         </label>)}
       </div>
-      <button type="submit" disabled style={{ padding: '10px 16px', borderRadius: 8, cursor: 'not-allowed', opacity: 0.55, justifySelf: 'start' }}>
-        Salvar endereço (em breve)
+      <button type="submit" disabled={!enabled || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: 'not-allowed', opacity: 0.55, justifySelf: 'start' }}>
+        {pending ? 'Salvando...' : enabled ? 'Salvar endereço' : 'Salvar endereço (em breve)'}
       </button>
+      {message && <p role="status">{message}</p>}
     </form>
   </section>;
 }
