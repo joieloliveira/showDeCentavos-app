@@ -1,12 +1,13 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { loginRequest, meRequest, type AuthUser } from '@/services/auth';
+import { loginRequest, googleLoginRequest, meRequest, type AuthUser } from '@/services/auth';
 const TOKEN_KEY = 'showdecentavos:dev-session';
 type AuthValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => void;
   getToken: () => string | null;
   refreshUser: () => Promise<void>;
@@ -36,6 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(TOKEN_KEY, result.token);
     setUser(result.user);
   };
+  const loginWithGoogle = async (credential: string) => {
+    const result = await googleLoginRequest(credential);
+    sessionStorage.setItem(TOKEN_KEY, result.token);
+    setUser(result.user);
+  };
   const logout = () => {
     sessionStorage.removeItem(TOKEN_KEY);
     setUser(null);
@@ -47,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profile = await meRequest(token);
     setUser(profile);
   };
-  return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithGoogle, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
   const value = useContext(AuthContext);
