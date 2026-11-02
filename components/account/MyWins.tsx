@@ -36,9 +36,10 @@ export function MyWins() {
       {loading && <p role="status">Carregando vitórias...</p>}
       {error && <p role="alert">{error}</p>}
       {!loading && !error && data?.items.length === 0 && <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>}
-      {!error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-        {win.coverImageUrl && <img src={win.coverImageUrl} alt={win.productName} style={{ width: 120, height: 100, objectFit: 'contain' }} />}
-        <div style={{ display: 'grid', gap: 8, flex: 1 }}>
+      {!error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          {win.coverImageUrl && <img src={win.coverImageUrl} alt={win.productName} style={{ width: 120, height: 100, objectFit: 'contain' }} />}
+          <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 220 }}>
           <strong>{win.productName}</strong>
           <span style={{ color: '#166534', fontWeight: 700 }}>Vitória confirmada</span>
           <span>Preço final do leilão: {money(win.finalPriceCents)}</span>
@@ -49,8 +50,9 @@ export function MyWins() {
           </div>
           <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
           <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
-          <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} />
+          </div>
         </div>
+        <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} />
       </article>)}
       {!!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Anterior</button>
