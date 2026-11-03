@@ -104,11 +104,11 @@ export function describeBidFailure(error: unknown): BidFailure {
   if (status === 401 || status === 403) {
     return { kind: 'auth', message: 'Sua sessão precisa ser verificada antes de participar.', needsReconciliation: false };
   }
-  if (status === 503 && serverMessage === 'Lances temporariamente indisponíveis.') {
+  if (status === 503 && /lances.*(indisponíveis|desabilitados)/i.test(serverMessage)) {
     return { kind: 'disabled', message: serverMessage, needsReconciliation: false };
   }
-  if (status === 409 && /saldo insuficiente/i.test(serverMessage)) {
-    return { kind: 'balance', message: 'Saldo insuficiente para realizar este lance.', needsReconciliation: false };
+  if (status === 409 && /saldo insuficiente|usuário desativado/i.test(serverMessage)) {
+    return { kind: 'balance', message: 'Saldo insuficiente ou conta desativada. Confira sua carteira e o estado da conta.', needsReconciliation: false };
   }
   if (status === 400) {
     return { kind: 'invalid', message: 'Solicitação inválida. Nenhum novo lance deve ser enviado automaticamente.', needsReconciliation: false };
@@ -116,7 +116,7 @@ export function describeBidFailure(error: unknown): BidFailure {
   if (status === 409 && /chave já foi utilizada em outro leilão/i.test(serverMessage)) {
     return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
   }
-  if (status === 409 && /leilão|tempo para realizar lances/i.test(serverMessage)) {
+  if (status === 409 && /leilão|tempo para realizar lances|custo do lance inválido/i.test(serverMessage)) {
     return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
   }
   // 5xx, unknown conflicts and unexpected responses must be reconciled.
