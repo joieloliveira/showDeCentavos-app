@@ -21,27 +21,29 @@ export function MyWins() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loadedForUser, setLoadedForUser] = useState<string | null>(null);
   useEffect(() => {
-    if (!user) { setData(null); setLoading(false); return; }
+    if (!user) { setData(null); setLoadedForUser(null); setLoading(false); return; }
     const token = getToken();
-    if (!token) { setData(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
+    if (!token) { setData(null); setLoadedForUser(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<WinsResponse>('/auctions/my/wins', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data: result }) => { if (active) { setData(result); setError(''); } })
+      .then(({ data: result }) => { if (active) { setData(result); setLoadedForUser(user.id); setError(''); } })
       .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken, refreshKey]);
   if (authLoading) return <p role="status">Verificando sua sessão...</p>;
   if (!user) return <div className="panel"><p>Faça login para consultar suas vitórias.</p><Link href="/login?next=/account/wins">Entrar</Link></div>;
+  const visibleData = loadedForUser === user.id ? data : null;
   return <div>
     <div className="page-heading"><span className="eyebrow">Área do usuário</span><h1>Minhas vitórias</h1><p>Consulte os leilões em que você foi confirmado como vencedor.</p><button type="button" disabled={loading} onClick={() => setRefreshKey(value => value + 1)}>{loading ? 'Atualizando...' : 'Atualizar histórico'}</button></div>
     <div style={{ display: 'grid', gap: 16 }}>
       {loading && <p role="status">Carregando vitórias...</p>}
       {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
-      {!loading && !error && data?.items.length === 0 && (page > 1 ? <div className="panel" role="status" style={{ padding: 24 }}><p>Não há vitórias nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>)}
-      {!loading && !error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
+      {!loading && !error && visibleData?.items.length === 0 && (page > 1 ? <div className="panel" role="status" style={{ padding: 24 }}><p>Não há vitórias nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>)}
+      {!loading && !error && visibleData?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           {win.coverImageUrl && <img src={win.coverImageUrl} alt={win.productName} style={{ width: 120, height: 100, objectFit: 'contain' }} />}
           <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 220 }}>
@@ -59,10 +61,10 @@ export function MyWins() {
         </div>
         <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} initialAddress={win.shippingAddress ?? null} editable={win.addressEditable ?? false} />
       </article>)}
-      {!loading && !error && !!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      {!loading && !error && !!visibleData && visibleData.total > visibleData.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Anterior</button>
-        <span>Página {page} de {Math.ceil(data.total / data.limit)}</span>
-        <button type="button" disabled={loading || page * data.limit >= data.total} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Próxima</button>
+        <span>Página {page} de {Math.ceil(visibleData.total / visibleData.limit)}</span>
+        <button type="button" disabled={loading || page * visibleData.limit >= visibleData.total} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Próxima</button>
       </div>}
     </div>
   </div>;
