@@ -15,6 +15,27 @@ const paymentLabels: Record<string, string> = { not_started: 'não iniciado', pe
 const deliveryLabels: Record<string, string> = { not_started: 'não iniciada', preparing: 'em preparação', shipped: 'enviada', delivered: 'entregue', cancelled: 'cancelada' };
 const money = (value: number) => (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+const deliverySteps = ['not_started', 'preparing', 'shipped', 'delivered'] as const;
+function DeliveryProgress({ paymentStatus, deliveryStatus }: { paymentStatus: string; deliveryStatus: string }) {
+  if (deliveryStatus === 'cancelled') return <p role="status">Entrega cancelada. Consulte o suporte para esclarecimentos.</p>;
+  if (paymentStatus === 'refunded' || paymentStatus === 'cancelled') return <p role="status">O pagamento não está ativo. O andamento da entrega depende de revisão administrativa.</p>;
+  const current = deliverySteps.indexOf(deliveryStatus as typeof deliverySteps[number]);
+  if (current < 0) return <p role="status">Estado da entrega indisponível.</p>;
+  return <section aria-label="Acompanhamento da entrega">
+    <h3 style={{ fontSize: 16, marginBottom: 8 }}>Acompanhamento do pedido</h3>
+    <ol className="win-delivery-progress">
+      {(['Pagamento confirmado', 'Em preparação', 'Enviado', 'Entregue'] as const).map((label, index) => {
+        const complete = index === 0 ? paymentStatus === 'paid' : paymentStatus === 'paid' && current >= index;
+        return <li key={label} className={complete ? 'win-delivery-complete' : ''}>
+          <span aria-hidden="true">{complete ? '✓' : index + 1}</span>{label}
+        </li>;
+      })}
+    </ol>
+    {paymentStatus !== 'paid' && <p>O acompanhamento de envio depende da confirmação do pagamento. Nenhuma cobrança é realizada nesta tela.</p>}
+  </section>;
+}
+
+
 export function MyWins() {
   const { user, isLoading: authLoading, getToken } = useAuth();
   const [page, setPage] = useState(1);
@@ -63,7 +84,7 @@ export function MyWins() {
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: {paymentLabels[win.paymentStatus] ?? 'indisponível'}</span>
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
           </div>
-          <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
+          <DeliveryProgress paymentStatus={win.paymentStatus} deliveryStatus={win.deliveryStatus} />
           <Link href={`/auctions/registered/${win.auctionId}`}>Ver detalhes do leilão</Link>
           </div>
         </div>
