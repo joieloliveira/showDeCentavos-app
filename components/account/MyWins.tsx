@@ -20,6 +20,7 @@ export function MyWins() {
   const [data, setData] = useState<WinsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
     if (!user) { setData(null); setLoading(false); return; }
     const token = getToken();
@@ -31,14 +32,14 @@ export function MyWins() {
       .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [user, page, getToken]);
+  }, [user, page, getToken, refreshKey]);
   if (authLoading) return <p role="status">Verificando sua sessão...</p>;
   if (!user) return <div className="panel"><p>Faça login para consultar suas vitórias.</p><Link href="/login?next=/account/wins">Entrar</Link></div>;
   return <div>
-    <div className="page-heading"><span className="eyebrow">Área do usuário</span><h1>Minhas vitórias</h1><p>Consulte os leilões em que você foi confirmado como vencedor.</p></div>
+    <div className="page-heading"><span className="eyebrow">Área do usuário</span><h1>Minhas vitórias</h1><p>Consulte os leilões em que você foi confirmado como vencedor.</p><button type="button" disabled={loading} onClick={() => setRefreshKey(value => value + 1)}>{loading ? 'Atualizando...' : 'Atualizar histórico'}</button></div>
     <div style={{ display: 'grid', gap: 16 }}>
       {loading && <p role="status">Carregando vitórias...</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
       {!loading && !error && data?.items.length === 0 && <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>}
       {!loading && !error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
