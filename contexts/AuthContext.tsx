@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { loginRequest, googleLoginRequest, meRequest, type AuthUser } from '@/services/auth';
 const TOKEN_KEY = 'showdecentavos:dev-session';
 type AuthValue = {
@@ -16,18 +16,20 @@ const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionVersion = useRef(0);
   useEffect(() => {
     let active = true;
     const token = sessionStorage.getItem(TOKEN_KEY);
+    const version = sessionVersion.current;
     if (!token) {
       queueMicrotask(() => { if (active) setIsLoading(false); });
       return () => { active = false; };
     }
     meRequest(token).then((profile) => {
-      if (active && sessionStorage.getItem(TOKEN_KEY) === token) setUser(profile);
+      if (active && sessionVersion.current === version && sessionStorage.getItem(TOKEN_KEY) === token) setUser(profile);
     }).catch(() => {
       // A failed profile check must not leave an unverified session active.
-      if (sessionStorage.getItem(TOKEN_KEY) === token) {
+      if (active && sessionVersion.current === version && sessionStorage.getItem(TOKEN_KEY) === token) {
         sessionStorage.removeItem(TOKEN_KEY);
         if (active) setUser(null);
       }
@@ -35,16 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, []);
   const login = async (email: string, password: string) => {
+    const version = ++sessionVersion.current;
     const result = await loginRequest(email, password);
+    if (sessionVersion.current !== version) throw new Error('Uma operação de sessão mais recente substituiu este login.');
     sessionStorage.setItem(TOKEN_KEY, result.token);
     setUser(result.user);
   };
   const loginWithGoogle = async (credential: string) => {
+    const version = ++sessionVersion.current;
     const result = await googleLoginRequest(credential);
+    if (sessionVersion.current !== version) throw new Error('Uma operação de sessão mais recente substituiu este login.');
     sessionStorage.setItem(TOKEN_KEY, result.token);
     setUser(result.user);
   };
   const logout = () => {
+    ++sessionVersion.current;
     sessionStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
@@ -52,8 +59,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     const token = getToken();
     if (!token) throw new Error('Sessão não encontrada.');
+    const version = sessionVersion.current;
     const profile = await meRequest(token);
-    if (getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
+    if (sessionVersion.current !== version || getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
     setUser(profile);
   };
   return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithGoogle, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
