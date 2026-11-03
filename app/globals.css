@@ -351,3 +351,11 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .admin-ops-metric-alert{background:#fff3ed;border-color:#f8bd9d}
 .admin-ops-metric-alert strong{color:#b8421f}
 @media(max-width:520px){.admin-ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-ops-metric{padding:12px}.admin-ops-metric strong{font-size:25px}}
+
+/* Winner order progress — informational only */
+.win-delivery-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;list-style:none;padding:0;margin:10px 0 14px}
+.win-delivery-progress li{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;font-size:12px;color:#64748b;padding:10px 4px;border:1px solid #e2e8f0;border-radius:10px;min-width:0}
+.win-delivery-progress li span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#e2e8f0;color:#475569;font-weight:700}
+.win-delivery-progress .win-delivery-complete{border-color:#bbdfc9;background:#f1faf4;color:#166534;font-weight:650}
+.win-delivery-progress .win-delivery-complete span{background:#166534;color:white}
+@media(max-width:480px){.win-delivery-progress{grid-template-columns:repeat(2,minmax(0,1fr))}}
