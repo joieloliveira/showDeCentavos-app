@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) throw new Error('Sessão não encontrada.');
     const version = sessionVersion.current;
     const profile = await meRequest(token);
-    if (!isCurrentSession(version, sessionVersion.current, null, null) || getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
+    if (!isCurrentSession(version, sessionVersion.current, token, getToken())) throw new Error('A sessão mudou durante a atualização.');
     setUser(profile);
   };
   return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithGoogle, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
