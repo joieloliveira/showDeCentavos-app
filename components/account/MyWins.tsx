@@ -21,13 +21,14 @@ export function MyWins() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setData(null); setLoading(false); return; }
     const token = getToken();
-    if (!token) return;
+    if (!token) { setData(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
+    queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<WinsResponse>('/auctions/my/wins', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
       .then(({ data: result }) => { if (active) { setData(result); setError(''); } })
-      .catch(err => { if (active) setError(getApiError(err)); })
+      .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken]);
@@ -39,7 +40,7 @@ export function MyWins() {
       {loading && <p role="status">Carregando vitórias...</p>}
       {error && <p role="alert">{error}</p>}
       {!loading && !error && data?.items.length === 0 && <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>}
-      {!error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
+      {!loading && !error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           {win.coverImageUrl && <img src={win.coverImageUrl} alt={win.productName} style={{ width: 120, height: 100, objectFit: 'contain' }} />}
           <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 220 }}>
@@ -57,7 +58,7 @@ export function MyWins() {
         </div>
         <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} initialAddress={win.shippingAddress ?? null} editable={win.addressEditable ?? false} />
       </article>)}
-      {!!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+      {!loading && !error && !!data && data.total > data.limit && <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Anterior</button>
         <span>Página {page} de {Math.ceil(data.total / data.limit)}</span>
         <button type="button" disabled={loading || page * data.limit >= data.total} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Próxima</button>
