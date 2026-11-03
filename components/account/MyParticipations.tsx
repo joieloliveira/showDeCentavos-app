@@ -32,14 +32,14 @@ export function MyParticipations() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setData(null); setLoading(false); return; }
     const token = getToken();
-    if (!token) return;
+    if (!token) { setData(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
-    queueMicrotask(() => { if (active) { setLoading(true); setError(''); } });
+    queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
       .then(({ data: response }) => { if (active) setData(response); })
-      .catch(err => { if (active) setError(getApiError(err)); })
+      .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken]);
@@ -50,7 +50,7 @@ export function MyParticipations() {
       {loading && <p role="status">Carregando participações...</p>}
       {error && <p role="alert">{error}</p>}
       {!loading && !error && data?.items.length === 0 && <p>Você ainda não participou de nenhum leilão.</p>}
-      {!error && data?.items.map(item => {
+      {!loading && !error && data?.items.map(item => {
         const status = participationStatus(item);
         const StatusIcon = status.icon;
         return <article key={item.auctionId} className="panel" style={{ padding: 18, border: '1px solid #e2e8f0', borderRadius: 12, display: 'grid', gap: 12 }}>
@@ -66,7 +66,7 @@ export function MyParticipations() {
           <Link href={`/auctions/registered/${item.auctionId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#ea580c', width: 'fit-content' }}>Ver detalhes do leilão <ArrowUpRight size={16} /></Link>
         </article>;
       })}
-      {!!data && data.total > data.limit && <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {!loading && !error && !!data && data.total > data.limit && <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</button>
         <span>Página {page} de {Math.ceil(data.total / data.limit)}</span>
         <button type="button" disabled={loading || page * data.limit >= data.total} onClick={() => setPage(p => p + 1)}>Próxima</button>
