@@ -9,7 +9,7 @@ import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 type ShippingAddress = { recipientName: string; phone: string; zipCode: string; street: string; number: string; complement: string; neighborhood: string; city: string; state: string };
-type Win = { shippingAddress?: ShippingAddress | null; addressSubmittedAt?: string | null; addressEditable?: boolean; auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; bidCount: number; paymentStatus: string; deliveryStatus: string; fulfillmentAvailable: boolean };
+type Win = { shippingAddress?: ShippingAddress | null; addressSubmittedAt?: string | null; addressEditable?: boolean; auctionId: string; productName: string; coverImageUrl: string | null; finalPriceCents: number; finishedAt: string | null; paymentDeadline?: string | null; paymentWindowStatus?: string | null; bidCount: number; paymentStatus: string; deliveryStatus: string; fulfillmentAvailable: boolean };
 type WinsResponse = { page: number; limit: number; total: number; items: Win[] };
 const paymentLabels: Record<string, string> = { not_started: 'não iniciado', pending: 'pendente', paid: 'pago', failed: 'falhou', refunded: 'reembolsado', cancelled: 'cancelado' };
 const deliveryLabels: Record<string, string> = { not_started: 'não iniciada', preparing: 'em preparação', shipped: 'enviada', delivered: 'entregue', cancelled: 'cancelada' };
@@ -54,6 +54,11 @@ export function MyWins() {
           <span style={{ color: '#166534', fontWeight: 700 }}>Vitória confirmada</span>
           <span>Preço final do leilão: {money(win.finalPriceCents)}</span>
           {win.finishedAt && <span>Encerrado em: {new Date(win.finishedAt).toLocaleString('pt-BR')}</span>}
+          {win.paymentDeadline && Number.isFinite(Date.parse(win.paymentDeadline)) && <span>Prazo de pagamento informado: {new Date(win.paymentDeadline).toLocaleString('pt-BR')}</span>}
+          {win.paymentStatus === 'paid' ? <span style={{ color: '#166534', fontWeight: 700 }}>Pagamento confirmado.</span> :
+            win.paymentStatus === 'refunded' || win.paymentStatus === 'cancelled' ? <span>Pagamento {paymentLabels[win.paymentStatus]}.</span> :
+            win.paymentWindowStatus === 'expired' ? <span role="status" style={{ color: '#a43c1a', fontWeight: 700 }}>Prazo ultrapassado. Consulte o suporte antes de qualquer providência.</span> :
+            win.paymentWindowStatus === 'open' ? <span>Prazo em andamento. A cobrança de arremates ainda não está habilitada nesta versão.</span> : null}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: {paymentLabels[win.paymentStatus] ?? 'indisponível'}</span>
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
