@@ -334,3 +334,20 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .admin-auction-timeline li{position:relative;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:0 0 18px 18px}
 .admin-auction-timeline li:before{content:"";position:absolute;left:-6px;top:5px;width:10px;height:10px;border-radius:50%;background:#e97932}
 .admin-auction-timeline li span{color:#697182;font-size:13px}
+
+/* Administrative operations dashboard */
+.admin-home-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.admin-home-grid>.panel{min-width:0}
+.admin-home-grid>.panel>h2{font-size:20px;margin:0 0 12px}
+.admin-home-grid>.panel>h3{font-size:16px;margin:26px 0 12px}
+.admin-home-grid>.panel>p{line-height:1.55}
+.admin-ops-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0 22px}
+.admin-ops-metric{display:flex;flex-direction:column;gap:9px;padding:17px;border:1px solid #e7eaf1;border-radius:13px;background:#f9fafc;color:#192238;text-decoration:none;min-width:0}
+.admin-ops-metric:hover,.admin-ops-metric:focus-visible{border-color:#f36b39;background:#fff7f1}
+.admin-ops-metric:focus-visible{outline:2px solid #f36b39;outline-offset:2px}
+.admin-ops-metric span{font-size:13px;color:#586276;font-weight:650}
+.admin-ops-metric strong{font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.admin-ops-metric small{font-size:11px;color:#727c8d}
+.admin-ops-metric-alert{background:#fff3ed;border-color:#f8bd9d}
+.admin-ops-metric-alert strong{color:#b8421f}
+@media(max-width:520px){.admin-ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-ops-metric{padding:12px}.admin-ops-metric strong{font-size:25px}}
