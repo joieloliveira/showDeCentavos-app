@@ -29,9 +29,9 @@ export function MyWins() {
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<WinsResponse>('/auctions/my/wins', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data: result }) => { if (active) { setData(result); setLoadedForUser(user.id); setError(''); } })
-      .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
-      .finally(() => { if (active) setLoading(false); });
+      .then(({ data: result }) => { if (active && getToken() === token) { setData(result); setLoadedForUser(user.id); setError(''); } })
+      .catch(err => { if (active && getToken() === token) { setData(null); setError(getApiError(err)); } })
+      .finally(() => { if (active && getToken() === token) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken, refreshKey]);
   if (authLoading) return <p role="status">Verificando sua sessão...</p>;
