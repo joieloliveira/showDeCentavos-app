@@ -52,7 +52,7 @@ export function MyWins() {
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
           </div>
           <span style={{ color: '#64748b' }}>Acompanhamento informativo. Pagamentos e envios ainda não estão habilitados.</span>
-          <Link href={`/auctions/${win.auctionId}`}>Ver detalhes do leilão</Link>
+          <Link href={`/auctions/registered/${win.auctionId}`}>Ver detalhes do leilão</Link>
           </div>
         </div>
         <WinShippingAddressForm auctionId={win.auctionId} getToken={getToken} initialAddress={win.shippingAddress ?? null} editable={win.addressEditable ?? false} />
