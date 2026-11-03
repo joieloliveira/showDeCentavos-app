@@ -63,7 +63,7 @@ export function MyParticipations() {
             <div><small style={{ display: 'block', color: '#64748b' }}>Total utilizado</small><strong>{money(item.totalSpentCents)}</strong></div>
           </div>
           <p style={{ margin: 0, color: '#64748b', fontSize: 13 }}>Último lance: {new Date(item.lastBidAt).toLocaleString('pt-BR')}</p>
-          <Link href={`/auctions/${item.auctionId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#ea580c', width: 'fit-content' }}>Ver detalhes do leilão <ArrowUpRight size={16} /></Link>
+          <Link href={`/auctions/registered/${item.auctionId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#ea580c', width: 'fit-content' }}>Ver detalhes do leilão <ArrowUpRight size={16} /></Link>
         </article>;
       })}
       {!!data && data.total > data.limit && <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
