@@ -26,7 +26,7 @@ const fields: { key: keyof Address; label: string; required?: boolean; maxLength
 
 export function WinShippingAddressForm({ auctionId, getToken, initialAddress, editable }: { auctionId: string; getToken: () => string | null; initialAddress: Address | null; editable: boolean }) {
   const [address, setAddress] = useState<Address>(() => initialAddress ? { ...initial, ...initialAddress } : initial);
-  useEffect(() => { setAddress(initialAddress ? { ...initial, ...initialAddress } : initial); }, [initialAddress]);
+  useEffect(() => { setAddress(initialAddress ? { ...initial, ...initialAddress } : initial); setMessage(''); }, [initialAddress, auctionId]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const enabled = process.env.NEXT_PUBLIC_AUCTION_ADDRESS_COLLECTION_ENABLED === 'true';
@@ -37,10 +37,22 @@ export function WinShippingAddressForm({ auctionId, getToken, initialAddress, ed
     if (!token) { setMessage('Sua sessão expirou. Faça login novamente.'); return; }
     setPending(true); setMessage('');
     try {
-      await api.put(`/auctions/my/wins/${encodeURIComponent(auctionId)}/address`, address, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await api.put<{ shippingAddress: Address }>(`/auctions/my/wins/${encodeURIComponent(auctionId)}/address`, address, { headers: { Authorization: `Bearer ${token}` } });
+      if (!data.shippingAddress) throw new Error('Resposta de cadastro incompleta. Atualize o histórico antes de tentar novamente.');
+      setAddress({ ...initial, ...data.shippingAddress });
       setMessage('Endereço salvo com sucesso.');
     } catch (error) { setMessage(getApiError(error)); }
     finally { setPending(false); }
+  }
+  if (!enabled) {
+    return <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
+      <h3 style={{ margin: '0 0 8px' }}>Endereço de entrega</h3>
+      <p style={{ color: '#64748b', margin: 0 }}>
+        {initialAddress
+          ? 'Endereço já registrado. A consulta e a edição de endereços estão temporariamente indisponíveis.'
+          : 'O cadastro de endereço ainda não está disponível. Não é necessário informar dados pessoais nesta etapa.'}
+      </p>
+    </section>;
   }
   return <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
     <h3 style={{ margin: '0 0 8px' }}>Endereço de entrega</h3>
@@ -52,17 +64,17 @@ export function WinShippingAddressForm({ auctionId, getToken, initialAddress, ed
           <input
             type="text"
             value={address[field.key]}
-            onChange={event => setAddress(previous => ({ ...previous, [field.key]: event.target.value }))}
+            onChange={event => { setAddress(previous => ({ ...previous, [field.key]: event.target.value })); setMessage(''); }}
             maxLength={field.maxLength}
             required={field.required}
-            disabled={!enabled || !editable}
+            disabled={!editable || pending}
             autoComplete="off"
             placeholder={field.key === 'zipCode' ? '00000-000' : field.key === 'state' ? 'PA' : undefined}
             style={{ padding: 10, borderRadius: 8, border: '1px solid #cbd5e1', width: '100%', boxSizing: 'border-box' }}
           />
         </label>)}
       </div>
-      <button type="submit" disabled={!enabled || !editable || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: 'not-allowed', opacity: 0.55, justifySelf: 'start' }}>
+      <button type="submit" disabled={!editable || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: pending || !editable ? 'not-allowed' : 'pointer', opacity: pending || !editable ? 0.55 : 1, justifySelf: 'start' }}>
         {pending ? 'Salvando...' : enabled ? 'Salvar endereço' : 'Salvar endereço (em breve)'}
       </button>
       {message && <p role="status">{message}</p>}
