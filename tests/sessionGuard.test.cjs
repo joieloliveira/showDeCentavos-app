@@ -9,9 +9,9 @@ const source = fs.readFileSync(path.join(__dirname, '../services/sessionGuard.ts
 const compiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
 }).outputText;
-const exports = {};
-vm.runInNewContext(compiled, { exports });
-const { isCurrentSession } = exports;
+const moduleExports = {};
+vm.runInNewContext(compiled, { exports: moduleExports });
+const { isCurrentSession } = moduleExports;
 
 test('accepts the same session version and token', () => {
   assert.equal(isCurrentSession(3, 3, 'token-a', 'token-a'), true);
