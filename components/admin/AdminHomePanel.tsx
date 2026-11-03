@@ -61,7 +61,7 @@ export function AdminHomePanel() {
       <button type="button" className="incident-action" onClick={() => setRefresh(value => value + 1)}>Atualizar agora</button>
       {updatedAt && <p>Última atualização: <time dateTime={updatedAt.toISOString()}>{updatedAt.toLocaleTimeString('pt-BR')}</time></p>}
       {summary && summary.incidentsRequiringReview > 0 && <p role="status"><strong>Atenção:</strong> {summary.incidentsRequiringReview} incidente(s) aguardando revisão. <Link href="/admin/wallet/incidents">Consultar incidentes</Link></p>}
-      {summary && summary.auctions.active > 0 && <p role="status">{summary.auctions.active} leilão(ões) ativo(s). <Link href="/admin/auctions">Acompanhar leilões</Link></p>
+      {summary && summary.auctions.active > 0 && <p role="status">{summary.auctions.active} leilão(ões) ativo(s). <Link href="/admin/auctions">Acompanhar leilões</Link></p>}
       {error && <p role="alert">{error}</p>}
       {!summary && !error && <p role="status">Carregando indicadores...</p>}
       {summary && <ul>
