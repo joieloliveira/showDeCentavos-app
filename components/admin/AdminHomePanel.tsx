@@ -68,7 +68,16 @@ export function AdminHomePanel() {
       {summary && summary.auctions.active > 0 && <p role="status">{summary.auctions.active} leilão(ões) ativo(s). <Link href="/admin/auctions">Acompanhar leilões</Link></p>}
       {error && <p role="alert">{error}</p>}
       {!summary && !error && <p role="status">Carregando indicadores...</p>}
-      {summary && <ul>
+      {summary && <><h3>Pendências consolidadas (todos os arremates)</h3>
+        <ul>
+          <li>Pagamentos com prazo ultrapassado: <strong>{summary.fulfillmentAlerts.overduePayments}</strong></li>
+          <li>Pagos aguardando endereço: <strong>{summary.fulfillmentAlerts.awaitingAddress}</strong></li>
+          <li>Pagos prontos para preparação: <strong>{summary.fulfillmentAlerts.readyForPreparation}</strong></li>
+          <li>Entregas em preparação: <strong>{summary.fulfillmentAlerts.preparingDeliveries}</strong></li>
+          <li>Entregas enviadas: <strong>{summary.fulfillmentAlerts.shippedDeliveries}</strong></li>
+        </ul>
+        <p><Link href="/admin/fulfillments">Gerenciar arremates</Link></p>
+        <h3>Indicadores gerais</h3><ul>
         <li>Leilões agendados: <strong>{summary.auctions.scheduled}</strong></li>
         <li>Leilões ativos: <strong>{summary.auctions.active}</strong></li>
         <li>Leilões encerrados: <strong>{summary.auctions.finished}</strong></li>
@@ -77,7 +86,7 @@ export function AdminHomePanel() {
         <li>Produtos enviados: <strong>{summary.deliveries.shipped}</strong></li>
         <li>Entregas concluídas: <strong>{summary.deliveries.delivered}</strong></li>
         <li>Incidentes financeiros para revisão: <strong>{summary.incidentsRequiringReview}</strong></li>
-      </ul>}
+      </ul></>}
       <p>Contagens atuais do banco de dados. Não representam faturamento.</p>
     </section>
     {sections.map(section => <section className="panel" key={section.href}>
