@@ -20,9 +20,14 @@ export async function meRequest(token: string) {
 }
 export function getApiError(error: unknown): string {
   if (error instanceof AxiosError) {
-    if (!error.response) return 'Não foi possível conectar à API. Verifique se o backend está em execução.';
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      return 'A API demorou para responder. Verifique sua conexão e tente novamente.';
+    }
+    if (!error.response) return 'Não foi possível conectar à API. Verifique sua conexão e se o backend está em execução.';
+    if (error.response.status === 401) return 'Sua sessão expirou ou não é válida. Faça login novamente.';
+    if (error.response.status >= 500) return 'O servidor está temporariamente indisponível. Tente novamente em instantes.';
     const message = (error.response.data as { message?: unknown } | undefined)?.message;
-    return typeof message === 'string' ? message : 'Não foi possível concluir a solicitação.';
+    return typeof message === 'string' && message.trim() ? message : 'Não foi possível concluir a solicitação.';
   }
   return error instanceof Error ? error.message : 'Ocorreu um erro inesperado.';
 }
