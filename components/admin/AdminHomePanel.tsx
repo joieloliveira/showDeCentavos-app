@@ -17,22 +17,51 @@ export function AdminHomePanel() {
   const { user, isLoading, getToken } = useAuth();
   const [summary, setSummary] = useState<AuctionOperationsSummary | null>(null);
   const [error, setError] = useState('');
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     if (isLoading || user?.role !== 'admin') return;
     const token = getToken();
-    if (!token) return;
+    if (!token) { setError('Sessão administrativa indisponível.'); return; }
     let active = true;
-    getAuctionOperationsSummary(token)
-      .then(data => { if (active) setSummary(data); })
-      .catch((err: unknown) => { if (active) setError(getApiError(err)); });
-    return () => { active = false; };
-  }, [isLoading, user?.role, getToken]);
+    let inFlight = false;
+    const load = async () => {
+      if (!active || inFlight || document.visibilityState !== 'visible') return;
+      inFlight = true;
+      try {
+        const data = await getAuctionOperationsSummary(token);
+        if (active) {
+          setSummary(data);
+          setUpdatedAt(new Date());
+          setError('');
+        }
+      } catch (err: unknown) {
+        if (active) setError(getApiError(err));
+      } finally {
+        inFlight = false;
+      }
+    };
+    void load();
+    const interval = window.setInterval(() => { void load(); }, 30000);
+    const onVisibility = () => { if (document.visibilityState === 'visible') void load(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [isLoading, user?.role, getToken, refresh]);
   if (isLoading) return <section className="panel">Verificando sua sessão...</section>;
   if (!user) return <section className="panel"><h2>Entre como administrador</h2><Link href="/login?next=/admin">Entrar</Link></section>;
   if (user.role !== 'admin') return <section className="panel"><h2>Acesso restrito</h2><p>Esta área é exclusiva de administradores.</p></section>;
   return <div className="admin-home-grid">
     <section className="panel">
       <h2>Indicadores operacionais</h2>
+      <p>Atualização automática a cada 30 segundos enquanto esta aba estiver visível.</p>
+      <button type="button" className="incident-action" onClick={() => setRefresh(value => value + 1)}>Atualizar agora</button>
+      {updatedAt && <p>Última atualização: <time dateTime={updatedAt.toISOString()}>{updatedAt.toLocaleTimeString('pt-BR')}</time></p>}
+      {summary && summary.incidentsRequiringReview > 0 && <p role="status"><strong>Atenção:</strong> {summary.incidentsRequiringReview} incidente(s) aguardando revisão. <Link href="/admin/wallet/incidents">Consultar incidentes</Link></p>}
+      {summary && summary.auctions.active > 0 && <p role="status">{summary.auctions.active} leilão(ões) ativo(s). <Link href="/admin/auctions">Acompanhar leilões</Link></p>
       {error && <p role="alert">{error}</p>}
       {!summary && !error && <p role="status">Carregando indicadores...</p>}
       {summary && <ul>
