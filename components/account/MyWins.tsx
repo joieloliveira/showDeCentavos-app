@@ -40,7 +40,7 @@ export function MyWins() {
     <div style={{ display: 'grid', gap: 16 }}>
       {loading && <p role="status">Carregando vitórias...</p>}
       {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
-      {!loading && !error && data?.items.length === 0 && <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>}
+      {!loading && !error && data?.items.length === 0 && (page > 1 ? <div className="panel" role="status" style={{ padding: 24 }}><p>Não há vitórias nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>)}
       {!loading && !error && data?.items.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           {win.coverImageUrl && <img src={win.coverImageUrl} alt={win.productName} style={{ width: 120, height: 100, objectFit: 'contain' }} />}
