@@ -5,6 +5,7 @@ import { api } from '@/services/api';
 import { money } from '@/utils/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchWalletBalance } from '@/services/wallet';
+import { reconcileBid, type BidRecord } from '@/services/bids';
 
 type ProductImage = { key?: string; url?: string };
 type Auction = {
@@ -21,6 +22,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [balanceError, setBalanceError] = useState('');
   const [balanceRefreshing, setBalanceRefreshing] = useState(false);
   const [showBidInfo, setShowBidInfo] = useState(false);
+  const [lookupKey, setLookupKey] = useState('');
+  const [lookupPending, setLookupPending] = useState(false);
+  const [lookupResult, setLookupResult] = useState<{ status: 'found' | 'not_found' | 'unavailable'; bid?: BidRecord } | null>(null);
+  const [lookupError, setLookupError] = useState('');
   const [showSimulation, setShowSimulation] = useState(false);
   const [simulatedBids, setSimulatedBids] = useState(0);
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -47,6 +52,33 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       .catch(() => { if (active) { setBalance(null); setBalanceError('Saldo indisponível no momento.'); } });
     return () => { active = false; };
   }, [user, getToken]);
+  const lookupBid = async () => {
+    if (lookupPending) return;
+    setLookupResult(null);
+    setLookupError('');
+    if (!user || !getToken()) {
+      setLookupError('Entre na sua conta para consultar suas tentativas.');
+      return;
+    }
+    const key = lookupKey.trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) {
+      setLookupError('Informe uma chave UUID v4 válida.');
+      return;
+    }
+    setLookupPending(true);
+    try {
+      const result = await reconcileBid(getToken()!, key);
+      if (result.status === 'found' && String(result.bid.auction).toLowerCase() !== id.toLowerCase()) {
+        setLookupError('Esta chave pertence a outro leilão da sua conta.');
+      } else {
+        setLookupResult(result);
+      }
+    } catch {
+      setLookupResult({ status: 'unavailable' });
+    } finally {
+      setLookupPending(false);
+    }
+  };
   const refreshBalance = async () => {
     const token = getToken();
     if (!user || !token || balanceRefreshing) return;
@@ -200,6 +232,18 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
           </div>}
         </section>
         {showBidInfo && <div className="registered-bid-dialog-backdrop" onClick={() => setShowBidInfo(false)}><section role="dialog" aria-modal="true" aria-labelledby="bid-info-title" className="registered-bid-dialog" onClick={event => event.stopPropagation()}><h3 id="bid-info-title">Confirmação de lance — prévia</h3><p>Este painel é apenas informativo. Nenhum lance será enviado ao servidor.</p><dl style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px 16px', margin: '16px 0' }}><dt>Custo de um lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.bidCostCents)}</dd><dt>Aumento do preço do leilão</dt><dd style={{ margin: 0, fontWeight: 700 }}>R$ 0,01</dd><dt>Preço hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.currentPriceCents + 1)}</dd><dt>Saldo disponível</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : money(balance)}</dd><dt>Saldo hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : balance < auction.bidCostCents ? 'Saldo insuficiente' : money(balance - auction.bidCostCents)}</dd></dl>{!user && <p>Entre na sua conta para consultar seu saldo antes de participar.</p>}{user && <button type="button" onClick={() => { void refreshBalance(); }} disabled={balanceRefreshing}>{balanceRefreshing ? 'Consultando carteira...' : 'Atualizar saldo da carteira'}</button>}{user && balanceError && <p role="status">{balanceError}</p>}<p role="status">{authLoading ? 'Verificando autenticação...' : !user ? 'Pré-requisito: entrar na conta.' : auction.status !== 'active' ? 'Pré-requisito: aguardar o leilão ficar ativo.' : liveDataStatus !== 'ok' ? 'Pré-requisito: restabelecer a comunicação com o servidor.' : balance === null ? 'Pré-requisito: confirmar o saldo da carteira.' : !hasSufficientBalance ? 'Pré-requisito: saldo suficiente para um lance.' : isBidPreviewEligible ? 'Pré-requisitos básicos atendidos. O envio financeiro continua bloqueado.' : 'Verificação pendente.'}</p><p><strong>Lances reais indisponíveis.</strong> Nenhum valor será debitado nesta demonstração.</p><button type="button" onClick={() => setShowBidInfo(false)}>Entendi, fechar</button></section></div>}
+        <section aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
+          <strong>Consultar tentativa de lance</strong>
+          <p style={{ margin: 0 }}>Consulta somente de leitura para verificar um lance anterior pela chave de idempotência. Não realiza nem repete lances.</p>
+          <label htmlFor="bid-lookup-key">Chave da tentativa (UUID v4)</label>
+          <input id="bid-lookup-key" type="text" autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
+          <button type="button" disabled={!user || authLoading || lookupPending} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
+          {!user && <p role="status">É necessário entrar na conta para consultar tentativas.</p>}
+          {lookupError && <p role="alert">{lookupError}</p>}
+          {lookupResult?.status === 'found' && lookupResult.bid && <p role="status">Lance encontrado e registrado. ID: <strong>{lookupResult.bid._id}</strong>. Custo registrado: <strong>{money(lookupResult.bid.bidCostCents)}</strong>. Saldo após o lance: <strong>{money(lookupResult.bid.balanceAfterCents)}</strong>.</p>}
+          {lookupResult?.status === 'not_found' && <p role="status">Nenhum lance encontrado para esta chave até o momento. Isso não autoriza reenviar automaticamente a tentativa.</p>}
+          {lookupResult?.status === 'unavailable' && <p role="alert">Não foi possível confirmar o registro agora. Guarde a chave original e tente consultar novamente mais tarde.</p>}
+        </section>
         <p className="registered-safety"><ShieldCheck size={18}/> Visualização informativa. Esta página não permite realizar lances ou pagamentos.</p>
       </div>
     </div>
