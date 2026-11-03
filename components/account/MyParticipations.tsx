@@ -40,9 +40,9 @@ export function MyParticipations() {
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data: response }) => { if (active) { setData(response); setLoadedForUser(user.id); } })
-      .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
-      .finally(() => { if (active) setLoading(false); });
+      .then(({ data: response }) => { if (active && getToken() === token) { setData(response); setLoadedForUser(user.id); } })
+      .catch(err => { if (active && getToken() === token) { setData(null); setError(getApiError(err)); } })
+      .finally(() => { if (active && getToken() === token) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken, refreshKey]);
   if (!user) return null;
