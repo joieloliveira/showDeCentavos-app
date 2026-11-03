@@ -79,7 +79,7 @@ export function MyWins() {
           {win.paymentStatus === 'paid' ? <span style={{ color: '#166534', fontWeight: 700 }}>Pagamento confirmado.</span> :
             win.paymentStatus === 'refunded' || win.paymentStatus === 'cancelled' ? <span>Pagamento {paymentLabels[win.paymentStatus]}.</span> :
             win.paymentWindowStatus === 'expired' ? <span role="status" style={{ color: '#a43c1a', fontWeight: 700 }}>Prazo ultrapassado. Consulte o suporte antes de qualquer providência.</span> :
-            win.paymentWindowStatus === 'open' ? <span>Prazo em andamento. A cobrança de arremates ainda não está habilitada nesta versão.</span> : null}
+            win.paymentWindowStatus === 'awaiting_payment' ? <span>Prazo em andamento. A cobrança de arremates ainda não está habilitada nesta versão.</span> : null}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Pagamento: {paymentLabels[win.paymentStatus] ?? 'indisponível'}</span>
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
