@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiError } from '@/services/auth';
-import { listAdminFulfillments, type FulfillmentList } from '@/services/adminFulfillments';
+import { advanceAdminDelivery, listAdminFulfillments, type FulfillmentList } from '@/services/adminFulfillments';
 
 const money = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = (value: string) => new Date(value).toLocaleString('pt-BR');
@@ -17,6 +17,9 @@ export function AdminFulfillmentsPanel() {
   const [result, setResult] = useState<FulfillmentList | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(0);
+  const [notice, setNotice] = useState('');
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
@@ -30,7 +33,24 @@ export function AdminFulfillmentsPanel() {
       .catch((err: unknown) => { if (active) setError(getApiError(err)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [isLoading, isAdmin, getToken, page, payment, delivery]);
+  }, [isLoading, isAdmin, getToken, page, payment, delivery, refresh]);
+
+  const advance = async (auctionId: string, target: string) => {
+    const token = getToken();
+    if (!token || updatingId) return;
+    setUpdatingId(auctionId);
+    setError('');
+    setNotice('');
+    try {
+      await advanceAdminDelivery(token, auctionId, target);
+      setNotice('Entrega atualizada com sucesso.');
+      setRefresh(n => n + 1);
+    } catch (err) {
+      setError(getApiError(err));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   if (isLoading) return <section className="panel">Verificando sessão...</section>;
   if (!user) return <section className="panel"><h2>Acesso administrativo</h2><Link href="/login?next=/admin/fulfillments">Entrar</Link></section>;
@@ -38,7 +58,7 @@ export function AdminFulfillmentsPanel() {
 
   return <section className="panel">
     <h2>Arremates e entregas</h2>
-    <p>Consulta administrativa. Esta tela não confirma pagamentos nem altera entregas.</p>
+    <p>A confirmação de pagamento não está disponível nesta tela. As entregas exigem pagamento confirmado e endereço válido.</p>
     <div className="incident-filters">
       <label>Pagamento{' '}<select aria-label="Filtrar pagamento" value={payment} onChange={e => { setPayment(e.target.value); setPage(1); }}>
         <option value="">Todos</option>
@@ -49,16 +69,28 @@ export function AdminFulfillmentsPanel() {
         {['not_started', 'preparing', 'shipped', 'delivered', 'cancelled'].map(x => <option key={x} value={x}>{x}</option>)}
       </select></label>
     </div>
+    {notice && <p role="status">{notice}</p>}
     {loading && <p role="status">Carregando arremates...</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && result && <>
       <p>{result.total} arremate(s) encontrado(s).</p>
       <div className="incident-table-wrap"><table className="incident-table">
-        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th></tr></thead>
+        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th></tr></thead>
         <tbody>{result.items.map(item => <tr key={item.auctionId}>
           <td>{item.auctionId}</td><td>{money(item.winningPriceCents)}</td><td>{date(item.paymentDeadline)}</td>
           <td>{item.paymentStatus}</td><td>{item.deliveryStatus}</td>
           <td>{item.shippingAddress?.recipientName || 'Endereço pendente'}</td>
+          <td>{item.paymentStatus === 'paid' && item.addressSubmittedAt && item.shippingAddress && ['not_started', 'preparing', 'shipped'].includes(item.deliveryStatus)
+            ? <button type="button" className="incident-action"
+                disabled={updatingId !== null || loading}
+                onClick={() => {
+                  const next = ({ not_started: 'preparing', preparing: 'shipped', shipped: 'delivered' } as Record<string, string>)[item.deliveryStatus];
+                  const labels = ({ preparing: 'iniciar a preparação', shipped: 'marcar como enviado', delivered: 'confirmar a entrega' } as Record<string, string>);
+                  if (next && window.confirm('Deseja ' + labels[next] + ' deste arremate?')) void advance(item.auctionId, next);
+                }}>
+                {({ not_started: 'Preparar', preparing: 'Marcar enviado', shipped: 'Confirmar entrega' } as Record<string, string>)[item.deliveryStatus]}
+              </button>
+            : 'Indisponível'}</td>
         </tr>)}</tbody>
       </table></div>
       {result.items.length === 0 && <p>Nenhum arremate encontrado.</p>}
