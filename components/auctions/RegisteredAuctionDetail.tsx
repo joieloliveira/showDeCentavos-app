@@ -95,6 +95,22 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   };
   useEffect(() => { const tick = setInterval(() => setNow(Date.now() + serverOffsetMs.current), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
+    // A route can reuse this component for another auction. Never merge the
+    // previous auction's SSE snapshot into the new auction's product details.
+    latestLiveRef.current = null;
+    latestRequestRef.current = 0;
+    latestAppliedRef.current = 0;
+    liveStatusRef.current = null;
+    lastLiveCheckMs.current = 0;
+    lastClockSyncMs.current = 0;
+    serverOffsetMs.current = 0;
+    setClockSyncedAt(null);
+    setSelectedImage(null);
+    setSimulatedBids(0);
+    setAuction(null);
+    setError('');
+    setConnectionStatus('connecting');
+    setLiveDataStatus('ok');
     let active = true;
     const refresh = async () => {
       try {
