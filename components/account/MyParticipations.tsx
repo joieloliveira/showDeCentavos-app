@@ -31,6 +31,7 @@ export function MyParticipations() {
   const [data, setData] = useState<Response | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
     if (!user) { setData(null); setLoading(false); return; }
     const token = getToken();
@@ -42,13 +43,13 @@ export function MyParticipations() {
       .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [user, page, getToken]);
+  }, [user, page, getToken, refreshKey]);
   if (!user) return null;
   return <section id="my-participations" className="account-details" style={{ scrollMarginTop: 150 }}>
-    <div><span className="eyebrow">Seus leilões</span><h2>Minhas participações</h2><p>Histórico de lances e resultados dos leilões em que você participou.</p></div>
+    <div><span className="eyebrow">Seus leilões</span><h2>Minhas participações</h2><p>Histórico de lances e resultados dos leilões em que você participou.</p><button type="button" disabled={loading} onClick={() => setRefreshKey(value => value + 1)}>{loading ? 'Atualizando...' : 'Atualizar histórico'}</button></div>
     <div style={{ display: 'grid', gap: 12 }}>
       {loading && <p role="status">Carregando participações...</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
       {!loading && !error && data?.items.length === 0 && <p>Você ainda não participou de nenhum leilão.</p>}
       {!loading && !error && data?.items.map(item => {
         const status = participationStatus(item);
