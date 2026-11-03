@@ -24,11 +24,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return () => { active = false; };
     }
     meRequest(token).then((profile) => {
-      if (active) setUser(profile);
+      if (active && sessionStorage.getItem(TOKEN_KEY) === token) setUser(profile);
     }).catch(() => {
       // A failed profile check must not leave an unverified session active.
-      sessionStorage.removeItem(TOKEN_KEY);
-      if (active) setUser(null);
+      if (sessionStorage.getItem(TOKEN_KEY) === token) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        if (active) setUser(null);
+      }
     }).finally(() => { if (active) setIsLoading(false); });
     return () => { active = false; };
   }, []);
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getToken();
     if (!token) throw new Error('Sessão não encontrada.');
     const profile = await meRequest(token);
+    if (getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
     setUser(profile);
   };
   return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithGoogle, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
