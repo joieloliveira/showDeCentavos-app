@@ -50,7 +50,7 @@ export function MyParticipations() {
     <div style={{ display: 'grid', gap: 12 }}>
       {loading && <p role="status">Carregando participações...</p>}
       {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
-      {!loading && !error && data?.items.length === 0 && <p>Você ainda não participou de nenhum leilão.</p>}
+      {!loading && !error && data?.items.length === 0 && (page > 1 ? <div role="status"><p>Não há participações nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <p>Você ainda não participou de nenhum leilão.</p>)}
       {!loading && !error && data?.items.map(item => {
         const status = participationStatus(item);
         const StatusIcon = status.icon;
