@@ -68,25 +68,33 @@ export function AdminHomePanel() {
       {summary && summary.auctions.active > 0 && <p role="status">{summary.auctions.active} leilão(ões) ativo(s). <Link href="/admin/auctions">Acompanhar leilões</Link></p>}
       {error && <p role="alert">{error}</p>}
       {!summary && !error && <p role="status">Carregando indicadores...</p>}
-      {summary && <><h3>Pendências consolidadas (todos os arremates)</h3>
-        <ul>
-          <li>Pagamentos com prazo ultrapassado: <strong>{summary.fulfillmentAlerts.overduePayments}</strong></li>
-          <li>Pagos aguardando endereço: <strong>{summary.fulfillmentAlerts.awaitingAddress}</strong></li>
-          <li>Pagos prontos para preparação: <strong>{summary.fulfillmentAlerts.readyForPreparation}</strong></li>
-          <li>Entregas em preparação: <strong>{summary.fulfillmentAlerts.preparingDeliveries}</strong></li>
-          <li>Entregas enviadas: <strong>{summary.fulfillmentAlerts.shippedDeliveries}</strong></li>
-        </ul>
-        <p><Link href="/admin/fulfillments">Gerenciar arremates</Link></p>
-        <h3>Indicadores gerais</h3><ul>
-        <li>Leilões agendados: <strong>{summary.auctions.scheduled}</strong></li>
-        <li>Leilões ativos: <strong>{summary.auctions.active}</strong></li>
-        <li>Leilões encerrados: <strong>{summary.auctions.finished}</strong></li>
-        <li>Pagamentos de arremates pendentes: <strong>{summary.payments.pending}</strong></li>
-        <li>Entregas em preparação: <strong>{summary.deliveries.preparing}</strong></li>
-        <li>Produtos enviados: <strong>{summary.deliveries.shipped}</strong></li>
-        <li>Entregas concluídas: <strong>{summary.deliveries.delivered}</strong></li>
-        <li>Incidentes financeiros para revisão: <strong>{summary.incidentsRequiringReview}</strong></li>
-      </ul></>}
+      {summary && <>
+        <h3>Pendências consolidadas</h3>
+        <div className="admin-ops-metrics">
+          {([
+            { label: 'Pagamentos atrasados', value: summary.fulfillmentAlerts.overduePayments, href: '/admin/fulfillments', attention: true },
+            { label: 'Aguardando endereço', value: summary.fulfillmentAlerts.awaitingAddress, href: '/admin/fulfillments', attention: false },
+            { label: 'Prontos para preparar', value: summary.fulfillmentAlerts.readyForPreparation, href: '/admin/fulfillments', attention: false },
+            { label: 'Incidentes para revisão', value: summary.incidentsRequiringReview, href: '/admin/wallet/incidents', attention: true },
+          ]).map(metric => <Link key={metric.label} href={metric.href} className={`admin-ops-metric${metric.attention && metric.value > 0 ? ' admin-ops-metric-alert' : ''}`}>
+            <span>{metric.label}</span><strong>{metric.value}</strong><small>Consultar detalhes</small>
+          </Link>)}
+        </div>
+        <h3>Visão geral</h3>
+        <div className="admin-ops-metrics">
+          {([
+            { label: 'Leilões agendados', value: summary.auctions.scheduled, href: '/admin/auctions' },
+            { label: 'Leilões ativos', value: summary.auctions.active, href: '/admin/auctions' },
+            { label: 'Leilões encerrados', value: summary.auctions.finished, href: '/admin/auctions' },
+            { label: 'Pagamentos pendentes', value: summary.payments.pending, href: '/admin/fulfillments' },
+            { label: 'Entregas em preparação', value: summary.deliveries.preparing, href: '/admin/fulfillments' },
+            { label: 'Produtos enviados', value: summary.deliveries.shipped, href: '/admin/fulfillments' },
+            { label: 'Entregas concluídas', value: summary.deliveries.delivered, href: '/admin/fulfillments' },
+          ]).map(metric => <Link key={metric.label} href={metric.href} className="admin-ops-metric">
+            <span>{metric.label}</span><strong>{metric.value}</strong><small>Consultar detalhes</small>
+          </Link>)}
+        </div>
+      </>}
       <p>Contagens atuais do banco de dados. Não representam faturamento.</p>
     </section>
     {sections.map(section => <section className="panel" key={section.href}>
