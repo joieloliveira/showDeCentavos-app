@@ -39,12 +39,13 @@ export function MyParticipations() {
     const token = getToken();
     if (!token) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
+    const controller = new AbortController();
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
-    api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
+    api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
       .then(({ data: response }) => { if (active && getToken() === token) { setData(response); setLoadedForUser(user.id); setLoadedForToken(token); } })
-      .catch(err => { if (active && getToken() === token) { setData(null); setError(getApiError(err)); } })
+      .catch(err => { if (!axios.isCancel(err) && active && getToken() === token) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active && getToken() === token) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [user, page, getToken, refreshKey]);
   if (!user) return null;
   const visibleData = loadedForUser === user.id && loadedForToken === getToken() ? data : null;
