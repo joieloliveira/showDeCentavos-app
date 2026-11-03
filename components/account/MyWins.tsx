@@ -28,12 +28,13 @@ export function MyWins() {
     const token = getToken();
     if (!token) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
+    const controller = new AbortController();
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
-    api.get<WinsResponse>('/auctions/my/wins', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
+    api.get<WinsResponse>('/auctions/my/wins', { params: { page }, headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
       .then(({ data: result }) => { if (active && getToken() === token) { setData(result); setLoadedForUser(user.id); setLoadedForToken(token); setError(''); } })
-      .catch(err => { if (active && getToken() === token) { setData(null); setError(getApiError(err)); } })
+      .catch(err => { if (!axios.isCancel(err) && active && getToken() === token) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active && getToken() === token) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [user, page, getToken, refreshKey]);
   if (authLoading) return <p role="status">Verificando sua sessão...</p>;
   if (!user) return <div className="panel"><p>Faça login para consultar suas vitórias.</p><Link href="/login?next=/account/wins">Entrar</Link></div>;
