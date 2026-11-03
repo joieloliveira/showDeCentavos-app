@@ -33,20 +33,21 @@ export function MyParticipations() {
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [loadedForUser, setLoadedForUser] = useState<string | null>(null);
+  const [loadedForToken, setLoadedForToken] = useState<string | null>(null);
   useEffect(() => {
-    if (!user) { setData(null); setLoadedForUser(null); setLoading(false); return; }
+    if (!user) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); return; }
     const token = getToken();
-    if (!token) { setData(null); setLoadedForUser(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
+    if (!token) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data: response }) => { if (active && getToken() === token) { setData(response); setLoadedForUser(user.id); } })
+      .then(({ data: response }) => { if (active && getToken() === token) { setData(response); setLoadedForUser(user.id); setLoadedForToken(token); } })
       .catch(err => { if (active && getToken() === token) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active && getToken() === token) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken, refreshKey]);
   if (!user) return null;
-  const visibleData = loadedForUser === user.id ? data : null;
+  const visibleData = loadedForUser === user.id && loadedForToken === getToken() ? data : null;
   return <section id="my-participations" className="account-details" style={{ scrollMarginTop: 150 }}>
     <div><span className="eyebrow">Seus leilões</span><h2>Minhas participações</h2><p>Histórico de lances e resultados dos leilões em que você participou.</p><button type="button" disabled={loading} onClick={() => setRefreshKey(value => value + 1)}>{loading ? 'Atualizando...' : 'Atualizar histórico'}</button></div>
     <div style={{ display: 'grid', gap: 12 }}>
