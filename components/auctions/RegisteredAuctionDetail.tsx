@@ -36,6 +36,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const liveStatusRef = useRef<string | null>(null);
   const latestRequestRef = useRef(0);
   const latestAppliedRef = useRef(0);
+  const latestLiveRef = useRef<Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents' | 'winnerNickname'> | null>(null);
   useEffect(() => {
     if (!user) return;
     const token = getToken();
@@ -52,14 +53,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       try {
         const { data } = await api.get<{ auction: Auction }>(`/auctions/${encodeURIComponent(id)}`);
         if (active) {
-          // The full detail request may finish after a newer /live response.
-          // Keep the latest verified live fields while loading product/gallery data.
-          setAuction(previous => previous && latestAppliedRef.current > 0
-            ? { ...data.auction, status: previous.status, currentPriceCents: previous.currentPriceCents,
-                bidCount: previous.bidCount, startsAt: previous.startsAt, endsAt: previous.endsAt,
-                bidCostCents: previous.bidCostCents, winnerNickname: previous.winnerNickname }
-            : data.auction);
-          if (latestAppliedRef.current === 0) liveStatusRef.current = data.auction.status;
+          // Product details may arrive after a newer authoritative live snapshot.
+          // Merge that snapshot even when the detail response is the first to populate state.
+          setAuction({ ...data.auction, ...(latestLiveRef.current ?? {}) });
+          if (!latestLiveRef.current) liveStatusRef.current = data.auction.status;
           setError('');
         }
       } catch { if (active) setError('Não foi possível atualizar este leilão.'); }
@@ -75,6 +72,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         if (!active || requestId < latestAppliedRef.current) return;
         setLiveDataStatus('ok');
         latestAppliedRef.current = requestId;
+        latestLiveRef.current = data.auction;
         const serverTime = Date.parse(data.serverTime);
         if (Number.isFinite(serverTime)) {
           // Midpoint compensates for request round-trip latency.
@@ -105,8 +103,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       if (document.visibilityState === 'visible') { lastLiveCheckMs.current = Date.now(); void refreshLive(); }
     };
     document.addEventListener('visibilitychange', onVisibility);
-    // SSE pushes confirmed bids immediately. Polling remains the fallback and
-    // also handles scheduler changes until it publishes its own events.
+    // SSE pushes scheduler and bid changes immediately. Polling remains a fallback.
     const base = api.defaults.baseURL ?? 'http://localhost:3001/api';
     const events = new EventSource(`${base.replace(/\/$/, '')}/auctions/${encodeURIComponent(id)}/events`);
     events.addEventListener('open', () => { if (active) { setConnectionStatus('connected'); void refreshLive(); } });
