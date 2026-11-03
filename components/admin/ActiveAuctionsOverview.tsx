@@ -11,6 +11,7 @@ export function ActiveAuctionsOverview() {
   const [data, setData] = useState<AdminAuctionList | null>(null);
   const [error, setError] = useState('');
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [checkedAt, setCheckedAt] = useState<number | null>(null);
   useEffect(() => {
     if (isLoading || user?.role !== 'admin') return;
     const token = getToken();
@@ -25,7 +26,9 @@ export function ActiveAuctionsOverview() {
         if (alive) {
           setData(result);
           setError('');
-          setUpdatedAt(new Date().toLocaleTimeString('pt-BR'));
+          const checked = Date.now();
+          setCheckedAt(checked);
+          setUpdatedAt(new Date(checked).toLocaleTimeString('pt-BR'));
         }
       } catch (err: unknown) {
         if (alive) setError(getApiError(err));
@@ -45,19 +48,28 @@ export function ActiveAuctionsOverview() {
   }, [getToken, isLoading, user?.role]);
 
   if (isLoading || user?.role !== 'admin') return null;
+  const overdue = data?.auctions.filter(auction => {
+    if (!auction.endsAt || checkedAt === null) return false;
+    const deadline = Date.parse(auction.endsAt);
+    return Number.isFinite(deadline) && deadline < checkedAt - 30000;
+  }) ?? [];
+  const withoutDeadline = data?.auctions.filter(auction => !auction.endsAt || !Number.isFinite(Date.parse(auction.endsAt))) ?? [];
   return <section className="panel">
     <h2>Leilões em andamento</h2>
-    <p>Consulta de leitura a cada 15 segundos, apenas enquanto a aba estiver visível. Até 20 leilões recentes são exibidos.</p>
+    <p>Consulta de leitura a cada 15 segundos, apenas enquanto a aba estiver visível. Até 20 leilões recentes são exibidos. Os alertas são indicativos e não alteram o estado dos leilões.</p>
     {updatedAt && <p>Atualizado às {updatedAt}</p>}
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p role="status">Consultando leilões ativos...</p>}
     {data && <p><strong>{data.pagination.total}</strong> leilão(ões) ativo(s) no total.</p>}
+    {overdue.length > 0 && <p role="status"><strong>Atenção:</strong> {overdue.length} leilão(ões) ainda constavam como ativos mais de 30 segundos após o prazo registrado na última consulta. Verifique o agendador e o histórico antes de qualquer intervenção. <Link href="/admin/auctions">Investigar</Link></p>}
+    {withoutDeadline.length > 0 && <p role="status">{withoutDeadline.length} leilão(ões) ativo(s) sem prazo válido de encerramento registrado. Isso pode ser esperado antes do primeiro lance. <Link href="/admin/auctions">Consultar</Link></p>}
     {data && data.auctions.length === 0 && <p>Nenhum leilão em andamento.</p>}
     {data && data.auctions.length > 0 && <ul>
       {data.auctions.map(auction => <li key={auction._id}>
         <strong>{auction.product?.name ?? 'Produto não disponível'}</strong>
         {' — '} {auction.bidCount} lance(s), preço atual {(auction.currentPriceCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         {' — '} {auction.endsAt ? `Prazo registrado: ${new Date(auction.endsAt).toLocaleString('pt-BR')}` : 'Sem prazo de encerramento registrado'}
+        {' — '} {overdue.some(item => item._id === auction._id) ? <strong>Prazo ultrapassado — verificar</strong> : withoutDeadline.some(item => item._id === auction._id) ? 'Sem prazo válido' : 'Dentro do prazo registrado'}
         {' — '} <Link href="/admin/auctions">Gerenciar</Link>
       </li>)}
     </ul>}
