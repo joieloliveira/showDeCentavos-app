@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { api } from '@/services/api';
 
 // Financial bids remain server-gated by AUCTION_BIDDING_ENABLED.
@@ -72,4 +73,69 @@ export async function submitConfirmedBid(token: string, auctionId: string, key: 
     throw new Error('Resposta do lance inconsistente. Consulte a chave antes de tentar novamente.');
   }
   return data;
+}
+
+/** User-facing guidance for a single bid attempt. Never triggers another POST. */
+export type BidFailure = {
+  kind: 'auth' | 'disabled' | 'balance' | 'conflict' | 'uncertain' | 'invalid' | 'other';
+  message: string;
+  /** Preserve the original key and reconcile before considering another attempt. */
+  needsReconciliation: boolean;
+};
+
+export function describeBidFailure(error: unknown): BidFailure {
+  if (!axios.isAxiosError(error)) {
+    return {
+      kind: 'uncertain',
+      message: 'Não foi possível confirmar o resultado. Consulte a tentativa antes de enviar outro lance.',
+      needsReconciliation: true,
+    };
+  }
+  const status = error.response?.status;
+  const serverMessage = typeof error.response?.data?.message === 'string'
+    ? error.response.data.message : '';
+  if (!status) {
+    return {
+      kind: 'uncertain',
+      message: 'Conexão interrompida. O lance pode ter sido registrado. Consulte a mesma chave antes de tentar novamente.',
+      needsReconciliation: true,
+    };
+  }
+  if (status === 401 || status === 403) {
+    return { kind: 'auth', message: 'Sua sessão precisa ser verificada antes de participar.', needsReconciliation: false };
+  }
+  if (status === 503 && serverMessage === 'Lances temporariamente indisponíveis.') {
+    return { kind: 'disabled', message: serverMessage, needsReconciliation: false };
+  }
+  if (status === 409 && /saldo insuficiente/i.test(serverMessage)) {
+    return { kind: 'balance', message: 'Saldo insuficiente para realizar este lance.', needsReconciliation: false };
+  }
+  if (status === 400) {
+    return { kind: 'invalid', message: 'Solicitação inválida. Nenhum novo lance deve ser enviado automaticamente.', needsReconciliation: false };
+  }
+  if (status === 409 && /chave já foi utilizada em outro leilão/i.test(serverMessage)) {
+    return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
+  }
+  if (status === 409 && /leilão|tempo para realizar lances/i.test(serverMessage)) {
+    return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
+  }
+  // 5xx, unknown conflicts and unexpected responses must be reconciled.
+  return {
+    kind: 'uncertain',
+    message: 'Resultado do lance não confirmado. Consulte a chave original antes de qualquer nova tentativa.',
+    needsReconciliation: true,
+  };
+}
+
+/** Read-only check. A missing record is not permission to blindly retry a POST. */
+export async function reconcileBid(token: string, key: string):
+  Promise<{ status: 'found'; bid: BidRecord } | { status: 'not_found' } | { status: 'unavailable' }> {
+  try {
+    const bid = await findBidByKey(token, key);
+    if (!bid || bid.idempotencyKey !== key) return { status: 'unavailable' };
+    return { status: 'found', bid };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return { status: 'not_found' };
+    return { status: 'unavailable' };
+  }
 }
