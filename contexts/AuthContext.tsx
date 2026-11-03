@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { isCurrentSession } from '@/services/sessionGuard';
 import { loginRequest, googleLoginRequest, meRequest, type AuthUser } from '@/services/auth';
 const TOKEN_KEY = 'showdecentavos:dev-session';
 type AuthValue = {
@@ -26,10 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return () => { active = false; };
     }
     meRequest(token).then((profile) => {
-      if (active && sessionVersion.current === version && sessionStorage.getItem(TOKEN_KEY) === token) setUser(profile);
+      if (active && isCurrentSession(version, sessionVersion.current, token, sessionStorage.getItem(TOKEN_KEY))) setUser(profile);
     }).catch(() => {
       // A failed profile check must not leave an unverified session active.
-      if (active && sessionVersion.current === version && sessionStorage.getItem(TOKEN_KEY) === token) {
+      if (active && isCurrentSession(version, sessionVersion.current, token, sessionStorage.getItem(TOKEN_KEY))) {
         sessionStorage.removeItem(TOKEN_KEY);
         if (active) setUser(null);
       }
@@ -39,14 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const version = ++sessionVersion.current;
     const result = await loginRequest(email, password);
-    if (sessionVersion.current !== version) throw new Error('Uma operação de sessão mais recente substituiu este login.');
+    if (!isCurrentSession(version, sessionVersion.current, null, null)) throw new Error('Uma operação de sessão mais recente substituiu este login.');
     sessionStorage.setItem(TOKEN_KEY, result.token);
     setUser(result.user);
   };
   const loginWithGoogle = async (credential: string) => {
     const version = ++sessionVersion.current;
     const result = await googleLoginRequest(credential);
-    if (sessionVersion.current !== version) throw new Error('Uma operação de sessão mais recente substituiu este login.');
+    if (!isCurrentSession(version, sessionVersion.current, null, null)) throw new Error('Uma operação de sessão mais recente substituiu este login.');
     sessionStorage.setItem(TOKEN_KEY, result.token);
     setUser(result.user);
   };
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) throw new Error('Sessão não encontrada.');
     const version = sessionVersion.current;
     const profile = await meRequest(token);
-    if (sessionVersion.current !== version || getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
+    if (!isCurrentSession(version, sessionVersion.current, null, null) || getToken() !== token) throw new Error('A sessão mudou durante a atualização.');
     setUser(profile);
   };
   return <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, loginWithGoogle, logout, getToken, refreshUser }}>{children}</AuthContext.Provider>;
