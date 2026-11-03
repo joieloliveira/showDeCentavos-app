@@ -32,26 +32,28 @@ export function MyParticipations() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loadedForUser, setLoadedForUser] = useState<string | null>(null);
   useEffect(() => {
-    if (!user) { setData(null); setLoading(false); return; }
+    if (!user) { setData(null); setLoadedForUser(null); setLoading(false); return; }
     const token = getToken();
-    if (!token) { setData(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
+    if (!token) { setData(null); setLoadedForUser(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setData(null); } });
     api.get<Response>('/auctions/my/participations', { params: { page }, headers: { Authorization: `Bearer ${token}` } })
-      .then(({ data: response }) => { if (active) setData(response); })
+      .then(({ data: response }) => { if (active) { setData(response); setLoadedForUser(user.id); } })
       .catch(err => { if (active) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [user, page, getToken, refreshKey]);
   if (!user) return null;
+  const visibleData = loadedForUser === user.id ? data : null;
   return <section id="my-participations" className="account-details" style={{ scrollMarginTop: 150 }}>
     <div><span className="eyebrow">Seus leilões</span><h2>Minhas participações</h2><p>Histórico de lances e resultados dos leilões em que você participou.</p><button type="button" disabled={loading} onClick={() => setRefreshKey(value => value + 1)}>{loading ? 'Atualizando...' : 'Atualizar histórico'}</button></div>
     <div style={{ display: 'grid', gap: 12 }}>
       {loading && <p role="status">Carregando participações...</p>}
       {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
-      {!loading && !error && data?.items.length === 0 && (page > 1 ? <div role="status"><p>Não há participações nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <p>Você ainda não participou de nenhum leilão.</p>)}
-      {!loading && !error && data?.items.map(item => {
+      {!loading && !error && visibleData?.items.length === 0 && (page > 1 ? <div role="status"><p>Não há participações nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <p>Você ainda não participou de nenhum leilão.</p>)}
+      {!loading && !error && visibleData?.items.map(item => {
         const status = participationStatus(item);
         const StatusIcon = status.icon;
         return <article key={item.auctionId} className="panel" style={{ padding: 18, border: '1px solid #e2e8f0', borderRadius: 12, display: 'grid', gap: 12 }}>
@@ -67,10 +69,10 @@ export function MyParticipations() {
           <Link href={`/auctions/registered/${item.auctionId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: '#ea580c', width: 'fit-content' }}>Ver detalhes do leilão <ArrowUpRight size={16} /></Link>
         </article>;
       })}
-      {!loading && !error && !!data && data.total > data.limit && <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {!loading && !error && !!visibleData && visibleData.total > visibleData.limit && <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button type="button" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</button>
-        <span>Página {page} de {Math.ceil(data.total / data.limit)}</span>
-        <button type="button" disabled={loading || page * data.limit >= data.total} onClick={() => setPage(p => p + 1)}>Próxima</button>
+        <span>Página {page} de {Math.ceil(visibleData.total / visibleData.limit)}</span>
+        <button type="button" disabled={loading || page * visibleData.limit >= visibleData.total} onClick={() => setPage(p => p + 1)}>Próxima</button>
       </div>}
     </div>
   </section>;
