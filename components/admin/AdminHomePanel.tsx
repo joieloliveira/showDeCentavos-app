@@ -6,6 +6,7 @@ import { getAuctionOperationsSummary, type AuctionOperationsSummary } from '@/se
 import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActiveAuctionsOverview } from './ActiveAuctionsOverview';
+import { FulfillmentAlertsOverview } from './FulfillmentAlertsOverview';
 
 const sections = [
   { href: '/admin/products', title: 'Produtos', description: 'Cadastre e organize os produtos disponíveis para leilão.' },
@@ -57,6 +58,7 @@ export function AdminHomePanel() {
   if (user.role !== 'admin') return <section className="panel"><h2>Acesso restrito</h2><p>Esta área é exclusiva de administradores.</p></section>;
   return <div className="admin-home-grid">
     <ActiveAuctionsOverview />
+    <FulfillmentAlertsOverview />
     <section className="panel">
       <h2>Indicadores operacionais</h2>
       <p>Atualização automática a cada 30 segundos enquanto esta aba estiver visível.</p>
