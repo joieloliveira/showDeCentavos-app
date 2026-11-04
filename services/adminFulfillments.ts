@@ -44,6 +44,7 @@ export async function advanceAdminDelivery(token: string, auctionId: string, del
 
 export type DeliveryAuditEvent = {
   actorId: string;
+  actorName?: string | null;
   fromStatus: string;
   toStatus: string;
   occurredAt: string;
