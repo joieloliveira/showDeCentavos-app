@@ -1,0 +1,224 @@
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { AdminAuctionCreateForm } from './AdminAuctionCreateForm';
+import { listAdminAuctions, listAdminAuctionEvents, listAdminAuctionBids, getAdminAuctionBidSummary, startAdminAuctionWaiting, type AdminAuction, type AdminAuctionList, type AdminAuctionEvent, type AdminAuctionBidHistory, type AdminAuctionBidSummary } from '@/services/adminAuctions';
+import { getApiError } from '@/services/auth';
+import { money } from '@/utils/format';
+
+const labels: Record<string, string> = { scheduled: 'Agendado', active: 'Ativo', finished: 'Encerrado', cancelled: 'Cancelado' };
+export function AdminAuctionsPanel() {
+  const { user, isLoading, getToken } = useAuth();
+  const [page, setPage] = useState(1);
+  const [refresh, setRefresh] = useState(0);
+  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState('');
+  const [result, setResult] = useState<AdminAuctionList | null>(null);
+  const [selected, setSelected] = useState<AdminAuction | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AdminAuctionEvent[]>([]);
+  const [bidHistory, setBidHistory] = useState<AdminAuctionBidHistory | null>(null);
+  const [bidSummary, setBidSummary] = useState<AdminAuctionBidSummary | null>(null);
+  const [bidSummaryLoading, setBidSummaryLoading] = useState(false);
+  const [bidSummaryError, setBidSummaryError] = useState('');
+  const [bidPage, setBidPage] = useState(1);
+  const [bidLoading, setBidLoading] = useState(false);
+  const [bidError, setBidError] = useState('');
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [waitingMinutes, setWaitingMinutes] = useState(60);
+  const [starting, setStarting] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [now, setNow] = useState(() => Date.now());
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(interval); }, []);
+  async function beginWaiting(auction: AdminAuction) {
+    const token = getToken();
+    if (!token || starting || auction.status !== 'scheduled' || auction.waitingStartedAt) return;
+    if (!window.confirm(`Iniciar a espera de ${waitingMinutes} minuto(s) para o leilão de ${auction.product?.name ?? 'produto'}? Isso grava a data de início no banco, mas não habilita lances nesta interface.`)) return;
+    setStarting(true); setNotice('');
+    try { await startAdminAuctionWaiting(token, auction._id, waitingMinutes); setNotice('Contagem de espera iniciada.'); setSelected(null); setRefresh(n => n + 1); }
+    catch (err) { setNotice(getApiError(err)); }
+    finally { setStarting(false); }
+  }
+  const isAdmin = user?.role === 'admin';
+  useEffect(() => {
+    if (isLoading || !isAdmin) return;
+    const token = getToken();
+    if (!token) return;
+    let active = true;
+    let inFlight = false;
+    const load = async (showLoading = false) => {
+      if (!active || inFlight || document.visibilityState === 'hidden') return;
+      inFlight = true;
+      if (showLoading) setLoading(true);
+      try {
+        const data = await listAdminAuctions(token, page, status);
+        if (!active) return;
+        setResult(data);
+        setLastUpdated(Date.now());
+        setError('');
+        setSelected(previous => previous ? (data.auctions.find(a => a._id === previous._id) ?? null) : null);
+      } catch (err) {
+        if (active) setError(getApiError(err));
+      } finally {
+        inFlight = false;
+        if (active && showLoading) setLoading(false);
+      }
+    };
+    void load(true);
+    const interval = window.setInterval(() => { void load(); }, 10000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [getToken, isAdmin, isLoading, page, status, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setAuditEvents([]); setAuditError(''); setAuditLoading(false); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setAuditLoading(true);
+    setAuditError('');
+    setAuditEvents([]);
+    listAdminAuctionEvents(token, selected._id)
+      .then(events => { if (alive) setAuditEvents(events); })
+      .catch(err => { if (alive) setAuditError(getApiError(err)); })
+      .finally(() => { if (alive) setAuditLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, isAdmin, getToken, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setBidHistory(null); setBidError(''); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setBidLoading(true);
+    setBidError('');
+    listAdminAuctionBids(token, selected._id, bidPage)
+      .then(data => { if (alive) setBidHistory(data); })
+      .catch(err => { if (alive) setBidError(getApiError(err)); })
+      .finally(() => { if (alive) setBidLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, bidPage, isAdmin, getToken, refresh]);
+  useEffect(() => {
+    if (!isAdmin || !selected?._id) { setBidSummary(null); setBidSummaryError(''); return; }
+    const token = getToken();
+    if (!token) return;
+    let alive = true;
+    setBidSummary(null);
+    setBidSummaryLoading(true);
+    setBidSummaryError('');
+    getAdminAuctionBidSummary(token, selected._id)
+      .then(summary => { if (alive) setBidSummary(summary); })
+      .catch(err => { if (alive) setBidSummaryError(getApiError(err)); })
+      .finally(() => { if (alive) setBidSummaryLoading(false); });
+    return () => { alive = false; };
+  }, [selected?._id, isAdmin, getToken, refresh]);
+  if (isLoading) return <div className="panel">Verificando sua sessão...</div>;
+  if (!user) return <div className="panel"><h2>Entre como administrador</h2><Link className="btn-primary" href="/login?next=/admin/auctions">Entrar</Link></div>;
+  if (!isAdmin) return <div className="panel"><h2>Acesso restrito</h2><p>Área exclusiva de administradores.</p></div>;
+  const auctionTimeLabel = (auction: AdminAuction) => {
+    if (auction.status === 'scheduled') {
+      if (!auction.waitingStartedAt || !auction.startsAt) return 'Aguardando início da espera';
+      const remaining = Math.max(0, Math.ceil((new Date(auction.startsAt).getTime() - now) / 1000));
+      return remaining > 0 ? `Início em ${Math.floor(remaining / 60)}m ${remaining % 60}s` : 'Aguardando ativação';
+    }
+    if (auction.status === 'active') {
+      if (!auction.endsAt) return 'Sem término definido';
+      const remaining = Math.max(0, Math.ceil((new Date(auction.endsAt).getTime() - now) / 1000));
+      return remaining > 0 ? `Restam ${Math.floor(remaining / 60)}m ${remaining % 60}s` : 'Aguardando atualização';
+    }
+    if (auction.status === 'finished') return 'Encerrado';
+    return 'Cancelado';
+  };
+  const auctions = result?.auctions.filter(a => (a.product?.name ?? '').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))) ?? [];
+  return <div className="admin-auctions">
+    <div className="admin-auction-notice"><strong>Administração de leilões</strong><p>Dados reais do MongoDB. É possível cadastrar e iniciar a contagem de espera manualmente. A interface pública ainda não permite lances. A busca por nome filtra apenas a página carregada.</p></div>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}><button type="button" className="incident-action" disabled={loading} onClick={() => setRefresh(n => n + 1)}>{loading ? "Atualizando..." : "Atualizar dados"}</button><span className="retail">{lastUpdated ? `Sincronização automática a cada 10s · Última atualização: ${new Date(lastUpdated).toLocaleTimeString("pt-BR")}` : "Aguardando consulta"}</span></div>
+    <div className="admin-auction-stats"><div><span>Total de leilões cadastrados {status ? '(filtro atual)' : ''}</span><strong>{result?.pagination.total ?? '—'}</strong></div><div><span>Registros nesta página</span><strong>{result?.auctions.length ?? '—'}</strong></div><div><span>Página atual</span><strong>{page}</strong></div></div>
+    {result?.statusCounts && <div className="admin-auction-stats" aria-label="Totais de leilões por situação">
+      {([['scheduled', 'Agendados'], ['active', 'Ativos'], ['finished', 'Encerrados'], ['cancelled', 'Cancelados']] as const).map(([key, label]) => <button type="button" key={key} className="admin-auction-stat-filter" aria-pressed={status === key} title={status === key ? 'Remover filtro' : `Filtrar: ${label}`} onClick={() => { setStatus(current => current === key ? '' : key); setPage(1); }}><span>{label}</span><strong>{result.statusCounts?.[key] ?? 0}</strong></button>)}
+    </div>}
+    <AdminAuctionCreateForm onCreated={() => { setPage(1); setRefresh(n => n + 1); }} />
+    <section className="panel admin-auction-panel"><h2>Leilões cadastrados</h2>
+      <div className="admin-auction-filters"><label>Buscar nesta página<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nome do produto..." /></label><label>Situação<select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">Todas</option><option value="scheduled">Agendado</option><option value="active">Ativo</option><option value="finished">Encerrado</option><option value="cancelled">Cancelado</option></select></label></div>
+      {loading && <p role="status">Carregando leilões...</p>}
+      {error && <p role="alert">{error}</p>}
+      {!loading && result && <><div className="admin-auction-table-wrap"><table className="admin-auction-table"><thead><tr><th>Produto</th><th>Situação</th><th>Preço inicial</th><th>Preço atual</th><th>Custo do lance</th><th>Tempo / andamento</th><th>Detalhes</th></tr></thead><tbody>{auctions.map(a => <tr key={a._id}><td><span className="admin-auction-product"><strong>{a.product?.name ?? 'Produto indisponível'}</strong></span></td><td>{labels[a.status] ?? a.status}</td><td>{money(a.startPriceCents)}</td><td>{money(a.currentPriceCents)}</td><td>{money(a.bidCostCents)}</td><td><span role="status">{auctionTimeLabel(a)}</span></td><td><button type="button" className="incident-action" onClick={() => { setBidPage(1); setBidHistory(null); setSelected(a); }}>Detalhes</button> <Link href={`/auctions/registered/${a._id}`} className="incident-action">Ver na vitrine</Link></td></tr>)}</tbody></table></div>
+        {auctions.length === 0 && <p>Nenhum leilão encontrado nesta página.</p>}
+        <p>{result.pagination.total} leilão(ões) no banco para o filtro selecionado.</p>
+        <div className="incident-pagination"><button type="button" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Anterior</button><span>Página {page} de {Math.max(1, result.pagination.totalPages)}</span><button type="button" disabled={page >= result.pagination.totalPages || loading} onClick={() => setPage(p => p + 1)}>Próxima</button></div>
+      </>}
+    </section>
+    {selected && <section className="panel admin-auction-panel"><h2>{selected.product?.name ?? 'Leilão'}</h2><p><strong>ID:</strong> {selected._id}</p><p><Link href={`/auctions/registered/${selected._id}`} className="incident-action">Abrir página pública do leilão</Link></p><p><strong>Situação:</strong> {labels[selected.status] ?? selected.status}</p><div className="admin-auction-detail-grid">
+      <div><span>Cadastrado em</span><strong>{selected.createdAt ? new Date(selected.createdAt).toLocaleString('pt-BR') : 'Não informado'}</strong></div>
+      <div><span>Última alteração</span><strong>{selected.updatedAt ? new Date(selected.updatedAt).toLocaleString('pt-BR') : 'Não informado'}</strong></div>
+      <div><span>Espera iniciada em</span><strong>{selected.waitingStartedAt ? new Date(selected.waitingStartedAt).toLocaleString('pt-BR') : 'Ainda não iniciada'}</strong></div>
+      <div><span>Espera configurada</span><strong>{selected.waitingMinutes ? `${selected.waitingMinutes} minutos` : 'Não informada'}</strong></div>
+      <div><span>Preço inicial</span><strong>{money(selected.startPriceCents)}</strong></div>
+      <div><span>Preço atual / final</span><strong>{money(selected.currentPriceCents)}</strong></div>
+      <div><span>Custo por lance</span><strong>{money(selected.bidCostCents)}</strong></div>
+      <div><span>Incremento por lance</span><strong>{selected.bidIncrementCents == null ? 'Não informado' : money(selected.bidIncrementCents)}</strong></div>
+    </div><section className="admin-auction-timeline" aria-label="Linha do tempo do leilão">
+      <h3>Linha do tempo</h3>
+      <ol>
+        {([
+          { label: 'Cadastro do leilão', date: selected.createdAt },
+          { label: 'Início da espera', date: selected.waitingStartedAt },
+          { label: 'Início programado', date: selected.startsAt },
+          { label: selected.status === 'finished' ? 'Encerramento' : 'Término previsto ou registrado', date: selected.endsAt },
+        ] as { label: string; date?: string | null }[]).map(item => <li key={item.label}><strong>{item.label}</strong><span>{item.date ? new Date(item.date).toLocaleString('pt-BR') : 'Ainda não registrado'}</span></li>)}
+      </ol>
+      <p><small>Linha do tempo reconstruída a partir das datas existentes. Não é um log de auditoria nem registra todas as transições de estado.</small></p>
+    </section>
+    <section className="admin-auction-timeline" aria-label="Eventos de auditoria persistidos">
+      <h3>Histórico de auditoria</h3>
+      {auditLoading && <p role="status">Carregando eventos...</p>}
+      {auditError && <p role="alert">{auditError}</p>}
+      {!auditLoading && !auditError && auditEvents.length === 0 && <p>Nenhum evento persistido para este leilão. Eventos anteriores à implantação da auditoria não são reconstruídos.</p>}
+      {!auditLoading && !auditError && auditEvents.length > 0 && <ol>{auditEvents.map(event => <li key={event._id}><strong>{({ created: 'Leilão criado', waiting_started: 'Espera iniciada', activated: 'Leilão ativado', finished: 'Leilão encerrado' } as Record<string, string>)[event.eventType] ?? event.eventType} ({event.source === 'scheduler' ? 'automático' : 'administrador'})</strong><span>{new Date(event.occurredAt).toLocaleString('pt-BR')}</span></li>)}</ol>}
+    </section>
+    <section className="admin-auction-timeline" aria-label="Histórico financeiro de lances">
+      <h3>Histórico financeiro de lances</h3>
+      {bidSummaryLoading && <p role="status">Calculando conciliação...</p>}
+      {bidSummaryError && <p role="alert">Resumo indisponível: {bidSummaryError}</p>}
+      {bidSummary && <div className="admin-auction-detail-grid" aria-label="Resumo de conciliação financeira">
+        <div><span>Total de lances</span><strong>{bidSummary.total}</strong></div>
+        <div><span>Conciliados</span><strong>{bidSummary.matched}</strong></div>
+        <div><span>Sem movimentação</span><strong>{bidSummary.missing}</strong></div>
+        <div><span>Divergências</span><strong>{bidSummary.mismatch}</strong></div>
+      </div>}
+      <p><small>Conciliação somente de leitura entre lances e movimentações da carteira. A ausência de movimentação pode indicar dados legados ou uma inconsistência a investigar.</small></p>
+      {bidLoading && <p role="status">Carregando lances...</p>}
+      {bidError && <p role="alert">{bidError}</p>}
+      {!bidLoading && !bidError && bidHistory && <>
+        <p>{bidHistory.pagination.total} lance(s) registrado(s).</p>
+        {bidHistory.bids.length === 0 ? <p>Nenhum lance nesta página.</p> : <div className="admin-auction-table-wrap"><table className="admin-auction-table">
+          <thead><tr><th>Data</th><th>Participante (ID)</th><th>Custo</th><th>Preço antes</th><th>Preço depois</th><th>Saldo após</th><th>Conciliação</th></tr></thead>
+          <tbody>{bidHistory.bids.map(bid => <tr key={bid.bidId}>
+            <td>{new Date(bid.createdAt).toLocaleString('pt-BR')}</td>
+            <td title={bid.userId}>{bid.userId}</td>
+            <td>{money(bid.bidCostCents)}</td>
+            <td>{money(bid.priceBeforeCents)}</td>
+            <td>{money(bid.priceAfterCents)}</td>
+            <td>{money(bid.balanceAfterCents)}</td>
+            <td>{({ matched: 'Conciliado', missing: 'Sem movimentação', mismatch: 'Divergência' } as const)[bid.ledgerStatus]}</td>
+          </tr>)}</tbody>
+        </table></div>}
+        <div className="incident-pagination">
+          <button type="button" disabled={bidPage <= 1} onClick={() => setBidPage(p => p - 1)}>Anterior</button>
+          <span>Página {bidPage} de {Math.max(1, bidHistory.pagination.totalPages)}</span>
+          <button type="button" disabled={bidPage >= bidHistory.pagination.totalPages} onClick={() => setBidPage(p => p + 1)}>Próxima</button>
+        </div>
+      </>}
+    </section>
+<p><strong>Quantidade de lances:</strong> {selected.bidCount}</p><p><strong>Duração por lance:</strong> {selected.durationSeconds} segundos</p><p><strong>Início:</strong> {selected.startsAt ? new Date(selected.startsAt).toLocaleString('pt-BR') : 'Não iniciado'}</p>{selected.status === 'scheduled' && selected.startsAt && <p><strong>Contagem de espera:</strong> {Math.max(0, Math.ceil((new Date(selected.startsAt).getTime() - now) / 1000))} segundos restantes</p>}{selected.status === 'scheduled' && !selected.waitingStartedAt && !selected.startsAt && <div className="admin-auction-create-fields"><label>Tempo de espera (minutos)<input type="number" min="1" max="10080" value={waitingMinutes} onChange={e => setWaitingMinutes(Number(e.target.value))}/></label><button type="button" className="incident-action" disabled={starting || !Number.isSafeInteger(waitingMinutes) || waitingMinutes < 1 || waitingMinutes > 10080} onClick={() => void beginWaiting(selected)}>{starting ? 'Iniciando...' : 'Iniciar contagem de espera'}</button></div>}{notice && <p role="status">{notice}</p>}<p><strong>Término:</strong> {selected.endsAt ? new Date(selected.endsAt).toLocaleString('pt-BR') : 'Não definido'}</p><button type="button" className="incident-action" onClick={() => setSelected(null)}>Fechar detalhes</button></section>}
+  </div>;
+}
