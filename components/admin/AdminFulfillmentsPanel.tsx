@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiError } from '@/services/auth';
-import { advanceAdminDelivery, listAdminFulfillments, type FulfillmentList } from '@/services/adminFulfillments';
+import { advanceAdminDelivery, getAdminDeliveryAudit, listAdminFulfillments, type DeliveryAuditEvent, type FulfillmentList } from '@/services/adminFulfillments';
 
 const money = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const date = (value: string) => new Date(value).toLocaleString('pt-BR');
@@ -20,6 +20,10 @@ export function AdminFulfillmentsPanel() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [notice, setNotice] = useState('');
+  const [auditAuctionId, setAuditAuctionId] = useState<string | null>(null);
+  const [auditItems, setAuditItems] = useState<DeliveryAuditEvent[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
@@ -44,11 +48,30 @@ export function AdminFulfillmentsPanel() {
     try {
       await advanceAdminDelivery(token, auctionId, target);
       setNotice('Entrega atualizada com sucesso.');
+      setAuditAuctionId(null);
       setRefresh(n => n + 1);
     } catch (err) {
       setError(getApiError(err));
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const toggleAudit = async (auctionId: string) => {
+    if (auditAuctionId === auctionId) { setAuditAuctionId(null); return; }
+    const token = getToken();
+    if (!token) { setAuditError('Sessão administrativa indisponível.'); return; }
+    setAuditAuctionId(auctionId);
+    setAuditItems([]);
+    setAuditError('');
+    setAuditLoading(true);
+    try {
+      const items = await getAdminDeliveryAudit(token, auctionId);
+      setAuditItems(items);
+    } catch (err: unknown) {
+      setAuditError(getApiError(err));
+    } finally {
+      setAuditLoading(false);
     }
   };
 
@@ -75,7 +98,7 @@ export function AdminFulfillmentsPanel() {
     {!loading && result && <>
       <p>{result.total} arremate(s) encontrado(s).</p>
       <div className="incident-table-wrap"><table className="incident-table">
-        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th></tr></thead>
+        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th><th>Auditoria</th></tr></thead>
         <tbody>{result.items.map(item => <tr key={item.auctionId}>
           <td>{item.auctionId}</td><td>{money(item.winningPriceCents)}</td><td>{date(item.paymentDeadline)}</td>
           <td>{item.paymentStatus}</td><td>{item.deliveryStatus}</td>
@@ -91,9 +114,28 @@ export function AdminFulfillmentsPanel() {
                 {({ not_started: 'Preparar', preparing: 'Marcar enviado', shipped: 'Confirmar entrega' } as Record<string, string>)[item.deliveryStatus]}
               </button>
             : 'Indisponível'}</td>
+          <td><button type="button" className="incident-action" onClick={() => void toggleAudit(item.auctionId)}
+            aria-expanded={auditAuctionId === item.auctionId}>
+            {auditAuctionId === item.auctionId ? 'Fechar histórico' : 'Ver histórico'}
+          </button></td>
         </tr>)}</tbody>
       </table></div>
       {result.items.length === 0 && <p>Nenhum arremate encontrado.</p>}
+      {auditAuctionId && <section className="panel" aria-label="Histórico administrativo de entrega">
+        <h3>Histórico de entrega</h3>
+        <p>Arremate: {auditAuctionId}</p>
+        {auditLoading && <p role="status">Carregando histórico...</p>}
+        {auditError && <p role="alert">{auditError}</p>}
+        {!auditLoading && !auditError && auditItems.length === 0 && <p>Nenhuma movimentação administrativa registrada.</p>}
+        {!auditLoading && !auditError && auditItems.length > 0 && <ol>
+          {auditItems.map((event, index) => <li key={event.toStatus + index}>
+            <strong>{event.fromStatus} → {event.toStatus}</strong> — {date(event.occurredAt)}
+            <span> · Administrador: {event.actorId}</span>
+          </li>)}
+        </ol>}
+        <p>Consulta somente leitura. Nenhum endereço é exibido neste histórico.</p>
+      </section>}
+
       <div className="incident-pagination">
         <button type="button" disabled={page <= 1 || loading} onClick={() => setPage(n => n - 1)}>Anterior</button>
         <span>Página {page} de {Math.max(1, Math.ceil(result.total / result.limit))}</span>
