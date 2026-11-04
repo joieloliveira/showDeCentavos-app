@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Audit = { actorId: string; fromStatus: string; toStatus: string; occurredAt: string };
+type Audit = { actorId: string; actorName?: string | null; fromStatus: string; toStatus: string; occurredAt: string };
 type Fulfillment = { auctionId: string; winningPriceCents: number; paymentStatus: string; deliveryStatus: string };
 const base = 'http://127.0.0.1:3002';
 const money = (value: number) => (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -96,7 +96,7 @@ export default function DeliveryAuditIntegrationPage() {
             {events.length === 0 ? <p>Nenhum evento encontrado.</p> : <ol>{events.map((event, index) =>
               <li key={event.toStatus + index}><strong>{event.fromStatus} → {event.toStatus}</strong>
                 {' — '}{new Date(event.occurredAt).toLocaleString('pt-BR')}
-                {' · Administrador: '}{event.actorId}</li>)}</ol>}
+                {' · Administrador: '}{event.actorName || event.actorId}</li>)}</ol>}
             <p>Consulta somente leitura. Endereços não são incluídos na resposta da auditoria.</p>
           </section>}
         </>}
