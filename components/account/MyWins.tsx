@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { WinShippingAddressForm } from './WinShippingAddressForm';
+import { WinPaymentPreview } from './WinPaymentPreview';
 import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 import { useAuth } from '@/contexts/AuthContext';
@@ -85,6 +86,7 @@ export function MyWins() {
             <span style={{ borderRadius: 8, background: '#f1f5f9', padding: '7px 10px', color: '#475569' }}>Entrega: {deliveryLabels[win.deliveryStatus] ?? 'indisponível'}</span>
           </div>
           <DeliveryProgress paymentStatus={win.paymentStatus} deliveryStatus={win.deliveryStatus} />
+          <WinPaymentPreview auctionId={win.auctionId} getToken={getToken} />
           <Link href={`/auctions/registered/${win.auctionId}`}>Ver detalhes do leilão</Link>
           </div>
         </div>
