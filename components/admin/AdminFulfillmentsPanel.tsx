@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiError } from '@/services/auth';
@@ -24,7 +24,10 @@ export function AdminFulfillmentsPanel() {
   const [auditItems, setAuditItems] = useState<DeliveryAuditEvent[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState('');
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const auditRequest = useRef(0);
   const isAdmin = user?.role === 'admin';
+  const selectedDetail = result?.items.find(item => item.auctionId === detailId);
 
   useEffect(() => {
     if (isLoading || !isAdmin) return;
@@ -48,7 +51,9 @@ export function AdminFulfillmentsPanel() {
     try {
       await advanceAdminDelivery(token, auctionId, target);
       setNotice('Entrega atualizada com sucesso.');
+      auditRequest.current += 1;
       setAuditAuctionId(null);
+      setAuditItems([]);
       setRefresh(n => n + 1);
     } catch (err) {
       setError(getApiError(err));
@@ -58,20 +63,21 @@ export function AdminFulfillmentsPanel() {
   };
 
   const toggleAudit = async (auctionId: string) => {
-    if (auditAuctionId === auctionId) { setAuditAuctionId(null); return; }
+    if (auditAuctionId === auctionId) { auditRequest.current += 1; setAuditAuctionId(null); return; }
     const token = getToken();
     if (!token) { setAuditError('Sessão administrativa indisponível.'); return; }
+    const request = ++auditRequest.current;
     setAuditAuctionId(auctionId);
     setAuditItems([]);
     setAuditError('');
     setAuditLoading(true);
     try {
       const items = await getAdminDeliveryAudit(token, auctionId);
-      setAuditItems(items);
+      if (request === auditRequest.current) setAuditItems(items);
     } catch (err: unknown) {
-      setAuditError(getApiError(err));
+      if (request === auditRequest.current) setAuditError(getApiError(err));
     } finally {
-      setAuditLoading(false);
+      if (request === auditRequest.current) setAuditLoading(false);
     }
   };
 
@@ -83,11 +89,11 @@ export function AdminFulfillmentsPanel() {
     <h2>Arremates e entregas</h2>
     <p>A confirmação de pagamento não está disponível nesta tela. As entregas exigem pagamento confirmado e endereço válido.</p>
     <div className="incident-filters">
-      <label>Pagamento{' '}<select aria-label="Filtrar pagamento" value={payment} onChange={e => { setPayment(e.target.value); setPage(1); }}>
+      <label>Pagamento{' '}<select aria-label="Filtrar pagamento" value={payment} onChange={e => { auditRequest.current += 1; setAuditAuctionId(null); setDetailId(null); setPayment(e.target.value); setPage(1); }}>
         <option value="">Todos</option>
         {['not_started', 'pending', 'paid', 'failed', 'refunded', 'cancelled'].map(x => <option key={x} value={x}>{x}</option>)}
       </select></label>
-      <label>Entrega{' '}<select aria-label="Filtrar entrega" value={delivery} onChange={e => { setDelivery(e.target.value); setPage(1); }}>
+      <label>Entrega{' '}<select aria-label="Filtrar entrega" value={delivery} onChange={e => { auditRequest.current += 1; setAuditAuctionId(null); setDetailId(null); setDelivery(e.target.value); setPage(1); }}>
         <option value="">Todas</option>
         {['not_started', 'preparing', 'shipped', 'delivered', 'cancelled'].map(x => <option key={x} value={x}>{x}</option>)}
       </select></label>
@@ -98,7 +104,7 @@ export function AdminFulfillmentsPanel() {
     {!loading && result && <>
       <p>{result.total} arremate(s) encontrado(s).</p>
       <div className="incident-table-wrap"><table className="incident-table">
-        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th><th>Auditoria</th></tr></thead>
+        <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th><th>Detalhes</th><th>Auditoria</th></tr></thead>
         <tbody>{result.items.map(item => <tr key={item.auctionId}>
           <td>{item.auctionId}</td><td>{money(item.winningPriceCents)}</td><td>{date(item.paymentDeadline)}</td>
           <td>{item.paymentStatus}</td><td>{item.deliveryStatus}</td>
@@ -114,6 +120,10 @@ export function AdminFulfillmentsPanel() {
                 {({ not_started: 'Preparar', preparing: 'Marcar enviado', shipped: 'Confirmar entrega' } as Record<string, string>)[item.deliveryStatus]}
               </button>
             : 'Indisponível'}</td>
+          <td><button type="button" className="incident-action" aria-expanded={detailId === item.auctionId}
+            onClick={() => setDetailId(current => current === item.auctionId ? null : item.auctionId)}>
+            {detailId === item.auctionId ? 'Fechar detalhes' : 'Ver detalhes'}
+          </button></td>
           <td><button type="button" className="incident-action" onClick={() => void toggleAudit(item.auctionId)}
             aria-expanded={auditAuctionId === item.auctionId}>
             {auditAuctionId === item.auctionId ? 'Fechar histórico' : 'Ver histórico'}
@@ -121,6 +131,22 @@ export function AdminFulfillmentsPanel() {
         </tr>)}</tbody>
       </table></div>
       {result.items.length === 0 && <p>Nenhum arremate encontrado.</p>}
+      {selectedDetail && <section className="panel" aria-label="Detalhes do arremate">
+        <h3>Detalhes do arremate</h3>
+        <p><strong>Leilão:</strong> {selectedDetail.auctionId}</p>
+        <p><strong>Vencedor:</strong> {selectedDetail.winnerId}</p>
+        <p><strong>Produto:</strong> {selectedDetail.productId}</p>
+        <p><strong>Valor:</strong> {money(selectedDetail.winningPriceCents)} · <strong>Arrematado em:</strong> {date(selectedDetail.wonAt)}</p>
+        <p><strong>Pagamento:</strong> {selectedDetail.paymentStatus} · <strong>Entrega:</strong> {selectedDetail.deliveryStatus}</p>
+        <h4>Endereço de entrega (restrito a administradores)</h4>
+        {selectedDetail.shippingAddress ? <div>
+          <p><strong>Destinatário:</strong> {selectedDetail.shippingAddress.recipientName || 'Não informado'}</p>
+          <p>{[selectedDetail.shippingAddress.street, selectedDetail.shippingAddress.number, selectedDetail.shippingAddress.complement].filter(Boolean).join(', ')}</p>
+          <p>{[selectedDetail.shippingAddress.neighborhood, selectedDetail.shippingAddress.city, selectedDetail.shippingAddress.state].filter(Boolean).join(' · ')}</p>
+          <p><strong>CEP:</strong> {selectedDetail.shippingAddress.zipCode || 'Não informado'} · <strong>Telefone:</strong> {selectedDetail.shippingAddress.phone || 'Não informado'}</p>
+        </div> : <p>Endereço ainda não cadastrado.</p>}
+        <p>Os dados pessoais desta seção não são incluídos no histórico de auditoria.</p>
+      </section>}
       {auditAuctionId && <section className="panel" aria-label="Histórico administrativo de entrega">
         <h3>Histórico de entrega</h3>
         <p>Arremate: {auditAuctionId}</p>
@@ -130,16 +156,16 @@ export function AdminFulfillmentsPanel() {
         {!auditLoading && !auditError && auditItems.length > 0 && <ol>
           {auditItems.map((event, index) => <li key={event.toStatus + index}>
             <strong>{event.fromStatus} → {event.toStatus}</strong> — {date(event.occurredAt)}
-            <span> · Administrador: {event.actorId}</span>
+            <span> · Administrador: {event.actorName || event.actorId}</span>
           </li>)}
         </ol>}
         <p>Consulta somente leitura. Nenhum endereço é exibido neste histórico.</p>
       </section>}
 
       <div className="incident-pagination">
-        <button type="button" disabled={page <= 1 || loading} onClick={() => setPage(n => n - 1)}>Anterior</button>
+        <button type="button" disabled={page <= 1 || loading} onClick={() => { auditRequest.current += 1; setAuditAuctionId(null); setDetailId(null); setPage(n => n - 1); }}>Anterior</button>
         <span>Página {page} de {Math.max(1, Math.ceil(result.total / result.limit))}</span>
-        <button type="button" disabled={page * result.limit >= result.total || loading} onClick={() => setPage(n => n + 1)}>Próxima</button>
+        <button type="button" disabled={page * result.limit >= result.total || loading} onClick={() => { auditRequest.current += 1; setAuditAuctionId(null); setDetailId(null); setPage(n => n + 1); }}>Próxima</button>
       </div>
     </>}
   </section>;
