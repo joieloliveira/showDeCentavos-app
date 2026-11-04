@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { FulfillmentDetails, paymentLabels, deliveryLabels } from '@/components/admin/FulfillmentDetails';
+import type { Fulfillment } from '@/services/adminFulfillments';
 
 type Audit = { actorId: string; actorName?: string | null; fromStatus: string; toStatus: string; occurredAt: string };
-type Fulfillment = { auctionId: string; winningPriceCents: number; paymentStatus: string; deliveryStatus: string };
 const base = 'http://127.0.0.1:3002';
 const money = (value: number) => (value / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -14,6 +15,7 @@ export default function DeliveryAuditIntegrationPage() {
   const [record, setRecord] = useState<Fulfillment | null>(null);
   const [token, setToken] = useState('');
   const [events, setEvents] = useState<Audit[] | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -84,13 +86,15 @@ export default function DeliveryAuditIntegrationPage() {
         {error && <p role="alert">{error}</p>}
         {record && <><p role="status">Arremate fictício recuperado do MongoDB temporário pela API real.</p>
           <div className="incident-table-wrap"><table className="incident-table">
-            <thead><tr><th>Arremate</th><th>Valor</th><th>Pagamento</th><th>Entrega</th><th>Auditoria</th></tr></thead>
+            <thead><tr><th>Arremate</th><th>Valor</th><th>Pagamento</th><th>Entrega</th><th>Detalhes</th><th>Auditoria</th></tr></thead>
             <tbody><tr><td>{record.auctionId}</td><td>{money(record.winningPriceCents)}</td>
-              <td>{record.paymentStatus}</td><td>{record.deliveryStatus}</td>
+              <td>{paymentLabels[record.paymentStatus] || record.paymentStatus}</td><td>{deliveryLabels[record.deliveryStatus] || record.deliveryStatus}</td>
+              <td><button type="button" className="incident-action" aria-expanded={showDetails} onClick={() => setShowDetails(value => !value)}>{showDetails ? 'Fechar detalhes' : 'Ver detalhes'}</button></td>
               <td><button type="button" className="incident-action" disabled={auditLoading} onClick={() => void toggle()} aria-expanded={events !== null}>
                 {auditLoading ? 'Consultando...' : events ? 'Fechar histórico' : 'Ver histórico'}
               </button></td></tr></tbody>
           </table></div>
+          {showDetails && <FulfillmentDetails item={record} />}
           {events && <section className="panel" aria-label="Histórico real de entrega">
             <h3>Histórico obtido da API</h3>
             {events.length === 0 ? <p>Nenhum evento encontrado.</p> : <ol>{events.map((event, index) =>
