@@ -41,3 +41,20 @@ export async function advanceAdminDelivery(token: string, auctionId: string, del
   );
   return data;
 }
+
+export type DeliveryAuditEvent = {
+  actorId: string;
+  fromStatus: string;
+  toStatus: string;
+  occurredAt: string;
+};
+export async function getAdminDeliveryAudit(token: string, auctionId: string) {
+  const { data } = await api.get<{ auctionId: string; items: DeliveryAuditEvent[] }>(
+    `/auctions/admin/fulfillments/${encodeURIComponent(auctionId)}/delivery-audit`,
+    { headers: headers(token) }
+  );
+  if (data?.auctionId !== auctionId || !Array.isArray(data.items)) {
+    throw new Error('Resposta de auditoria inválida.');
+  }
+  return data.items;
+}
