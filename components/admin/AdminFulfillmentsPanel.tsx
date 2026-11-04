@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiError } from '@/services/auth';
+import { FulfillmentDetails, paymentLabels, deliveryLabels } from '@/components/admin/FulfillmentDetails';
 import { advanceAdminDelivery, getAdminDeliveryAudit, listAdminFulfillments, type DeliveryAuditEvent, type FulfillmentList } from '@/services/adminFulfillments';
 
 const money = (cents: number) => (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -32,7 +33,7 @@ export function AdminFulfillmentsPanel() {
   useEffect(() => {
     if (isLoading || !isAdmin) return;
     const token = getToken();
-    if (!token) return;
+    if (!token) { queueMicrotask(() => setError('Sessão administrativa indisponível.')); return; }
     let active = true;
     queueMicrotask(() => { if (active) { setLoading(true); setError(''); setResult(null); } });
     listAdminFulfillments(token, page, payment, delivery)
@@ -51,6 +52,7 @@ export function AdminFulfillmentsPanel() {
     try {
       await advanceAdminDelivery(token, auctionId, target);
       setNotice('Entrega atualizada com sucesso.');
+      setDetailId(null);
       auditRequest.current += 1;
       setAuditAuctionId(null);
       setAuditItems([]);
@@ -65,7 +67,7 @@ export function AdminFulfillmentsPanel() {
   const toggleAudit = async (auctionId: string) => {
     if (auditAuctionId === auctionId) { auditRequest.current += 1; setAuditAuctionId(null); return; }
     const token = getToken();
-    if (!token) { setAuditError('Sessão administrativa indisponível.'); return; }
+    if (!token) { setAuditAuctionId(auctionId); setAuditError('Sessão administrativa indisponível.'); return; }
     const request = ++auditRequest.current;
     setAuditAuctionId(auctionId);
     setAuditItems([]);
@@ -107,7 +109,7 @@ export function AdminFulfillmentsPanel() {
         <thead><tr><th>Arremate</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th>Entrega</th><th>Destinatário</th><th>Ação</th><th>Detalhes</th><th>Auditoria</th></tr></thead>
         <tbody>{result.items.map(item => <tr key={item.auctionId}>
           <td>{item.auctionId}</td><td>{money(item.winningPriceCents)}</td><td>{date(item.paymentDeadline)}</td>
-          <td>{item.paymentStatus}</td><td>{item.deliveryStatus}</td>
+          <td>{paymentLabels[item.paymentStatus] || item.paymentStatus}</td><td>{deliveryLabels[item.deliveryStatus] || item.deliveryStatus}</td>
           <td>{item.shippingAddress?.recipientName || 'Endereço pendente'}</td>
           <td>{item.paymentStatus === 'paid' && item.addressSubmittedAt && item.shippingAddress && ['not_started', 'preparing', 'shipped'].includes(item.deliveryStatus)
             ? <button type="button" className="incident-action"
@@ -131,22 +133,7 @@ export function AdminFulfillmentsPanel() {
         </tr>)}</tbody>
       </table></div>
       {result.items.length === 0 && <p>Nenhum arremate encontrado.</p>}
-      {selectedDetail && <section className="panel" aria-label="Detalhes do arremate">
-        <h3>Detalhes do arremate</h3>
-        <p><strong>Leilão:</strong> {selectedDetail.auctionId}</p>
-        <p><strong>Vencedor:</strong> {selectedDetail.winnerId}</p>
-        <p><strong>Produto:</strong> {selectedDetail.productId}</p>
-        <p><strong>Valor:</strong> {money(selectedDetail.winningPriceCents)} · <strong>Arrematado em:</strong> {date(selectedDetail.wonAt)}</p>
-        <p><strong>Pagamento:</strong> {selectedDetail.paymentStatus} · <strong>Entrega:</strong> {selectedDetail.deliveryStatus}</p>
-        <h4>Endereço de entrega (restrito a administradores)</h4>
-        {selectedDetail.shippingAddress ? <div>
-          <p><strong>Destinatário:</strong> {selectedDetail.shippingAddress.recipientName || 'Não informado'}</p>
-          <p>{[selectedDetail.shippingAddress.street, selectedDetail.shippingAddress.number, selectedDetail.shippingAddress.complement].filter(Boolean).join(', ')}</p>
-          <p>{[selectedDetail.shippingAddress.neighborhood, selectedDetail.shippingAddress.city, selectedDetail.shippingAddress.state].filter(Boolean).join(' · ')}</p>
-          <p><strong>CEP:</strong> {selectedDetail.shippingAddress.zipCode || 'Não informado'} · <strong>Telefone:</strong> {selectedDetail.shippingAddress.phone || 'Não informado'}</p>
-        </div> : <p>Endereço ainda não cadastrado.</p>}
-        <p>Os dados pessoais desta seção não são incluídos no histórico de auditoria.</p>
-      </section>}
+      {selectedDetail && <FulfillmentDetails item={selectedDetail} />}
       {auditAuctionId && <section className="panel" aria-label="Histórico administrativo de entrega">
         <h3>Histórico de entrega</h3>
         <p>Arremate: {auditAuctionId}</p>
