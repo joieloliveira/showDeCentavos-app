@@ -29,6 +29,7 @@ const demoEnabled = process.env.NODE_ENV === 'development';
 export function AdminPixMonitor() {
   const { user, getToken, isLoading: authLoading } = useAuth();
   const [status, setStatus] = useState('');
+  const [reviewOnly, setReviewOnly] = useState(false);
   const [demo, setDemo] = useState(false);
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
@@ -43,7 +44,7 @@ export function AdminPixMonitor() {
     const controller = new AbortController();
     setLoading(true); setError(''); setData(null);
     api.get<Response>('/auctions/admin/pix-monitor', {
-      params: { page, ...(status ? { status } : {}) },
+      params: { page, ...(status ? { status } : {}), ...(reviewOnly ? { review: 'required' } : {}) },
       headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
     }).then(({ data: result }) => {
       if (!controller.signal.aborted && getToken() === token) setData(result);
@@ -51,8 +52,8 @@ export function AdminPixMonitor() {
       if (!controller.signal.aborted) setError(getApiError(err));
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [authLoading, user, getToken, status, page, refresh, demo]);
-  const filteredDemo = demoItems.filter(item => !status || item.status === status);
+  }, [authLoading, user, getToken, status, reviewOnly, page, refresh, demo]);
+  const filteredDemo = demoItems.filter(item => (!status || item.status === status) && (!reviewOnly || item.requiresReview));
   const displayed: Response | null = demoEnabled && demo
     ? { page, limit: 2, total: filteredDemo.length, items: filteredDemo.slice((page - 1) * 2, page * 2) }
     : data;
@@ -79,6 +80,10 @@ export function AdminPixMonitor() {
           <select id="pix-status" value={status} onChange={event => { setStatus(event.target.value); setPage(1); }} style={{ border: '1px solid #cbd5e1', borderRadius: 8, padding: 10, minWidth: 170 }}>
             {statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
+          <input type="checkbox" checked={reviewOnly} onChange={event => { setReviewOnly(event.target.checked); setPage(1); }} />
+          Somente revisão manual
         </label>
         {demoEnabled && <button style={buttonStyle} type="button" aria-pressed={demo} onClick={() => { setDemo(value => !value); setPage(1); }}>
           {demo ? 'Sair da demonstração' : 'Visualizar dados fictícios'}
