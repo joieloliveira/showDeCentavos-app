@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/services/api';
 import { getApiError } from '@/services/auth';
 
@@ -26,15 +26,26 @@ export function WinPaymentPreview({ auctionId, getToken }: {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => { setPreview(null); setError(''); }, [auctionId]);
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { requestRef.current?.abort(); }, []);
+  useEffect(() => {
+    requestRef.current?.abort();
+    setPreview(null);
+    setError('');
+    setLoading(false);
+  }, [auctionId]);
   const load = async () => {
     const token = getToken();
     if (!token) { setError('Faça login novamente para consultar o pagamento.'); return; }
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setPreview(null);
     setLoading(true); setError('');
     try {
       const { data } = await api.get<Preview>(
         `/auctions/my/wins/${encodeURIComponent(auctionId)}/payment-preview`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal }
       );
       if (data.auctionId !== auctionId || data.currency !== 'BRL' ||
           !Number.isSafeInteger(data.amountCents) || data.amountCents < 0 ||
@@ -43,12 +54,19 @@ export function WinPaymentPreview({ auctionId, getToken }: {
         throw new Error('Resposta de pagamento inválida.');
       }
       // This interface is deliberately read-only, even if the API ever enables checkout.
+      if (controller.signal.aborted) return;
       if (getToken() !== token) throw new Error('Sua sessão mudou. Consulte novamente.');
       setPreview(data);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(getApiError(err));
       setPreview(null);
-    } finally { setLoading(false); }
+    } finally {
+      if (requestRef.current === controller) {
+        requestRef.current = null;
+        setLoading(false);
+      }
+    }
   };
   const deadline = preview?.paymentDeadline && Number.isFinite(Date.parse(preview.paymentDeadline))
     ? new Date(preview.paymentDeadline).toLocaleString('pt-BR') : null;
