@@ -28,6 +28,7 @@ export function AdminFulfillmentsPanel() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const auditRequest = useRef(0);
   const isAdmin = user?.role === 'admin';
+  const deliveryWritesEnabled = process.env.NEXT_PUBLIC_AUCTION_DELIVERY_MANAGEMENT_ENABLED === 'true';
   const selectedDetail = result?.items.find(item => item.auctionId === detailId);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function AdminFulfillmentsPanel() {
 
   const advance = async (auctionId: string, target: string) => {
     const token = getToken();
-    if (!token || updatingId) return;
+    if (!token || updatingId || !deliveryWritesEnabled) return;
     setUpdatingId(auctionId);
     setError('');
     setNotice('');
@@ -90,6 +91,7 @@ export function AdminFulfillmentsPanel() {
   return <section className="panel">
     <h2>Arremates e entregas</h2>
     <p>A confirmação de pagamento não está disponível nesta tela. As entregas exigem pagamento confirmado e endereço válido.</p>
+    {!deliveryWritesEnabled && <p role="status">Modo somente leitura: alterações de entrega desabilitadas neste frontend.</p>}
     <div className="incident-filters">
       <label>Pagamento{' '}<select aria-label="Filtrar pagamento" value={payment} onChange={e => { auditRequest.current += 1; setAuditAuctionId(null); setDetailId(null); setPayment(e.target.value); setPage(1); }}>
         <option value="">Todos</option>
@@ -111,7 +113,7 @@ export function AdminFulfillmentsPanel() {
           <td>{item.auctionId}</td><td>{money(item.winningPriceCents)}</td><td>{date(item.paymentDeadline)}</td>
           <td>{paymentLabels[item.paymentStatus] || item.paymentStatus}</td><td>{deliveryLabels[item.deliveryStatus] || item.deliveryStatus}</td>
           <td>{item.shippingAddress?.recipientName || 'Endereço pendente'}</td>
-          <td>{item.paymentStatus === 'paid' && item.addressSubmittedAt && item.shippingAddress && ['not_started', 'preparing', 'shipped'].includes(item.deliveryStatus)
+          <td>{deliveryWritesEnabled && item.paymentStatus === 'paid' && item.addressSubmittedAt && item.shippingAddress && ['not_started', 'preparing', 'shipped'].includes(item.deliveryStatus)
             ? <button type="button" className="incident-action"
                 disabled={updatingId !== null || loading}
                 onClick={() => {
