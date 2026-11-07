@@ -10,6 +10,12 @@ type Payment = {
   createdAt: string; processedAt: string | null;
 };
 type Response = { page: number; limit: number; total: number; items: Payment[] };
+type Detail = {
+  paymentId: string; ledgerConsistent: boolean; requiresReview: boolean;
+  attempt: { state: string } | null;
+  fulfillment: { paymentStatus: string; deliveryStatus: string; hasAddress: boolean } | null;
+  providerVerification: string;
+};
 const statuses = [
   ['','Todos'], ['not_started','Não iniciado'], ['pending','Pendente'],
   ['paid','Pago'], ['failed','Falhou'], ['refunded','Reembolsado'], ['cancelled','Cancelado']
@@ -36,6 +42,10 @@ export function AdminPixMonitor() {
   const [data, setData] = useState<Response | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [detail, setDetail] = useState<Detail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
   useEffect(() => {
     if (authLoading || !user || user.role !== 'admin') { setData(null); return; }
     if (demoEnabled && demo) { setData(null); setError(''); setLoading(false); return; }
@@ -53,6 +63,26 @@ export function AdminPixMonitor() {
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [authLoading, user, getToken, status, reviewOnly, page, refresh, demo]);
+  useEffect(() => {
+    setSelected(null); setDetail(null); setDetailError('');
+  }, [status, reviewOnly, page, demo, refresh]);
+  useEffect(() => {
+    if (!selected || demo || authLoading || !user || user.role !== 'admin') {
+      setDetail(null); setDetailLoading(false); return;
+    }
+    const token = getToken();
+    if (!token) { setDetail(null); setDetailError('Sessão expirada.'); return; }
+    const controller = new AbortController();
+    setDetailLoading(true); setDetail(null); setDetailError('');
+    api.get<Detail>(`/auctions/admin/pix-monitor/${encodeURIComponent(selected)}`, {
+      headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
+    }).then(({ data: result }) => {
+      if (!controller.signal.aborted && getToken() === token) setDetail(result);
+    }).catch(err => {
+      if (!controller.signal.aborted) setDetailError(getApiError(err));
+    }).finally(() => { if (!controller.signal.aborted) setDetailLoading(false); });
+    return () => controller.abort();
+  }, [selected, demo, authLoading, user, getToken]);
   const filteredDemo = demoItems.filter(item => (!status || item.status === status) && (!reviewOnly || item.requiresReview));
   const displayed: Response | null = demoEnabled && demo
     ? { page, limit: 2, total: filteredDemo.length, items: filteredDemo.slice((page - 1) * 2, page * 2) }
@@ -124,6 +154,30 @@ export function AdminPixMonitor() {
             </span>
           </div>
           {item.requiresReview && <p role="status" style={{ color: '#9a3412', fontWeight: 700 }}>Atenção: análise manual necessária. Não repita a cobrança.</p>}
+          <div><button type="button" style={buttonStyle} aria-expanded={selected === item.paymentId}
+            onClick={() => { setSelected(current => current === item.paymentId ? null : item.paymentId); setDetail(null); setDetailError(''); }}>
+            {selected === item.paymentId ? 'Ocultar detalhes' : 'Ver detalhes da reconciliação'}
+          </button></div>
+          {selected === item.paymentId && <section aria-label="Detalhes da reconciliação" style={{ background: '#f8fafc', borderRadius: 10, padding: 16, display: 'grid', gap: 8 }}>
+            {demo && <>
+              <strong>Simulação fictícia — nenhuma consulta à API</strong>
+              <span>Tentativa: {item.attemptState ? labels[item.attemptState] ?? item.attemptState : 'Não registrada'}</span>
+              <span>Revisão manual: {item.requiresReview ? 'Necessária' : 'Não sinalizada'}</span>
+              <small>Consistência e liquidação financeira não foram verificadas.</small>
+            </>}
+            {!demo && detailLoading && <p role="status">Consultando detalhes...</p>}
+            {!demo && detailError && <p role="alert" style={{ color: '#b91c1c' }}>{detailError}</p>}
+            {!demo && detail && detail.paymentId === item.paymentId && <>
+              <strong>Reconciliação local — somente leitura</strong>
+              <span>Consistência: {detail.ledgerConsistent ? 'Consistente' : 'Divergência encontrada'}</span>
+              <span>Revisão manual: {detail.requiresReview ? 'Necessária' : 'Não sinalizada'}</span>
+              <span>Tentativa PIX: {detail.attempt ? labels[detail.attempt.state] ?? detail.attempt.state : 'Não registrada'}</span>
+              <span>Pagamento na entrega: {detail.fulfillment?.paymentStatus ?? 'Registro indisponível'}</span>
+              <span>Situação da entrega: {detail.fulfillment?.deliveryStatus ?? 'Registro indisponível'}</span>
+              <span>Endereço informado: {detail.fulfillment ? (detail.fulfillment.hasAddress ? 'Sim' : 'Não') : 'Indisponível'}</span>
+              <small>Verificação no provedor não realizada. Não repita cobranças em caso de divergência.</small>
+            </>}
+          </section>}
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', color: '#64748b', fontSize: 13 }}>
             <span>Registrado: {new Date(item.createdAt).toLocaleString('pt-BR')}</span>
             {item.processedAt && <span>Processado: {new Date(item.processedAt).toLocaleString('pt-BR')}</span>}
