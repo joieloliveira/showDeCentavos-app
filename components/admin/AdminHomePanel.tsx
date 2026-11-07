@@ -12,6 +12,7 @@ const sections = [
   { href: '/admin/products', title: 'Produtos', description: 'Cadastre e organize os produtos disponíveis para leilão.' },
   { href: '/admin/auctions', title: 'Leilões', description: 'Gerencie agendamentos, acompanhe disputas e consulte auditorias.' },
   { href: '/admin/fulfillments', title: 'Arremates e entregas', description: 'Acompanhe pagamentos, endereços e etapas de entrega.' },
+  { href: '/admin/pix-monitor', title: 'Monitor financeiro PIX', description: 'Consulte pagamentos de arremates, tentativas PIX e pendências de reconciliação. Somente leitura.' },
   { href: '/admin/wallet/incidents', title: 'Incidentes financeiros', description: 'Consulte reembolsos, contestações e ocorrências que exigem revisão.' },
 ];
 
