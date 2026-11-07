@@ -144,7 +144,7 @@ export function AdminFulfillmentsPanel() {
         {!auditLoading && !auditError && auditItems.length === 0 && <p>Nenhuma movimentação administrativa registrada.</p>}
         {!auditLoading && !auditError && auditItems.length > 0 && <ol>
           {auditItems.map((event, index) => <li key={event.toStatus + index}>
-            <strong>{event.fromStatus} → {event.toStatus}</strong> — {date(event.occurredAt)}
+            <strong>{deliveryLabels[event.fromStatus] || event.fromStatus} → {deliveryLabels[event.toStatus] || event.toStatus}</strong> — {date(event.occurredAt)}
             <span> · Administrador: {event.actorName || event.actorId}</span>
           </li>)}
         </ol>}
