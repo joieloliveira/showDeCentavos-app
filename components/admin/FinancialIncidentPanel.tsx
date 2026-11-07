@@ -67,7 +67,7 @@ export function FinancialIncidentPanel() {
           <tbody>{result.items.map(item => <tr key={item._id}>
             <td className="incident-order">{item.order}</td>
             <td className="incident-order">{item.providerOrderId}</td>
-            <td>{item.reason === 'late_approval_after_closure' ? 'Aprovação após encerramento' : item.reason}</td>
+            <td>{item.reason === 'late_approval_after_closure' ? 'Aprovação após encerramento' : item.reason === 'approved_amount_mismatch' ? 'Divergência no valor da cobrança' : item.reason}</td>
             <td>{statusLabels[item.status] ?? item.status}</td>
             <td>{item.occurrences}</td>
             <td>{formatDate(item.lastSeenAt)}</td>
