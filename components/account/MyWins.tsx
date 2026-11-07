@@ -54,6 +54,7 @@ export function MyWins() {
   const [loadedForUser, setLoadedForUser] = useState<string | null>(null);
   const [loadedForToken, setLoadedForToken] = useState<string | null>(null);
   useEffect(() => {
+    if (demoAvailable && demo) { setLoading(false); return; }
     if (!user) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); return; }
     const token = getToken();
     if (!token) { setData(null); setLoadedForUser(null); setLoadedForToken(null); setLoading(false); setError('Sua sessão expirou. Faça login novamente.'); return; }
@@ -65,7 +66,7 @@ export function MyWins() {
       .catch(err => { if (!axios.isCancel(err) && active && getToken() === token) { setData(null); setError(getApiError(err)); } })
       .finally(() => { if (active && getToken() === token) setLoading(false); });
     return () => { active = false; controller.abort(); };
-  }, [user, page, getToken, refreshKey]);
+  }, [user, page, getToken, refreshKey, demo]);
   if (authLoading) return <p role="status">Verificando sua sessão...</p>;
   if (!user) return <div className="panel"><p>Faça login para consultar suas vitórias.</p><Link href="/login?next=/account/wins">Entrar</Link></div>;
   const visibleData = loadedForUser === user.id && loadedForToken === getToken() ? data : null;
@@ -74,7 +75,7 @@ export function MyWins() {
     {demoAvailable && <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}><button type="button" onClick={() => setDemo(value => !value)} aria-pressed={demo}>{demo ? 'Sair da demonstração' : 'Visualizar vitórias fictícias'}</button></div>}
     {demo && demoAvailable && <div role="status" style={{ border: '1px solid #f59e0b', background: '#fffbeb', color: '#92400e', padding: 14, borderRadius: 10, marginBottom: 16, fontWeight: 700 }}>MODO DEMONSTRAÇÃO — vitórias fictícias locais. Nenhum arremate, pagamento ou endereço foi criado no banco. Consultas de pagamento e envio de endereço estão indisponíveis nesta visualização.</div>}
     {demo && demoAvailable && <div style={{ display: 'grid', gap: 16, marginBottom: 16 }}>{demoWins.map(win => <article key={win.auctionId} className="panel" style={{ padding: 20, display: 'grid', gap: 14 }}><div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}><div><strong>{win.productName}</strong><p style={{ color: '#166534', fontWeight: 700 }}>Vitória fictícia confirmada</p></div><strong style={{ fontSize: 20 }}>{money(win.finalPriceCents)}</strong></div><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><span style={{ padding: '7px 10px', borderRadius: 8, background: win.paymentStatus === 'paid' ? '#dcfce7' : '#fef3c7' }}>Pagamento: {paymentLabels[win.paymentStatus]}</span><span style={{ padding: '7px 10px', borderRadius: 8, background: '#f1f5f9' }}>Entrega: {deliveryLabels[win.deliveryStatus]}</span></div><DeliveryProgress paymentStatus={win.paymentStatus} deliveryStatus={win.deliveryStatus}/><p style={{ color: '#64748b' }}>Consulta de pagamento e cadastro de endereço desabilitados no modo demonstração.</p></article>)}</div>}
-    <div style={{ display: demo ? 'none' : 'grid', gap: 16 }}>
+    {!demo && <div style={{ display: 'grid', gap: 16 }}>
       {loading && <p role="status">Carregando vitórias...</p>}
       {error && <div role="alert"><p>{error}</p><button type="button" onClick={() => setRefreshKey(value => value + 1)}>Tentar novamente</button></div>}
       {!loading && !error && visibleData?.items.length === 0 && (page > 1 ? <div className="panel" role="status" style={{ padding: 24 }}><p>Não há vitórias nesta página.</p><button type="button" onClick={() => setPage(1)}>Voltar à primeira página</button></div> : <div className="panel" style={{ padding: 24 }}><Trophy size={32}/><h2>Você ainda não tem vitórias registradas.</h2><Link href="/auctions">Explorar leilões</Link></div>)}
@@ -107,6 +108,6 @@ export function MyWins() {
         <span>Página {page} de {Math.ceil(visibleData.total / visibleData.limit)}</span>
         <button type="button" disabled={loading || page * visibleData.limit >= visibleData.total} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Próxima</button>
       </div>}
-    </div>
+    </div>}
   </div>;
 }
