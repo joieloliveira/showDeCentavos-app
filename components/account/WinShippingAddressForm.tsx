@@ -34,9 +34,14 @@ export function WinShippingAddressForm({ auctionId, getToken, initialAddress, ed
     event.preventDefault();
     if (!enabled || !editable || pending) return;
     if (demo) {
-      if (!/^\\d{5}-?\\d{3}$/.test(address.zipCode.trim())) { setMessage('Informe um CEP válido com 8 dígitos.'); return; }
-      if (!/^[A-Za-z]{2}$/.test(address.state.trim())) { setMessage('Informe uma UF com duas letras.'); return; }
-      if (!/^\\d{10,11}$/.test(address.phone.replace(/\\D/g, ''))) { setMessage('Informe telefone com DDD (10 ou 11 dígitos).'); return; }
+      const requiredFields: (keyof Address)[] = ['recipientName', 'phone', 'zipCode', 'street', 'number', 'neighborhood', 'city', 'state'];
+      if (requiredFields.some(key => !address[key].trim())) { setMessage('Preencha todos os campos obrigatórios.'); return; }
+      const zip = address.zipCode.replace(/\D/g, '');
+      const phone = address.phone.replace(/\D/g, '');
+      const uf = address.state.trim().toUpperCase();
+      if (!/^\d{8}$/.test(zip)) { setMessage('Informe um CEP válido com 8 dígitos.'); return; }
+      if (!/^[A-Z]{2}$/.test(uf)) { setMessage('Informe uma UF com duas letras.'); return; }
+      if (!/^\d{10,11}$/.test(phone)) { setMessage('Informe telefone com DDD (10 ou 11 dígitos).'); return; }
       setMessage('Validação fictícia concluída. Nenhum endereço foi enviado ou armazenado.');
       return;
     }
