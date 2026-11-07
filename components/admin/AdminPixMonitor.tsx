@@ -19,9 +19,17 @@ const labels: Record<string,string> = {
   reconciliation_required: 'Reconciliação necessária',
   provider_confirmed: 'Confirmada pelo provedor',
 };
+const demoItems: Payment[] = [
+  { paymentId: 'demo-pending', auctionId: 'DEMO-LEILAO-001', amountCents: 1750, status: 'pending', attemptState: 'reserved', requiresReview: false, createdAt: '2026-11-07T12:00:00.000Z', processedAt: null },
+  { paymentId: 'demo-paid', auctionId: 'DEMO-LEILAO-002', amountCents: 2990, status: 'paid', attemptState: 'provider_confirmed', requiresReview: false, createdAt: '2026-11-07T12:05:00.000Z', processedAt: '2026-11-07T12:10:00.000Z' },
+  { paymentId: 'demo-unknown', auctionId: 'DEMO-LEILAO-003', amountCents: 4250, status: 'pending', attemptState: 'request_unknown', requiresReview: true, createdAt: '2026-11-07T12:15:00.000Z', processedAt: null },
+  { paymentId: 'demo-reconcile', auctionId: 'DEMO-LEILAO-004', amountCents: 5300, status: 'pending', attemptState: 'reconciliation_required', requiresReview: true, createdAt: '2026-11-07T12:20:00.000Z', processedAt: null },
+];
+const demoEnabled = process.env.NODE_ENV === 'development';
 export function AdminPixMonitor() {
   const { user, getToken, isLoading: authLoading } = useAuth();
   const [status, setStatus] = useState('');
+  const [demo, setDemo] = useState(false);
   const [page, setPage] = useState(1);
   const [refresh, setRefresh] = useState(0);
   const [data, setData] = useState<Response | null>(null);
@@ -29,6 +37,7 @@ export function AdminPixMonitor() {
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (authLoading || !user || user.role !== 'admin') { setData(null); return; }
+    if (demoEnabled && demo) { setData(null); setError(''); setLoading(false); return; }
     const token = getToken();
     if (!token) { setData(null); setError('Sessão expirada.'); return; }
     const controller = new AbortController();
@@ -42,7 +51,11 @@ export function AdminPixMonitor() {
       if (!controller.signal.aborted) setError(getApiError(err));
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [authLoading, user, getToken, status, page, refresh]);
+  }, [authLoading, user, getToken, status, page, refresh, demo]);
+  const filteredDemo = demoItems.filter(item => !status || item.status === status);
+  const displayed: Response | null = demoEnabled && demo
+    ? { page, limit: 2, total: filteredDemo.length, items: filteredDemo.slice((page - 1) * 2, page * 2) }
+    : data;
   if (authLoading) return <p>Verificando sessão...</p>;
   if (!user || user.role !== 'admin') return <p>Acesso restrito a administradores.</p>;
   return <main className="panel" style={{ padding: 24, display: 'grid', gap: 16 }}>
@@ -53,15 +66,19 @@ export function AdminPixMonitor() {
       <select id="pix-status" value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}>
         {statuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select>
-      <button type="button" disabled={loading} onClick={() => setRefresh(n => n + 1)}>
+      {demoEnabled && <button type="button" aria-pressed={demo} onClick={() => { setDemo(value => !value); setPage(1); }}>
+        {demo ? 'Sair da demonstração' : 'Visualizar dados fictícios'}
+      </button>}
+      <button type="button" disabled={loading || demo} onClick={() => setRefresh(n => n + 1)}>
         {loading ? 'Atualizando...' : 'Atualizar'}
       </button>
     </div>
-    {error && <p role="alert">{error}</p>}
-    {loading && <p role="status">Consultando registros...</p>}
-    {!loading && data && <p>{data.total} pagamento(s) encontrado(s).</p>}
-    {!loading && data?.items.length === 0 && <p>Nenhum pagamento neste filtro.</p>}
-    {data?.items.map(item => <article key={item.paymentId} style={{
+    {demoEnabled && demo && <p role="status" style={{ fontWeight: 700, color: '#92400e' }}>MODO DEMONSTRAÇÃO — dados fictícios locais. Nenhum pagamento ou registro foi criado no banco.</p>}
+    {error && !demo && <p role="alert">{error}</p>}
+    {loading && !demo && <p role="status">Consultando registros...</p>}
+    {!loading && displayed && <p>{displayed.total} pagamento(s) encontrado(s).</p>}
+    {!loading && displayed?.items.length === 0 && <p>Nenhum pagamento neste filtro.</p>}
+    {displayed?.items.map(item => <article key={item.paymentId} style={{
       padding: 14, border: '1px solid #cbd5e1', borderRadius: 8, display: 'grid', gap: 6
     }}>
       <strong>Leilão: {item.auctionId}</strong>
@@ -74,10 +91,10 @@ export function AdminPixMonitor() {
       <small>Registro: {new Date(item.createdAt).toLocaleString('pt-BR')}</small>
       {item.processedAt && <small>Processado: {new Date(item.processedAt).toLocaleString('pt-BR')}</small>}
     </article>)}
-    {data && data.total > data.limit && <nav aria-label="Paginação financeira" style={{ display: 'flex', gap: 12 }}>
+    {displayed && displayed.total > displayed.limit && <nav aria-label="Paginação financeira" style={{ display: 'flex', gap: 12 }}>
       <button type="button" disabled={loading || page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</button>
-      <span>Página {page} de {Math.ceil(data.total / data.limit)}</span>
-      <button type="button" disabled={loading || page * data.limit >= data.total} onClick={() => setPage(p => p + 1)}>Próxima</button>
+      <span>Página {page} de {Math.ceil(displayed.total / displayed.limit)}</span>
+      <button type="button" disabled={loading || page * displayed.limit >= displayed.total} onClick={() => setPage(p => p + 1)}>Próxima</button>
     </nav>}
   </main>;
 }
