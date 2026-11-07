@@ -24,15 +24,22 @@ const fields: { key: keyof Address; label: string; required?: boolean; maxLength
   { key: 'state', label: 'UF', required: true, maxLength: 2 }
 ];
 
-export function WinShippingAddressForm({ auctionId, getToken, initialAddress, editable }: { auctionId: string; getToken: () => string | null; initialAddress: Address | null; editable: boolean }) {
+export function WinShippingAddressForm({ auctionId, getToken, initialAddress, editable, demo = false }: { auctionId: string; getToken: () => string | null; initialAddress: Address | null; editable: boolean; demo?: boolean }) {
   const [address, setAddress] = useState<Address>(() => initialAddress ? { ...initial, ...initialAddress } : initial);
   useEffect(() => { setAddress(initialAddress ? { ...initial, ...initialAddress } : initial); setMessage(''); }, [initialAddress, auctionId]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
-  const enabled = process.env.NEXT_PUBLIC_AUCTION_ADDRESS_COLLECTION_ENABLED === 'true';
+  const enabled = demo || process.env.NEXT_PUBLIC_AUCTION_ADDRESS_COLLECTION_ENABLED === 'true';
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!enabled || !editable || pending) return;
+    if (demo) {
+      if (!/^\\d{5}-?\\d{3}$/.test(address.zipCode.trim())) { setMessage('Informe um CEP válido com 8 dígitos.'); return; }
+      if (!/^[A-Za-z]{2}$/.test(address.state.trim())) { setMessage('Informe uma UF com duas letras.'); return; }
+      if (!/^\\d{10,11}$/.test(address.phone.replace(/\\D/g, ''))) { setMessage('Informe telefone com DDD (10 ou 11 dígitos).'); return; }
+      setMessage('Validação fictícia concluída. Nenhum endereço foi enviado ou armazenado.');
+      return;
+    }
     const token = getToken();
     if (!token) { setMessage('Sua sessão expirou. Faça login novamente.'); return; }
     setPending(true); setMessage('');
@@ -56,6 +63,7 @@ export function WinShippingAddressForm({ auctionId, getToken, initialAddress, ed
   }
   return <section style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, marginTop: 8 }}>
     <h3 style={{ margin: '0 0 8px' }}>Endereço de entrega</h3>
+    {demo && <p role="status" style={{ padding: 10, borderRadius: 8, background: '#fffbeb', color: '#92400e', fontWeight: 700 }}>SIMULAÇÃO LOCAL — use somente dados inventados. Não há consulta de CEP nem gravação de endereço.</p>}
     <p style={{ color: '#64748b', marginBottom: 12 }}>{!editable ? 'Endereço disponível apenas para consulta: a entrega já foi iniciada.' : enabled ? 'Confira os dados antes de salvar.' : initialAddress ? 'Endereço já cadastrado. Edição temporariamente desabilitada.' : 'Formulário em preparação. Não informe dados pessoais reais nesta etapa: o envio está desabilitado.'}</p>
     <form onSubmit={save} style={{ display: 'grid', gap: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
@@ -75,7 +83,7 @@ export function WinShippingAddressForm({ auctionId, getToken, initialAddress, ed
         </label>)}
       </div>
       <button type="submit" disabled={!editable || pending} style={{ padding: '10px 16px', borderRadius: 8, cursor: pending || !editable ? 'not-allowed' : 'pointer', opacity: pending || !editable ? 0.55 : 1, justifySelf: 'start' }}>
-        {pending ? 'Salvando...' : enabled ? 'Salvar endereço' : 'Salvar endereço (em breve)'}
+        {pending ? 'Salvando...' : demo ? 'Validar dados fictícios' : enabled ? 'Salvar endereço' : 'Salvar endereço (em breve)'}
       </button>
       {message && <p role="status">{message}</p>}
     </form>
