@@ -41,13 +41,13 @@ export function Header() {
     </div>
     <button ref={triggerRef} type="button" className="mobile-menu" aria-label="Abrir menu" aria-expanded={open} aria-controls="mobile-navigation" onClick={() => setOpen(true)}><Menu size={24}/></button>
   </div>
-  {open && <div className="mobile-nav-layer"><button className="mobile-nav-backdrop" type="button" aria-label="Fechar menu" onClick={close}/><nav id="mobile-navigation" className="mobile-nav-panel" aria-label="Menu móvel" aria-modal="true" role="dialog">
+  <div className={`mobile-nav-layer${open ? " is-open" : ""}`} aria-hidden={!open} inert={!open}><button className="mobile-nav-backdrop" type="button" aria-label="Fechar menu" onClick={close}/><nav id="mobile-navigation" className="mobile-nav-panel" aria-label="Menu móvel" aria-modal="true" role="dialog">
     <div className="mobile-nav-heading"><strong>Menu</strong><button ref={closeRef} type="button" onClick={() => { close(); triggerRef.current?.focus(); }} aria-label="Fechar menu"><X size={23}/></button></div>
     <Link href="/" onClick={close}>Início</Link><Link href="/auctions" onClick={close}>Leilões</Link><Link href="/how-it-works" onClick={close}>Como funciona</Link><Link href="/winners" onClick={close}>Ganhadores</Link>
     <div className="mobile-nav-divider"/>
     {user?.role === 'admin' && <><Link href="/admin" onClick={close}>Administração</Link><Link href="/admin/auctions" onClick={close}>Gerenciar leilões</Link><Link href="/admin/wallet/incidents" onClick={close}>Incidentes</Link><div className="mobile-nav-divider"/></>}
     <Link href="/wallet" onClick={close}><Wallet size={18}/> Minha carteira</Link>
     {user ? <><Link href="/account" onClick={close}><CircleUserRound size={18}/>{user.name}</Link><button type="button" onClick={signOut}><LogOut size={18}/> Sair</button></> : <Link href="/login" onClick={close}><CircleUserRound size={18}/> Entrar</Link>}
-  </nav></div>}
+  </nav></div>
   </header>;
 }
