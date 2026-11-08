@@ -445,3 +445,8 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
   .footer-bottom{min-width:0;overflow-wrap:anywhere;line-height:1.6}
   .home-final-cta{padding:30px 14px}
 }
+
+/* Keep auction status labels inside their image frame on narrow screens. */
+.auction-visual{overflow:hidden;isolation:isolate}
+.auction-visual .auction-status{top:12px;left:12px;right:auto;z-index:2;display:inline-flex;align-items:center;max-width:calc(100% - 24px);box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+@media(max-width:480px){.auction-visual .auction-status{top:10px;left:10px;max-width:calc(100% - 20px);padding:7px 9px}}
