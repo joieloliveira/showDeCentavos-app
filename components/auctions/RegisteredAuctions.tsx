@@ -102,7 +102,7 @@ export function RegisteredAuctions() {
         <div className="bid-info"><div><span className="metric-label">{auction.status === "finished" ? "Preço final" : "Preço atual"}</span><strong>{money(auction.currentPriceCents)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(auction.bidCostCents)}</strong></div></div>
         {auction.status === 'finished' && <div style={{ padding: '12px 14px', background: '#fff8df', border: '1px solid #f2d783', borderRadius: 10, display: 'grid', gap: 5, textAlign: 'center' }}>
           <strong>🏆 Leilão encerrado</strong>
-          <span>{auction.winnerNickname ? <>Ganhador: <strong>{auction.winnerNickname}</strong></> : 'Ganhador não identificado publicamente'}</span>
+          <span>{auction.winnerNickname ? <>Ganhador: <strong title={auction.winnerNickname} style={{ overflowWrap: "anywhere" }}>{auction.winnerNickname.length > 22 ? `${auction.winnerNickname.slice(0, 22)}…` : auction.winnerNickname}</strong></> : 'Ganhador não identificado publicamente'}</span>
           <span>Preço de arremate: <strong>{money(auction.currentPriceCents)}</strong></span>
         </div>}
         {auction.status === 'finished' && auction.endsAt && <p className="retail">Encerrado em: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
