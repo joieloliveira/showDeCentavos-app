@@ -216,13 +216,13 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         <p role="status" aria-live="polite" style={{ fontSize: 12, marginTop: 8 }}>
           {liveDataStatus === "unavailable" ? "Sem comunicação com o servidor; tentando reconectar" : connectionStatus === "connected" ? "Atualizações em tempo real conectadas" : connectionStatus === "reconnecting" ? "Canal em reconexão; consultas ao servidor disponíveis" : "Conectando atualizações em tempo real..."}
         </p>
-        {auction.status === 'finished' && <div role="status" aria-live="polite" style={{ marginTop: 12, padding: '16px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}><strong style={{ display: 'block', fontSize: '1.15rem' }}>Leilão encerrado!</strong><span>O resultado foi confirmado pelo servidor. Preço final: {money(auction.currentPriceCents)}.</span><span style={{ display: 'block', marginTop: 6, fontWeight: 600, overflowWrap: "anywhere" }}>{auction.winnerNickname ? `Vencedor: ${auction.winnerNickname}` : auction.bidCount > 0 ? 'Vencedor confirmado · identificação pública indisponível' : 'Nenhum lance vencedor registrado'}</span></div>}
+        {auction.status === 'finished' && <div role="status" aria-live="polite" style={{ marginTop: 12, padding: '16px', borderRadius: 12, background: '#f0fdf4', border: '1px solid #86efac', color: '#166534' }}><strong style={{ display: 'block', fontSize: '1.15rem' }}>Leilão encerrado!</strong><span>Resultado confirmado pelo servidor. Preço de arremate: <strong>{money(auction.currentPriceCents)}</strong>.</span><span style={{ display: 'block', marginTop: 6, fontWeight: 600, overflowWrap: "anywhere" }}>{auction.winnerNickname ? `Vencedor: ${auction.winnerNickname}` : auction.bidCount > 0 ? 'Vencedor confirmado · identificação pública indisponível' : 'Nenhum lance vencedor registrado'}</span></div>}
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
-        <p style={{ fontSize: 13, color: "#64748b" }}>ID do leilão: <code style={{ overflowWrap: "anywhere" }}>{auction._id}</code></p>
+        
         {secondsUntilStart !== null && <div className="registered-clock" role="timer"><span>{secondsUntilStart > 0 ? "Início previsto em" : "Horário previsto atingido · aguardando atualização do servidor"}</span><strong>{clock(secondsUntilStart)}</strong></div>}
         {secondsUntilEnd !== null && <div className="registered-clock" role="timer"><span>{secondsUntilEnd > 0 ? "Tempo restante registrado" : "Tempo esgotado · aguardando encerramento no servidor"}</span><strong>{clock(secondsUntilEnd)}</strong>{clockStale && <small role="status" style={{ display: "block", marginTop: 8 }}>Sincronização do cronômetro pendente; horário sujeito a atualização.</small>}</div>}
         <div className="registered-price-block">
-          <span>Preço atual do leilão</span>
+          <span>{auction.status === 'finished' ? 'Preço final do leilão' : 'Preço atual do leilão'}</span>
           <strong>{money(auction.currentPriceCents)}</strong>
           <small>Preço inicial: {money(auction.startPriceCents)}</small>
         </div>
@@ -236,7 +236,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span></div></div>
         <button type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
         <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances reais indisponíveis</button>
-        <section aria-label="Simulador de lances" style={{ padding: 16, border: '1px dashed #94a3b8', borderRadius: 12, display: 'grid', gap: 10 }}>
+        <details style={{ marginTop: 12, border: '1px solid #cbd5e1', borderRadius: 12, padding: 14 }}><summary style={{ cursor: 'pointer', fontWeight: 600 }}>Ferramentas de demonstração e suporte</summary><p style={{ fontSize: 12, color: '#64748b', overflowWrap: 'anywhere' }}>Identificador do leilão: <code>{auction._id}</code></p><section aria-label="Simulador de lances" style={{ padding: 16, border: '1px dashed #94a3b8', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Simulador local de lances</strong>
           <p style={{ margin: 0, color: '#64748b' }}>Prévia educativa, independente da carteira e do servidor. Não registra lances, não altera o leilão e não cobra valores.</p>
           <button type="button" onClick={() => { setShowSimulation(previous => !previous); setSimulatedBids(0); }}>{showSimulation ? 'Fechar simulação' : 'Abrir simulação'}</button>
@@ -261,6 +261,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
           {lookupResult?.status === 'not_found' && <p role="status">Nenhum lance encontrado para esta chave até o momento. Isso não autoriza reenviar automaticamente a tentativa.</p>}
           {lookupResult?.status === 'unavailable' && <p role="alert">Não foi possível confirmar o registro agora. Guarde a chave original e tente consultar novamente mais tarde.</p>}
         </section>
+        </details>
         <p className="registered-safety"><ShieldCheck size={18}/> Visualização informativa. Esta página não permite realizar lances ou pagamentos.</p>
       </div>
     </div>
