@@ -456,3 +456,24 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .auction-card .auction-visual>img{display:block;position:relative;z-index:0;width:100%;height:100%;object-fit:contain}
 .auction-card .auction-visual>.auction-status{position:absolute;top:12px;left:12px;z-index:5;transform:none;margin:0;line-height:1.3;white-space:nowrap;max-width:calc(100% - 24px)}
 @media(max-width:480px){.auction-card .auction-visual>.auction-status{top:12px;left:12px;padding:8px 10px}}
+
+/* Registered auction detail: compact mobile reading flow */
+.registered-finished-result{margin-top:12px;padding:16px;border-radius:12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;line-height:1.5}
+.registered-finished-title{display:block;font-size:1.15rem}
+.registered-finished-winner{display:block;margin-top:6px;font-weight:600;overflow-wrap:anywhere}
+.registered-support-tools{margin-top:12px;border:1px solid #cbd5e1;border-radius:12px;padding:14px;min-width:0}
+.registered-support-tools>summary{cursor:pointer;font-weight:600;line-height:1.45}
+.registered-support-tools:not([open]){background:#f8fafc}
+.registered-support-tools[open]>summary{margin-bottom:12px}
+@media(max-width:480px){
+  .registered-auction-page.page-content{padding-top:20px}
+  .registered-auction-page .page-heading{margin-bottom:0}
+  .registered-auction-page .registered-detail{margin-top:18px;gap:14px}
+  .registered-finished-result{padding:12px;font-size:13px;line-height:1.45}
+  .registered-finished-title{font-size:15px}
+  .registered-finished-winner{margin-top:4px}
+  .registered-detail-panel h2{font-size:21px;margin:14px 0}
+  .registered-support-tools{padding:11px;font-size:13px}
+  .registered-support-tools section{min-width:0}
+  .registered-support-tools input{max-width:100%;min-width:0}
+}
