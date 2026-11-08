@@ -427,3 +427,21 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
   .registered-metrics>div{padding:8px 6px}
   .registered-metrics small{font-size:9px}
 }
+
+/* Extra-small viewport: prevent footer columns and home content overflow */
+@media(max-width:380px){
+  .site-container{width:100%;max-width:100%;min-width:0;padding-inline:12px}
+  .home-hero,.home-hero-grid,.home-hero-content,.home-final-cta{min-width:0;max-width:100%}
+  .home-hero-grid{grid-template-columns:minmax(0,1fr)}
+  .home-hero h1{font-size:clamp(32px,10vw,40px);letter-spacing:-1.8px;overflow-wrap:break-word}
+  .home-kicker{max-width:100%;font-size:10px;white-space:normal}
+  .home-hero-actions{min-width:0}
+  .home-hero-actions>a{max-width:100%}
+  .footer-main{grid-template-columns:minmax(0,1fr);gap:18px;padding-bottom:28px}
+  .footer-main>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .footer-main h4{margin-bottom:6px}
+  .footer-main a:not(.brand){margin:9px 0;overflow-wrap:anywhere}
+  .footer-main p{max-width:100%}
+  .footer-bottom{min-width:0;overflow-wrap:anywhere;line-height:1.6}
+  .home-final-cta{padding:30px 14px}
+}
