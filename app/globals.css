@@ -386,3 +386,44 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 }
 
 @media(prefers-reduced-motion:reduce){.mobile-nav-layer,.mobile-nav-backdrop,.mobile-nav-panel{transition-duration:0s!important;transition-delay:0s!important}}
+
+/* Auction details: narrow mobile screens (320px+) */
+@media(max-width:600px){
+  .registered-detail{grid-template-columns:minmax(0,1fr);gap:16px;margin-top:18px;min-width:0}
+  .registered-detail-gallery,.registered-detail-sidebar,.registered-detail-panel{min-width:0;width:100%;max-width:100%}
+  .registered-detail-gallery,.registered-detail-panel{padding:14px;border-radius:14px}
+  .registered-detail-panel{position:static;top:auto;overflow-wrap:anywhere}
+  .registered-main-image{height:auto;aspect-ratio:4/3;min-height:0;border-radius:10px}
+  .registered-main-image img{max-width:100%;max-height:100%;object-fit:contain}
+  .registered-no-image{font-size:13px;text-align:center;padding:12px}
+  .registered-description{margin-top:14px;padding-top:14px}
+  .registered-description h2{font-size:17px}
+  .registered-description p{font-size:13px;line-height:1.6}
+  .registered-detail-panel h2{font-size:21px;line-height:1.3;margin:15px 0;overflow-wrap:anywhere}
+  .registered-price-block{padding:16px;gap:6px}
+  .registered-price-block strong{font-size:clamp(28px,9vw,38px);letter-spacing:-1px}
+  .registered-clock{padding:13px 14px;margin:12px 0}
+  .registered-clock strong{font-size:clamp(24px,8vw,32px);letter-spacing:0}
+  .registered-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+  .registered-metrics>div{min-width:0;gap:6px;padding:9px 7px;align-items:flex-start}
+  .registered-metrics>div svg{flex:0 0 16px;width:16px;height:16px}
+  .registered-metrics span{min-width:0}
+  .registered-metrics small{font-size:10px;line-height:1.35}
+  .registered-metrics strong{font-size:14px}
+  .registered-wallet-preview{padding:12px;gap:9px;align-items:flex-start}
+  .registered-wallet-preview>div{min-width:0}
+  .registered-gallery-controls{gap:5px}
+  .registered-gallery-controls>button{flex-basis:28px}
+  .registered-thumbnails button{width:68px;height:64px;flex-basis:68px}
+  .registered-bid-dialog-backdrop{padding:10px}
+  .registered-bid-dialog{padding:18px;max-height:calc(100dvh - 20px);overflow-y:auto;overflow-wrap:anywhere}
+  .registered-bid-dialog h3{font-size:19px}
+  .registered-detail-panel details,.registered-detail-panel details section{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .registered-detail-panel details input{width:100%;max-width:100%;min-width:0}
+  .registered-detail-panel details button{max-width:100%;white-space:normal}
+}
+@media(max-width:350px){
+  .registered-detail-gallery,.registered-detail-panel{padding:12px}
+  .registered-metrics>div{padding:8px 6px}
+  .registered-metrics small{font-size:9px}
+}
