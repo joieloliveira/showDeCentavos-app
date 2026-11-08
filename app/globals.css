@@ -477,3 +477,9 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
   .registered-support-tools section{min-width:0}
   .registered-support-tools input{max-width:100%;min-width:0}
 }
+
+/* Winners: align mobile heading spacing with registered auction details. */
+@media(max-width:480px){
+  .winners-page.page-content{padding-top:20px}
+  .winners-page .page-heading{padding-top:14px;padding-bottom:12px;margin-bottom:0}
+}
