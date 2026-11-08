@@ -28,3 +28,31 @@ export async function listAdminFinancialIncidents(token: string, page: number, s
   }
   return data;
 }
+
+export type FinancialIncidentAudit = {
+  _id: string;
+  actor: string;
+  fromStatus: FinancialIncidentStatus;
+  toStatus: FinancialIncidentStatus;
+  note: string;
+  createdAt: string;
+};
+
+export async function updateAdminFinancialIncident(
+  token: string, incidentId: string, status: 'investigating' | 'resolved', note: string
+) {
+  const { data } = await api.patch<{ incident: FinancialIncident }>(
+    `/admin/financial/incidents/${encodeURIComponent(incidentId)}`,
+    { status, note }, { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return data.incident;
+}
+
+export async function listAdminFinancialIncidentAudit(token: string, incidentId: string) {
+  const { data } = await api.get<{ items: FinancialIncidentAudit[] }>(
+    `/admin/financial/incidents/${encodeURIComponent(incidentId)}/audit`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!data || !Array.isArray(data.items)) throw new Error('Resposta inválida ao consultar auditoria.');
+  return data.items;
+}
