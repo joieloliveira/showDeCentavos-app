@@ -112,7 +112,7 @@ export function FinancialIncidentPanel() {
       <button type="button" className="incident-action" onClick={() => { closeDetails(); setRefresh(n => n + 1); }} disabled={loading || saving}>Atualizar</button>
     </div>
     {!selectedId && actionMessage && <p role="status">{actionMessage}</p>}
-    {loading && <p role="status">Carregando incidentes...</p>
+    {loading && <p role="status">Carregando incidentes...</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && result && <>
       <p>{result.total} incidente(s) encontrado(s).</p>
