@@ -467,7 +467,7 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
 .registered-support-tools[open]>summary{margin-bottom:12px}
 @media(max-width:480px){
   .registered-auction-page.page-content{padding-top:20px}
-  .registered-auction-page .page-heading{margin-bottom:0}
+  .registered-auction-page .page-heading{padding-top:14px;padding-bottom:12px;margin-bottom:0}
   .registered-auction-page .registered-detail{margin-top:18px;gap:14px}
   .registered-finished-result{padding:12px;font-size:13px;line-height:1.45}
   .registered-finished-title{font-size:15px}
