@@ -104,7 +104,7 @@ export function RegisteredAuctions() {
     const secondsLeft = auction.status === 'active' && auction.endsAt && now !== null ? Math.max(0, Math.ceil((Date.parse(auction.endsAt) - now) / 1000)) : null;
     return <article key={auction._id} className="auction-card">
       <div className="auction-visual" style={{ background: '#f3f5f9' }}>
-        {image ? <img src={image} alt={auction.product?.name ?? 'Produto'} style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: 230 }} /> : <span className="auction-emoji" aria-hidden="true">📦</span>}
+        {image ? <img src={image} alt={auction.product?.name ?? 'Produto'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} /> : <span className="auction-emoji" aria-hidden="true">📦</span>}
         <span className={`auction-status ${auction.status === "active" ? "live" : ""}`}>{status}</span>
         {auction.status === 'active' && <span role="timer" aria-label="Tempo restante do leilão" style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, padding: '9px 13px', borderRadius: 10, background: '#fff', border: '2px solid #ff6b35', color: '#e65320', fontWeight: 800, fontSize: 18, boxShadow: '0 3px 10px #0002' }}>{secondsLeft === null ? 'Aguardando início' : secondsLeft === 0 ? 'Encerrando...' : `⏱ ${secondsLeft}s`}</span>}
       </div>
