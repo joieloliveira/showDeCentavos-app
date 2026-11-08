@@ -151,7 +151,7 @@ export function FinancialIncidentPanel() {
         {auditLoading ? <p>Carregando histórico...</p> : audit && (audit.length
           ? <ol>{audit.map(entry => <li key={entry._id} style={{ marginBottom: '1rem', overflowWrap: 'anywhere' }}>
               <strong>{statusLabels[entry.fromStatus]} → {statusLabels[entry.toStatus]}</strong>
-              <div><small>{formatDate(entry.createdAt)} · Administrador: {entry.actor}</small></div>
+              <div><small>{formatDate(entry.createdAt)} · {entry.source === 'system' || !entry.actor ? 'Sistema automático (Mercado Pago)' : `Administrador: ${entry.actor}`}</small></div>
               <p>{entry.note}</p>
             </li>)}</ol>
           : <p>Nenhuma alteração administrativa registrada.</p>)}
