@@ -30,6 +30,13 @@ export function FinancialIncidentPanel() {
   const [actionError, setActionError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const isAdmin = user?.role === 'admin';
+  const closeDetails = () => {
+    setSelectedId(null);
+    setAudit(null);
+    setNote('');
+    setActionError('');
+    setActionMessage('');
+  };
 
   useEffect(() => {
     if (isLoading || !isAdmin) return;
@@ -76,9 +83,8 @@ export function FinancialIncidentPanel() {
     setActionMessage('');
     try {
       await updateAdminFinancialIncident(token, selected._id, nextStatus, note.trim());
-      setActionMessage('Situação atualizada e registrada na auditoria.');
-      setNote('');
-      setAudit(await listAdminFinancialIncidentAudit(token, selected._id));
+      closeDetails();
+      setActionMessage('Situação atualizada e registrada na auditoria. Consulte o filtro correspondente para visualizar o incidente.');
       setRefresh(n => n + 1);
     } catch (err: unknown) {
       setActionError(getApiError(err));
@@ -96,16 +102,17 @@ export function FinancialIncidentPanel() {
     <p>Gerencie a investigação com justificativa e histórico de auditoria. Nenhuma ação aqui movimenta dinheiro ou estoque.</p>
     <div className="incident-filters">
       <label className="incident-field">Situação{' '}
-        <select value={status} onChange={e => { setStatus(e.target.value as '' | FinancialIncidentStatus); setPage(1); }}>
+        <select value={status} onChange={e => { closeDetails(); setStatus(e.target.value as '' | FinancialIncidentStatus); setPage(1); }}>
           <option value="">Todas</option>
           <option value="pending">Pendentes</option>
           <option value="investigating">Em análise</option>
           <option value="resolved">Resolvidos</option>
         </select>
       </label>
-      <button type="button" className="incident-action" onClick={() => setRefresh(n => n + 1)} disabled={loading}>Atualizar</button>
+      <button type="button" className="incident-action" onClick={() => { closeDetails(); setRefresh(n => n + 1); }} disabled={loading || saving}>Atualizar</button>
     </div>
-    {loading && <p role="status">Carregando incidentes...</p>}
+    {!selectedId && actionMessage && <p role="status">{actionMessage}</p>}
+    {loading && <p role="status">Carregando incidentes...</p>
     {error && <p role="alert">{error}</p>}
     {!loading && result && <>
       <p>{result.total} incidente(s) encontrado(s).</p>
@@ -123,10 +130,10 @@ export function FinancialIncidentPanel() {
           </tr>)}</tbody>
         </table>
       </div>
-      {selectedId && <div className="panel" aria-label="Detalhes do incidente">
+      {selected && <div className="panel" aria-label="Detalhes do incidente">
         <h3>Investigação e auditoria</h3>
-        <button type="button" onClick={() => { setSelectedId(null); setAudit(null); setActionError(''); }}>Fechar</button>
-        {selected ? <>
+        <button type="button" onClick={closeDetails}>Fechar</button>
+        <>
           <p>Pedido: {selected.order} | Cobrança: {selected.providerOrderId}</p>
           <p>Situação: {statusLabels[selected.status]}</p>
           {nextStatus && <div className="incident-filters">
@@ -137,19 +144,23 @@ export function FinancialIncidentPanel() {
               {saving ? 'Salvando...' : nextStatus === 'investigating' ? 'Iniciar investigação' : 'Marcar como resolvido'}
             </button>
           </div>}
-        </> : <p>Atualize a lista para consultar o estado atual deste incidente.</p>}
+        </>
         {actionError && <p role="alert">{actionError}</p>}
         {actionMessage && <p role="status">{actionMessage}</p>}
         <h4>Histórico de auditoria</h4>
         {auditLoading ? <p>Carregando histórico...</p> : audit && (audit.length
-          ? <ul>{audit.map(entry => <li key={entry._id}>{formatDate(entry.createdAt)} — {statusLabels[entry.fromStatus]} → {statusLabels[entry.toStatus]} — {entry.note} (administrador: {entry.actor})</li>)}</ul>
+          ? <ol>{audit.map(entry => <li key={entry._id} style={{ marginBottom: '1rem', overflowWrap: 'anywhere' }}>
+              <strong>{statusLabels[entry.fromStatus]} → {statusLabels[entry.toStatus]}</strong>
+              <div><small>{formatDate(entry.createdAt)} · Administrador: {entry.actor}</small></div>
+              <p>{entry.note}</p>
+            </li>)}</ol>
           : <p>Nenhuma alteração administrativa registrada.</p>)}
       </div>}
       {result.items.length === 0 && <p>Nenhum incidente encontrado para o filtro selecionado.</p>}
       <div className="incident-pagination">
-        <button type="button" disabled={page <= 1} onClick={() => setPage(n => n - 1)}>Anterior</button>
+        <button type="button" disabled={page <= 1} onClick={() => { closeDetails(); setPage(n => n - 1); }}>Anterior</button>
         <span>Página {page} de {Math.max(1, Math.ceil(result.total / result.limit))}</span>
-        <button type="button" disabled={page * result.limit >= result.total} onClick={() => setPage(n => n + 1)}>Próxima</button>
+        <button type="button" disabled={page * result.limit >= result.total} onClick={() => { closeDetails(); setPage(n => n + 1); }}>Próxima</button>
       </div>
     </>}
   </section>;
