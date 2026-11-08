@@ -31,7 +31,8 @@ export async function listAdminFinancialIncidents(token: string, page: number, s
 
 export type FinancialIncidentAudit = {
   _id: string;
-  actor: string;
+  actor: string | null;
+  source?: 'admin' | 'system';
   fromStatus: FinancialIncidentStatus;
   toStatus: FinancialIncidentStatus;
   note: string;
