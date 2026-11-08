@@ -51,13 +51,30 @@ export function RegisteredAuctions() {
     void refresh();
     const interval = window.setInterval(() => { void refresh(); }, 5000);
     const onVisibility = () => { if (document.visibilityState === 'visible') void refresh(); };
+    const onAuctionEvent = () => { void refresh(); };
+    window.addEventListener('showdecentavos:auction-update', onAuctionEvent);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      window.removeEventListener('showdecentavos:auction-update', onAuctionEvent);
       mounted = false;
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
+  const activeIds = auctions.filter(a => a.status === 'active').map(a => a._id).sort().join(',');
+  useEffect(() => {
+    if (!activeIds) return;
+    const base = (api.defaults.baseURL ?? 'http://localhost:3001/api').replace(/\\/$/, '');
+    const sources = activeIds.split(',').map(id => {
+      const source = new EventSource(`${base}/auctions/${id}/events`);
+      source.addEventListener('auction-update', () => {
+        window.dispatchEvent(new Event('showdecentavos:auction-update'));
+      });
+      return source;
+    });
+    return () => sources.forEach(source => source.close());
+  }, [activeIds]);
+
   if (loading) return <p role="status">Carregando leilões cadastrados...</p>;
   if (error && !auctions.length) return <p role="alert">Não foi possível carregar os leilões cadastrados. Verifique se a API está disponível.</p>;
   if (!auctions.length) return <p className="empty-state">Ainda não existem leilões cadastrados para exibição.</p>;
