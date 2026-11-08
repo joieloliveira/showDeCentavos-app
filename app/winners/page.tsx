@@ -22,7 +22,7 @@ export default async function Winners() {
     const data = await response.json();
     winners = Array.isArray(data.winners) ? data.winners : [];
   } catch { failed = true; }
-  return <div className="site-container page-content">
+  return <div className="site-container page-content winners-page">
     <div className="page-heading"><span className="eyebrow">Histórico transparente</span><h1>Ganhadores</h1><p>Resultados públicos de leilões encerrados, com identificação por apelido.</p></div>
     {failed ? <div className="panel" role="alert"><p>Não foi possível consultar os ganhadores. Tente novamente mais tarde.</p></div> :
       winners.length === 0 ? <div className="panel"><p>Ainda não há resultados com vencedores identificados por apelido público.</p></div> :
