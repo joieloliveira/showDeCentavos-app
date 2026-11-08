@@ -23,6 +23,10 @@ export function RegisteredAuctions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [now, setNow] = useState<number | null>(null);
+  const [previewCards, setPreviewCards] = useState(false);
+  useEffect(() => {
+    setPreviewCards(new URLSearchParams(window.location.search).get('demoCards') === '8');
+  }, []);
   useEffect(() => {
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -75,6 +79,17 @@ export function RegisteredAuctions() {
     return () => sources.forEach(source => source.close());
   }, [activeIds]);
 
+  if (previewCards) return <div>
+    <p role="status" style={{ padding: '12px 16px', borderRadius: 10, background: '#fff4e9', color: '#9a481b', marginBottom: 20 }}>Prévia visual: 8 cards fictícios. Nenhum leilão, lance ou pagamento foi criado.</p>
+    <div className="auction-grid">{['Console de videogame', 'Smartphone', 'Notebook', 'Fone de ouvido', 'Smart TV', 'Câmera digital', 'Relógio inteligente', 'Tablet'].map((name, index) => <article className="auction-card" key={name}>
+      <div className="auction-visual" style={{ background: '#f3f5f9' }}><span className="auction-emoji" aria-hidden="true">{['🎮', '📱', '💻', '🎧', '📺', '📷', '⌚', '📲'][index]}</span><span className="auction-status">Demonstração</span></div>
+      <div className="auction-body"><div className="auction-title-row"><h3>{name} — prévia visual</h3></div>
+        <p className="retail">Valor de referência: {(index + 1) * 250},00 (fictício)</p>
+        <div className="bid-info"><div><span className="metric-label">Preço ilustrativo</span><strong>{money((index + 1) * 100)}</strong></div><div><span className="metric-label">Custo por lance</span><strong>{money(50)}</strong></div></div>
+        <div className="card-bottom"><span>Sem lances reais</span><span className="card-cta" aria-disabled="true">Somente visualização</span></div>
+      </div>
+    </article>)}</div>
+  </div>;
   if (loading) return <p role="status">Carregando leilões cadastrados...</p>;
   if (error && !auctions.length) return <p role="alert">Não foi possível carregar os leilões cadastrados. Verifique se a API está disponível.</p>;
   if (!auctions.length) return <p className="empty-state">Ainda não existem leilões cadastrados para exibição.</p>;
