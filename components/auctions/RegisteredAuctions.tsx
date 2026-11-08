@@ -64,7 +64,7 @@ export function RegisteredAuctions() {
   const activeIds = auctions.filter(a => a.status === 'active').map(a => a._id).sort().join(',');
   useEffect(() => {
     if (!activeIds) return;
-    const base = (api.defaults.baseURL ?? 'http://localhost:3001/api').replace(/\\/$/, '');
+    const base = (api.defaults.baseURL ?? 'http://localhost:3001/api').replace(/\/$/, '');
     const sources = activeIds.split(',').map(id => {
       const source = new EventSource(`${base}/auctions/${id}/events`);
       source.addEventListener('auction-update', () => {
