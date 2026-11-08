@@ -28,7 +28,7 @@ export default async function Winners() {
       winners.length === 0 ? <div className="panel"><p>Ainda não há resultados com vencedores identificados por apelido público.</p></div> :
       <div className="auction-grid">
         {winners.map(w => <article className="auction-card" key={w.auctionId}>
-          <div className="auction-visual" style={{ background: "#f3f5f9" }}>{w.coverImageUrl ? <img src={w.coverImageUrl} alt={w.productName} style={{ width: "100%", height: "100%", maxHeight: 230, objectFit: "contain" }} /> : <span className="auction-emoji" aria-hidden="true">🏆</span>}<span className="auction-status">Encerrado</span></div>
+          <div className="auction-visual" style={{ background: "#f3f5f9" }}>{w.coverImageUrl ? <img src={w.coverImageUrl} alt={w.productName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <span className="auction-emoji" aria-hidden="true">🏆</span>}<span className="auction-status">Encerrado</span></div>
           <div className="auction-body" style={{ display: "grid", gap: 12 }}>
             <h3>{w.productName}</h3>
             <div style={{ padding: 14, borderRadius: 10, background: "#fff8df", border: "1px solid #f2d783", textAlign: "center" }}><strong style={{ display: "block" }}>🏆 Ganhador</strong><strong style={{ display: "block", marginTop: 6 }}>{w.winnerNickname}</strong></div>
