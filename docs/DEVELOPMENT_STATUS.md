@@ -1,6 +1,6 @@
 # Show de Centavos — Estado do desenvolvimento
 
-Atualizado em: 2026-11-08 (America/Sao_Paulo)
+Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 > **Documento de continuidade entre conversas.** Fonte de orientação, não substitui o código nem os testes. Ao retomar, conferir a branch e os commits atuais no GitHub e eventuais mudanças locais não enviadas.
 
@@ -27,7 +27,9 @@ Atualizado em: 2026-11-08 (America/Sao_Paulo)
 - `components/auctions/RegisteredAuctions.tsx`: consulta periódica a cada 5 segundos; `EventSource` para leilões ativos e atualização após `auction-update`. O cronômetro visual atualiza a cada segundo.
 - 2026-11-08: demonstração em `/auctions` exibiu **Agendado → Em andamento (cronômetro em 5s e 10s) → Encerrado**, com ganhador e preço final de R$ 0,01, conforme capturas do navegador.
 - Terminal do backend confirmou quatro ciclos de ativação/encerramento.
-- DevTools Network exibiu requisição `events` com HTTP 200 e tipo `event-stream`. **Ainda não foi capturado o conteúdo de `auction-update` na aba EventStream/Response**. Não afirmar que o recebimento da mensagem específica foi homologado; o polling também pode explicar atualização dos cards.
+- DevTools Network exibiu requisição `events` com HTTP 200 e tipo `event-stream`.
+- **2026-11-09: HOMOLOGADO envio SSE pelo backend em teste manual com `curl -N`** no endpoint `/api/auctions/6af2298f01f89eff94a2b6c4/events` (ID temporário, não reutilizar). Foram recebidos `: connected`, `: heartbeat` e três mensagens `event: auction-update` com `data.status` `scheduled`, `active` e `finished`; `currentPriceCents: 1` e `bidCount: 1`. O evento foi recebido diretamente no stream, independente do polling do navegador. **Não repetir essa verificação sem regressão relevante.**
+- A integração visual do frontend já foi observada, mas não foi isolado o comportamento de atualização visual sem polling; manter essa distinção se necessário.
 - Script verificado: `src/scripts/browserAuctionCountdownDemo.js` (API, branch de trabalho). Usa apenas URI local de testes `mongodb://127.0.0.1:27018/wallet_test_pix?replicaSet=walletTestRS`, porta 3002, endpoint `POST /demo/schedule`, e remove registros temporários com Ctrl+C. Frontend demonstrativo aponta para `http://127.0.0.1:3002/api`. Não usar banco de produção.
 
 ### Interface
@@ -37,10 +39,9 @@ Atualizado em: 2026-11-08 (America/Sao_Paulo)
 - Em 2026-11-08, usuário enviou captura de `/winners` em viewport mobile 320px com aparência aprovada e saída de `npm run typecheck` / `tsc --noEmit` sem erros.
 
 ## Próximo passo exato
-1. **Não repetir** o ciclo completo de agendamento/encerramento nem a correção de Ganhadores: ambos já observados.
-2. Se for relevante concluir a prova de SSE puro, capturar uma mensagem `auction-update` em EventStream/Response de uma conexão ativa; alternativamente adicionar teste automatizado específico que diferencie evento SSE de polling. Uma conexão HTTP 200 `event-stream` não prova sozinha o recebimento do evento.
-3. Depois planejar a próxima funcionalidade de produto com o desenvolvedor, mantendo lances financeiros desativados até homologação/autorização específica.
-4. Atualizar este documento **ao final de marcos importantes**, registrando data, branch, commit, evidência, pendência e próximo passo; não registrar testes como aprovados sem evidência.
+1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
+2. **Próximo passo: escolher com o desenvolvedor a próxima funcionalidade ou revisão de produto**, consultando o código atual e mantendo lances financeiros desativados até autorização/revisão específica.
+3. Atualizar este documento **ao final de marcos importantes**, registrando data, branch, commit, evidência, pendência e próximo passo; não registrar testes como aprovados sem evidência.
 
 ## Comandos locais úteis
 ```bash
