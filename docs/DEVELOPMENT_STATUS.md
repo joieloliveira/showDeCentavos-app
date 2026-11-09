@@ -53,9 +53,15 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - `RegisteredAuctionDetail.tsx` agora exibe **Aguardando o primeiro lance** com explicação explícita nesse estado; commit `6559013ca4a9c0debb77f3c8ef4a53d9648a0c33`.
 - Usuário confirmou em capturas o aviso, conexão em tempo real, carteira e botão financeiro desabilitado; `npm run typecheck` / `tsc --noEmit` sem erros. **Interface aprovada.** Não repetir teste sem regressão.
 
+### Simulador local de lances (2026-11-09)
+- Botão do simulador corrigido para exibir o incremento formatado em moeda, em vez da interpolação literal; commit `b24039db8b9278b413ca6d4c3e80bd8c8058c544`.
+- Usuário confirmou em capturas a atualização do texto para **Simular lance de R$ 0,01**, e anteriormente verificou um lance hipotético com preço **R$ 0,01** e custo hipotético **R$ 0,50**; `npm run typecheck` / `tsc --noEmit` sem erros.
+- Simulação é local, não gera POST, não altera carteira nem preço real. **Homologação concluída; não repetir sem regressão.**
+- Próxima prioridade: revisar e preparar indicadores de elegibilidade de participação (sessão, saldo, estado do leilão, conectividade), sempre sem liberar lances financeiros; aproveitar `services/bids.ts` e fluxos existentes.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
-2. **Próximo passo: escolher com o desenvolvedor a próxima funcionalidade/revisão de produto**, consultando o código atual e mantendo lances financeiros desativados até autorização/revisão específica.
+2. **Próximo passo: revisar a interface de elegibilidade para lances**, comunicando sessão, saldo, status e conectividade sem liberar POST financeiro. Inspecionar o componente antes de alterar e evitar duplicar informações já existentes.
 3. Atualizar este documento **ao final de marcos importantes**, registrando data, branch, commit, evidência, pendência e próximo passo; não registrar testes como aprovados sem evidência.
 
 ## Comandos locais úteis
