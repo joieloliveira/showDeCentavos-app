@@ -221,6 +221,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         <h2>{product?.name ?? 'Produto indisponível'}</h2>
         
         {secondsUntilStart !== null && <div className="registered-clock" role="timer"><span>{secondsUntilStart > 0 ? "Início previsto em" : "Horário previsto atingido · aguardando atualização do servidor"}</span><strong>{clock(secondsUntilStart)}</strong></div>}
+        {auction.status === 'active' && auction.bidCount === 0 && !auction.endsAt && <div className="registered-clock" role="status"><strong style={{ fontSize: 18 }}>Aguardando o primeiro lance</strong><span style={{ display: "block", marginTop: 8 }}>O cronômetro de 15 segundos começará após o primeiro lance válido.</span></div>}
         {secondsUntilEnd !== null && <div className="registered-clock" role="timer"><span>{secondsUntilEnd > 0 ? "Tempo restante registrado" : "Tempo esgotado · aguardando encerramento no servidor"}</span><strong>{clock(secondsUntilEnd)}</strong>{clockStale && <small role="status" style={{ display: "block", marginTop: 8 }}>Sincronização do cronômetro pendente; horário sujeito a atualização.</small>}</div>}
         <div className="registered-price-block">
           <span>{auction.status === 'finished' ? 'Preço final do leilão' : 'Preço atual do leilão'}</span>
