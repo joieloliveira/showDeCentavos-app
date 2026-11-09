@@ -43,13 +43,13 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Frontend `components/auctions/RegisteredAuctionDetail.tsx`: link contextual sob **Minha carteira**: autenticado → `/wallet` ("Ver minha carteira"); visitante → `/login?next=...` ("Entrar na minha conta"). Commit `c3e138c88b55bae30ab71f59e9dd403d7de4eab4`; `npm run typecheck` reportado sem erros.
 - API demonstrativa da porta 3002 **não implementa login/cadastro/carteira**. Para verificar autenticação, foi iniciada API completa na porta **3001**, com `MONGO_URI=mongodb://127.0.0.1:27018/wallet_test_pix?replicaSet=walletTestRS`, `AUCTION_BIDDING_ENABLED=false`; frontend iniciado com `NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api`.
 - Usuário confirmou cadastro e login reais na API local; capturas de `/wallet` mostraram sessão autenticada, saldo **R$ 0,00**, sem movimentações, PIX real desabilitado.
-- Capturas de `/auctions/registered/[id]` mostraram o link **Ver minha carteira**, saldo **R$ 0,00**, lances reais indisponíveis; segunda captura confirmou navegação para `/wallet` com sessão mantida. **Fluxo autenticado aprovado**. Não há ainda evidência específica do fluxo visitante com retorno após login.
+- Capturas de `/auctions/registered/[id]` mostraram o link **Ver minha carteira**, saldo **R$ 0,00**, lances reais indisponíveis; segunda captura confirmou navegação para `/wallet` com sessão mantida. **Fluxo autenticado aprovado**. Em 2026-11-09, **fluxo visitante com retorno após login aprovado por duas capturas**: antes, link "Entrar na minha conta" em leilão; após login em janela privativa, URL do mesmo leilão preservada, nome do usuário exibido e link "Ver minha carteira" com saldo R$ 0,00.
 - Atenção: um leilão temporário de demonstração ainda aparecia na listagem da API completa após encerramento do script de demonstração; investigar limpeza residual com cautela antes de excluir dados. Não presumir que foi limpo.
 - Terminais atuais: **1 BACKEND MongoDB replicaSet 27018; 2 BACKEND API completa 3001; 3 BACKEND antigo SSE encerrado; 4 BACKEND comandos disponível; 5 FRONTEND Next.js 3000**.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
-2. **Próximo passo: verificar o fluxo visitante com retorno após login, ou escolher com o desenvolvedor a próxima funcionalidade/revisão de produto**, consultando o código atual e mantendo lances financeiros desativados até autorização/revisão específica.
+2. **Próximo passo: escolher com o desenvolvedor a próxima funcionalidade/revisão de produto**, consultando o código atual e mantendo lances financeiros desativados até autorização/revisão específica.
 3. Atualizar este documento **ao final de marcos importantes**, registrando data, branch, commit, evidência, pendência e próximo passo; não registrar testes como aprovados sem evidência.
 
 ## Comandos locais úteis
