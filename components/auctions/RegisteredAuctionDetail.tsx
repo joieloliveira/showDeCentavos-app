@@ -247,7 +247,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             <span>Preço hipotético: <strong>{money(simulatedPriceCents)}</strong></span>
             <span>Lances simulados: <strong>{simulatedBids}</strong></span>
             <span>Custo hipotético dos lances: <strong>{money(simulatedBids * auction.bidCostCents)}</strong></span>
-            <button type="button" disabled={!canSimulate} onClick={() => setSimulatedBids(previous => previous + 1)}>{canSimulate ? 'Simular lance de {money(bidIncrementCents)}' : 'Simulação disponível apenas durante leilão ativo'}</button>
+            <button type="button" disabled={!canSimulate} onClick={() => setSimulatedBids(previous => previous + 1)}>{canSimulate ? `Simular lance de ${money(bidIncrementCents)}` : 'Simulação disponível apenas durante leilão ativo'}</button>
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
