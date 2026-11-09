@@ -47,6 +47,12 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Atenção: um leilão temporário de demonstração ainda aparecia na listagem da API completa após encerramento do script de demonstração; investigar limpeza residual com cautela antes de excluir dados. Não presumir que foi limpo.
 - Terminais atuais: **1 BACKEND MongoDB replicaSet 27018; 2 BACKEND API completa 3001; 3 BACKEND antigo SSE encerrado; 4 BACKEND comandos disponível; 5 FRONTEND Next.js 3000**.
 
+
+### Estado ativo sem lances (2026-11-09)
+- Leilão criado pelo painel administrativo e iniciado após espera de 1 minuto; API completa porta 3001 retornou `status: active`, `bidCount: 0`, `endsAt: null`. Esse estado é esperado: cronômetro de 15 segundos depende do primeiro lance válido.
+- `RegisteredAuctionDetail.tsx` agora exibe **Aguardando o primeiro lance** com explicação explícita nesse estado; commit `6559013ca4a9c0debb77f3c8ef4a53d9648a0c33`.
+- Usuário confirmou em capturas o aviso, conexão em tempo real, carteira e botão financeiro desabilitado; `npm run typecheck` / `tsc --noEmit` sem erros. **Interface aprovada.** Não repetir teste sem regressão.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Próximo passo: escolher com o desenvolvedor a próxima funcionalidade/revisão de produto**, consultando o código atual e mantendo lances financeiros desativados até autorização/revisão específica.
