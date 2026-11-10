@@ -65,6 +65,12 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Usuário enviou capturas comprovando conta conectada, leilão ativo aguardando primeiro lance, saldo R$ 0,00 insuficiente para custo R$ 0,50, consulta ao servidor disponível e lances reais indisponíveis. `npm run typecheck` (`tsc --noEmit`) sem erros. **Interface homologada.**
 - Próximo passo: revisar consistência visual e acessibilidade do painel, e depois planejar homologação segura do fluxo de lance financeiro em ambiente isolado; não ativar `AUCTION_BIDDING_ENABLED` sem autorização explícita.
 
+
+### Modal informativa de lance (2026-11-09, noite)
+- Corrigida a posição da modal `showBidInfo`: estava dentro de `<details className="registered-support-tools">`, de modo que só aparecia após expandir as ferramentas de suporte. Agora é irmã de `<details>`, independente da expansão; commit frontend `43cda801061e4b4d93deaab35d7e1c0fa5c7c6c8`.
+- Usuário comprovou por captura a modal **Confirmação de lance — prévia** aberta com ferramentas fechadas; `npm run typecheck` (`tsc --noEmit`) sem erros. **Correção homologada**.
+- A modal é somente informativa, e lances reais continuam indisponíveis. Não repetir esse teste sem regressão.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
