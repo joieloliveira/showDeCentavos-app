@@ -238,6 +238,14 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {auction.endsAt && <p className="registered-date">Término registrado: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span>{!authLoading && <Link href={user ? "/wallet" : `/login?next=${encodeURIComponent(`/auctions/registered/${id}`)}`} style={{ display: "inline-block", marginTop: 8, fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>{user ? "Ver minha carteira" : "Entrar na minha conta"}</Link>}</div></div>
         <button type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
+        <div role="status" aria-label="Condições para participar" style={{ padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 10, display: 'grid', gap: 6, fontSize: 13 }}>
+          <strong>Condições para participar (prévia)</strong>
+          <span>{authLoading ? '• Conta: verificando sessão' : user ? '✓ Conta: conectada' : '• Conta: entre para participar'}</span>
+          <span>{auction.status === 'active' ? '✓ Leilão: em andamento' : `• Leilão: ${label.toLowerCase()}`}</span>
+          <span>{!user || authLoading ? '• Saldo: disponível após login' : balanceError ? '• Saldo: não foi possível verificar' : balance === null ? '• Saldo: consultando carteira' : hasSufficientBalance ? `✓ Saldo: suficiente para ${money(auction.bidCostCents)}` : `• Saldo: insuficiente para ${money(auction.bidCostCents)}`}</span>
+          <span>{liveDataStatus === 'ok' ? '✓ Servidor: consulta disponível' : '• Servidor: aguardando reconexão'}</span>
+          <small style={{ color: '#64748b' }}>Verificação apenas informativa. Mesmo com os requisitos atendidos, lances financeiros permanecem bloqueados.</small>
+        </div>
         <button type="button" disabled className="auction-bid-disabled"><LockKeyhole size={18}/> Lances reais indisponíveis</button>
         <details className="registered-support-tools"><summary>Ferramentas de demonstração e suporte</summary><p style={{ fontSize: 12, color: '#64748b', overflowWrap: 'anywhere' }}>Identificador do leilão: <code>{auction._id}</code></p><section aria-label="Simulador de lances" style={{ padding: 16, border: '1px dashed #94a3b8', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Simulador local de lances</strong>
