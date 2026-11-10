@@ -32,6 +32,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [auction, setAuction] = useState<Auction | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
+  const bidInfoTriggerRef = useRef<HTMLButtonElement>(null);
+  const bidInfoCloseRef = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
   const [liveDataStatus, setLiveDataStatus] = useState<'ok' | 'unavailable'>('ok');
@@ -94,6 +96,28 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       setBalanceRefreshing(false);
     }
   };
+  useEffect(() => {
+    if (!showBidInfo) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : bidInfoTriggerRef.current;
+    bidInfoCloseRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowBidInfo(false);
+      }
+      if (event.key === 'Tab') {
+        const dialog = bidInfoCloseRef.current?.closest('[role="dialog"]');
+        const controls = dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])');
+        if (!controls?.length) return;
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => { document.removeEventListener('keydown', onKeyDown); previousFocus?.focus(); };
+  }, [showBidInfo]);
   useEffect(() => { const tick = setInterval(() => setNow(Date.now() + serverOffsetMs.current), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
     // A route can reuse this component for another auction. Never merge the
@@ -237,7 +261,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         {auction.startsAt && <p className="registered-date">Início registrado: {new Date(auction.startsAt).toLocaleString('pt-BR')}</p>}
         {auction.endsAt && <p className="registered-date">Término registrado: {new Date(auction.endsAt).toLocaleString('pt-BR')}</p>}
         <div className="registered-wallet-preview"><Wallet size={19}/><div><strong>Minha carteira</strong><span>{authLoading ? "Verificando sessão..." : !user ? "Entre na sua conta para consultar seu saldo." : balanceError || (balance === null ? "Consultando saldo..." : `Saldo disponível: ${money(balance)}`)}</span>{!authLoading && <Link href={user ? "/wallet" : `/login?next=${encodeURIComponent(`/auctions/registered/${id}`)}`} style={{ display: "inline-block", marginTop: 8, fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>{user ? "Ver minha carteira" : "Entrar na minha conta"}</Link>}</div></div>
-        <button type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
+        <button ref={bidInfoTriggerRef} type="button" className="registered-bid-info-button" onClick={() => setShowBidInfo(true)}><Gavel size={18}/> Como funcionará o lance</button>
         <div role="status" aria-label="Condições para participar" style={{ padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: 10, display: 'grid', gap: 6, fontSize: 13 }}>
           <strong>Condições para participar (prévia)</strong>
           <span>{authLoading ? '• Conta: verificando sessão' : user ? '✓ Conta: conectada' : '• Conta: entre para participar'}</span>
@@ -259,7 +283,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
-        {showBidInfo && <div className="registered-bid-dialog-backdrop" onClick={() => setShowBidInfo(false)}><section role="dialog" aria-modal="true" aria-labelledby="bid-info-title" className="registered-bid-dialog" onClick={event => event.stopPropagation()}><h3 id="bid-info-title">Confirmação de lance — prévia</h3><p>Este painel é apenas informativo. Nenhum lance será enviado ao servidor.</p><dl style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px 16px', margin: '16px 0' }}><dt>Custo de um lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.bidCostCents)}</dd><dt>Aumento do preço do leilão</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(bidIncrementCents)}</dd><dt>Preço hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.currentPriceCents + bidIncrementCents)}</dd><dt>Saldo disponível</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : money(balance)}</dd><dt>Saldo hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : balance < auction.bidCostCents ? 'Saldo insuficiente' : money(balance - auction.bidCostCents)}</dd></dl>{!user && <p>Entre na sua conta para consultar seu saldo antes de participar.</p>}{user && <button type="button" onClick={() => { void refreshBalance(); }} disabled={balanceRefreshing}>{balanceRefreshing ? 'Consultando carteira...' : 'Atualizar saldo da carteira'}</button>}{user && balanceError && <p role="status">{balanceError}</p>}<p role="status">{authLoading ? 'Verificando autenticação...' : !user ? 'Pré-requisito: entrar na conta.' : auction.status !== 'active' ? 'Pré-requisito: aguardar o leilão ficar ativo.' : liveDataStatus !== 'ok' ? 'Pré-requisito: restabelecer a comunicação com o servidor.' : balance === null ? 'Pré-requisito: confirmar o saldo da carteira.' : !hasSufficientBalance ? 'Pré-requisito: saldo suficiente para um lance.' : isBidPreviewEligible ? 'Pré-requisitos básicos atendidos. O envio financeiro continua bloqueado.' : 'Verificação pendente.'}</p><p><strong>Lances reais indisponíveis.</strong> Nenhum valor será debitado nesta demonstração.</p><button type="button" onClick={() => setShowBidInfo(false)}>Entendi, fechar</button></section></div>}
+        {showBidInfo && <div className="registered-bid-dialog-backdrop" onClick={() => setShowBidInfo(false)}><section role="dialog" aria-modal="true" aria-labelledby="bid-info-title" aria-describedby="bid-info-description" className="registered-bid-dialog" onClick={event => event.stopPropagation()}><h3 id="bid-info-title">Confirmação de lance — prévia</h3><p id="bid-info-description">Este painel é apenas informativo. Nenhum lance será enviado ao servidor.</p><dl style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px 16px', margin: '16px 0' }}><dt>Custo de um lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.bidCostCents)}</dd><dt>Aumento do preço do leilão</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(bidIncrementCents)}</dd><dt>Preço hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{money(auction.currentPriceCents + bidIncrementCents)}</dd><dt>Saldo disponível</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : money(balance)}</dd><dt>Saldo hipotético após o lance</dt><dd style={{ margin: 0, fontWeight: 700 }}>{balance === null ? 'Não disponível' : balance < auction.bidCostCents ? 'Saldo insuficiente' : money(balance - auction.bidCostCents)}</dd></dl>{!user && <p>Entre na sua conta para consultar seu saldo antes de participar.</p>}{user && <button type="button" onClick={() => { void refreshBalance(); }} disabled={balanceRefreshing}>{balanceRefreshing ? 'Consultando carteira...' : 'Atualizar saldo da carteira'}</button>}{user && balanceError && <p role="status">{balanceError}</p>}<p role="status">{authLoading ? 'Verificando autenticação...' : !user ? 'Pré-requisito: entrar na conta.' : auction.status !== 'active' ? 'Pré-requisito: aguardar o leilão ficar ativo.' : liveDataStatus !== 'ok' ? 'Pré-requisito: restabelecer a comunicação com o servidor.' : balance === null ? 'Pré-requisito: confirmar o saldo da carteira.' : !hasSufficientBalance ? 'Pré-requisito: saldo suficiente para um lance.' : isBidPreviewEligible ? 'Pré-requisitos básicos atendidos. O envio financeiro continua bloqueado.' : 'Verificação pendente.'}</p><p><strong>Lances reais indisponíveis.</strong> Nenhum valor será debitado nesta demonstração.</p><button ref={bidInfoCloseRef} type="button" onClick={() => setShowBidInfo(false)}>Entendi, fechar</button></section></div>}
         <section aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Consulta somente de leitura para verificar um lance anterior pela chave de idempotência. Não realiza nem repete lances.</p>
