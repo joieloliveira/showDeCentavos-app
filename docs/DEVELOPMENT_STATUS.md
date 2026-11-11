@@ -156,7 +156,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Consulta de tentativa recuperada na UI (2026-11-11)
 - Commit `812690f`: painel de suporte oferece consulta GET de tentativa restaurada do diário; usa máquina de estados e `resolvePendingBid` para confirmar somente chave, conta e leilão correspondentes. Ignora respostas tardias após troca de conta/leilão/token. Não faz POST nem limpa o diário.
-- Pendente homologação local: `npm run typecheck` e inspeção visual condicional (botão só aparece quando há tentativa recuperada). Não criar tentativa financeira para testar o botão.
+- `npm run typecheck` homologado pelo usuário em 2026-11-11, sem erros; pendente inspeção visual condicional (botão só aparece quando há tentativa recuperada). Não criar tentativa financeira para testar o botão.
 - **Importante**: não há geração nem gravação automática de tentativas reais, porque o fluxo financeiro segue desabilitado.
 
 ## Próximo passo exato
