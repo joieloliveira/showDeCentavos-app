@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../services/bidAttemptJourn
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const mod = { exports: {} };
 vm.runInNewContext(js, { module: mod, exports: mod.exports });
-const { serializePendingBid: save, restorePendingBid: restore } = mod.exports;
+const { serializePendingBid: save, restorePendingBid: restore, persistPendingBid: persist, BID_ATTEMPT_JOURNAL_KEY: storageKey } = mod.exports;
 const user = '507f1f77bcf86cd799439011';
 const auction = '507f1f77bcf86cd799439012';
 const key = '123e4567-e89b-42d3-a456-426614174000';
@@ -47,4 +47,47 @@ test('invalid, malformed or untrusted journal data is ignored', () => {
 test('pending journal is not silently discarded because it is old', () => {
   const raw = save(pending, user, auction, 1);
   assert.equal(restore(raw, user, auction).status, 'uncertain');
+});
+
+function memoryStorage() {
+  const values = new Map();
+  return { getItem: k => values.has(k) ? values.get(k) : null, setItem: (k,v) => { values.set(k,v); } };
+}
+test('pending key is durably written before future submission', () => {
+  const storage = memoryStorage();
+  assert.equal(persist(storage, pending, user, auction, 100), true);
+  assert.equal(restore(storage.getItem(storageKey), user, auction).key, key);
+});
+test('repeated write of same pending key is safe', () => {
+  const storage = memoryStorage();
+  assert.equal(persist(storage, pending, user, auction, 100), true);
+  assert.equal(persist(storage, { status: 'uncertain', key, message: 'timeout' }, user, auction, 101), true);
+});
+test('different key cannot overwrite unresolved attempt', () => {
+  const storage = memoryStorage();
+  persist(storage, pending, user, auction, 100);
+  const other = '123e4567-e89b-42d3-a456-426614174001';
+  assert.equal(persist(storage, { status: 'submitting', key: other }, user, auction, 101), false);
+  assert.equal(restore(storage.getItem(storageKey), user, auction).key, key);
+});
+test('different account and auction cannot overwrite unresolved attempt', () => {
+  const storage = memoryStorage();
+  persist(storage, pending, user, auction, 100);
+  assert.equal(persist(storage, pending, '507f1f77bcf86cd799439013', auction, 101), false);
+  assert.equal(persist(storage, pending, user, '507f1f77bcf86cd799439013', 101), false);
+});
+test('corrupt storage record blocks writes rather than discarding evidence', () => {
+  const storage = memoryStorage();
+  storage.setItem(storageKey, '{bad');
+  assert.equal(persist(storage, pending, user, auction, 100), false);
+  assert.equal(storage.getItem(storageKey), '{bad');
+});
+test('storage write failures and readback mismatch fail closed', () => {
+  assert.equal(persist({ getItem: () => null, setItem: () => { throw Error('quota'); } }, pending, user, auction, 100), false);
+  assert.equal(persist({ getItem: () => null, setItem: () => {} }, pending, user, auction, 100), false);
+});
+test('invalid or settled state cannot create a journal', () => {
+  const storage = memoryStorage();
+  assert.equal(persist(storage, { status: 'idle' }, user, auction, 100), false);
+  assert.equal(storage.getItem(storageKey), null);
 });
