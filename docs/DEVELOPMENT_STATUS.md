@@ -127,7 +127,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Validação do contrato de registros financeiros (2026-11-11)
 - Commits `0b5f8cb`, `1eca5af`: `services/bids.ts` valida campos obrigatórios de BidRecord em POST e GET (ObjectIds, chave, inteiros monetários não negativos, data de expiração); GET inconsistente resulta em `unavailable` e POST inconsistente lança erro sem retry.
-- Fixture dos testes atualizada para o contrato real e três cenários adicionados (13 testes previstos em `npm run test:bids`). **Pendente execução do usuário** de `npm run test:bids` e `npm run typecheck`.
+- Fixture dos testes atualizada para o contrato real e três cenários adicionados (13 testes previstos em `npm run test:bids`). **Homologado em 2026-11-11:** usuário executou `npm run test:bids` (13/13 aprovados, 0 falhas) e `npm run typecheck` sem erros.
 - Backend financeiro permanece bloqueado.
 
 ## Próximo passo exato
