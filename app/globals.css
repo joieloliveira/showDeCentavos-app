@@ -497,3 +497,8 @@ a.account-summary-card:hover{box-shadow:0 14px 32px #252a3b12;transform:translat
   .winners-page.page-content{padding-top:20px}
   .winners-page .page-heading{padding-top:14px;padding-bottom:12px;margin-bottom:0}
 }
+
+/* Informational bid attempt monitor; no financial actions. */
+.registered-attempt-status{display:grid;gap:8px;min-width:0;margin:12px 0;padding:14px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#0f172a;overflow-wrap:anywhere}
+.registered-attempt-status small{color:#475569;line-height:1.5}
+@media(max-width:480px){.registered-attempt-status{padding:12px;font-size:13px}}
