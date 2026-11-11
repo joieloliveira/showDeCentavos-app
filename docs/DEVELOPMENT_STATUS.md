@@ -159,6 +159,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - `npm run typecheck` homologado pelo usuário em 2026-11-11, sem erros; pendente inspeção visual condicional (botão só aparece quando há tentativa recuperada). Não criar tentativa financeira para testar o botão.
 - **Importante**: não há geração nem gravação automática de tentativas reais, porque o fluxo financeiro segue desabilitado.
 
+### Laboratório isolado de recuperação (2026-11-11)
+- Commit `dd13426`: rota `/auctions/demo-recovery` demonstra serialização e restauração de tentativa fictícia, somente em memória React. Não usa conta, API, carteira nem sessionStorage real. Não executa POST/GET.
+- A ação 'Simular atualização da página' invoca a função de restauração com o registro em memória; não é um reload verdadeiro. Reload real reinicia a demonstração. Pendente typecheck e inspeção visual.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
