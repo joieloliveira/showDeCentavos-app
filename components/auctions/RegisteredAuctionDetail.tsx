@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWalletBalance } from '@/services/wallet';
 import { reconcileBid, type BidRecord } from '@/services/bids';
 import { evaluateBidPreflight } from '@/services/bidPreflight';
+import { transitionBidAttempt } from '@/services/bidAttemptState';
+import { resolvePendingBid } from '@/services/bidAttemptReconciliation';
 import type { BidAttemptState } from '@/services/bidAttemptState';
 import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid } from '@/services/bidAttemptJournal';
 import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
@@ -34,6 +36,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [lookupSummary, setLookupSummary] = useState<{ status: 'checking' | 'found' | 'not_found' | 'unavailable' | 'mismatch'; key: string } | null>(null);
   // No financial attempt is initiated by this page while bidding is disabled.
   const [attemptState, setAttemptState] = useState<BidAttemptState>({ status: 'idle' });
+  const [recoveryPending, setRecoveryPending] = useState(false);
+  const recoveryGeneration = useRef(0);
+  const recoveryContext = useRef({ userId: user?.id ?? '', auctionId: id });
+  recoveryContext.current = { userId: user?.id ?? '', auctionId: id };
   const [showSimulation, setShowSimulation] = useState(false);
   const [simulatedBids, setSimulatedBids] = useState(0);
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -55,6 +61,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const latestLiveRef = useRef<Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents' | 'winnerNickname'> | null>(null);
   // Read-only recovery: never creates a new financial request. Authentication is verified first.
   useEffect(() => {
+    ++recoveryGeneration.current;
+    setRecoveryPending(false);
     setAttemptState({ status: 'idle' });
     if (authLoading || !user?.id || !getToken()) return;
     try {
@@ -100,6 +108,30 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       setLookupSummary({ status: 'unavailable', key });
     } finally {
       setLookupPending(false);
+    }
+  };
+  const reconcileRecoveredAttempt = async () => {
+    if (recoveryPending || attemptState.status !== 'uncertain' || !user?.id || authLoading) return;
+    const token = getToken();
+    if (!token) return;
+    const key = attemptState.key;
+    const userId = user.id;
+    const auctionId = id;
+    const generation = ++recoveryGeneration.current;
+    const reconciling = transitionBidAttempt(attemptState, { type: 'reconcile', key });
+    if (reconciling.status !== 'reconciling') return;
+    setAttemptState(reconciling);
+    setRecoveryPending(true);
+    try {
+      const result = await reconcileBid(token, key);
+      if (generation !== recoveryGeneration.current || recoveryContext.current.userId !== userId || recoveryContext.current.auctionId !== auctionId || getToken() !== token) return;
+      setAttemptState(resolvePendingBid(reconciling, key, userId, auctionId, result));
+    } catch {
+      if (generation === recoveryGeneration.current && recoveryContext.current.userId === userId && recoveryContext.current.auctionId === auctionId && getToken() === token) {
+        setAttemptState(resolvePendingBid(reconciling, key, userId, auctionId, { status: 'unavailable' }));
+      }
+    } finally {
+      if (generation === recoveryGeneration.current) setRecoveryPending(false);
     }
   };
   const refreshBalance = async () => {
@@ -317,6 +349,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
           </div>}
         </section>
         <BidAttemptStatus attempt={attemptState} lookup={lookupSummary} />
+        {attemptState.status === 'uncertain' && <button type="button" disabled={recoveryPending || authLoading || !user} onClick={() => { void reconcileRecoveredAttempt(); }}>Consultar tentativa recuperada (somente GET)</button>}
+        {attemptState.status === 'reconciling' && <p role="status">Verificando a chave original no servidor...</p>}
+        {attemptState.status === 'confirmed' && <p role="status">Registro recuperado e confirmado. O diário permanece preservado para conferência.</p>}
         <section className="registered-bid-lookup" aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
