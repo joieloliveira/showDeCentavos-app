@@ -142,7 +142,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 ### Leitura do diário na página registrada (2026-11-11)
 - Commits `da413b2`, `06254a2`: `RegisteredAuctionDetail` lê `sessionStorage` somente após autenticação, restaura chave da mesma conta/leilão como `uncertain`, e reseta estado de apresentação ao trocar de usuário/leilão.
 - A gravação automática do diário **não foi conectada**: o fluxo de POST financeiro continua desabilitado e a escrita precisa ocorrer sincronamente antes de um futuro envio explícito para evitar perda em reload. Evitada escrita por efeito React, que poderia associar chave antiga a novo leilão.
-- Pendente `npm run typecheck` e teste visual leve de carregamento normal; sem novos testes automatizados nesta integração.
+- `npm run typecheck` homologado pelo usuário em 2026-11-11, sem erros; teste visual leve de carregamento normal ainda não solicitado; sem novos testes automatizados nesta integração.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
