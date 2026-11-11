@@ -151,7 +151,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Reconciliação vinculada à identidade (2026-11-11)
 - Commits `75c5f21` e `9b008d9`: função pura `resolvePendingBid` aplica resultado GET somente ao estado `reconciling` e à chave, conta e leilão esperados. Resposta divergente, 404 ou falha mantém tentativa incerta; resposta atrasada não altera estado confirmado. Sem POST, sem efeitos colaterais.
-- Oito testes novos. Pendente `npm run test:bid-reconciliation` e `npm run typecheck`.
+- Oito testes novos. Homologado pelo usuário em 2026-11-11: `npm run test:bid-reconciliation` 8/8 PASS e `npm run typecheck` sem erros.
 - A função ainda não está conectada à UI; reconciliação manual existente continua somente leitura. Backend financeiro permanece bloqueado.
 
 ## Próximo passo exato
