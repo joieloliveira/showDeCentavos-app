@@ -154,6 +154,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Oito testes novos. Homologado pelo usuário em 2026-11-11: `npm run test:bid-reconciliation` 8/8 PASS e `npm run typecheck` sem erros.
 - A função ainda não está conectada à UI; reconciliação manual existente continua somente leitura. Backend financeiro permanece bloqueado.
 
+### Consulta de tentativa recuperada na UI (2026-11-11)
+- Commit `812690f`: painel de suporte oferece consulta GET de tentativa restaurada do diário; usa máquina de estados e `resolvePendingBid` para confirmar somente chave, conta e leilão correspondentes. Ignora respostas tardias após troca de conta/leilão/token. Não faz POST nem limpa o diário.
+- Pendente homologação local: `npm run typecheck` e inspeção visual condicional (botão só aparece quando há tentativa recuperada). Não criar tentativa financeira para testar o botão.
+- **Importante**: não há geração nem gravação automática de tentativas reais, porque o fluxo financeiro segue desabilitado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
