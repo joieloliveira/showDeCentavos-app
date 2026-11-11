@@ -44,7 +44,7 @@ export function persistPendingBid(
     if (existing !== null) {
       // Fail closed for corrupt records, other accounts, auctions or keys.
       const restored = restorePendingBid(existing, userId, auctionId);
-      if (!restored || restored.key !== state.key) return false;
+      if (!restored || restored.status !== 'uncertain' || restored.key !== state.key) return false;
     }
     storage.setItem(BID_ATTEMPT_JOURNAL_KEY, serialized);
     return storage.getItem(BID_ATTEMPT_JOURNAL_KEY) === serialized;
