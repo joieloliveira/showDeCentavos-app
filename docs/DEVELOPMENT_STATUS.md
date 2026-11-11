@@ -137,7 +137,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 ### Preparação da recuperação após reload (2026-11-11)
 - Commits `605589d`, `560522d`: módulo puro `services/bidAttemptJournal.ts` para serializar tentativas pendentes sem token, isoladas por usuário e leilão, restaurando-as sempre como `uncertain`; sete testes isolados em `tests/bidAttemptJournal.test.cjs`.
 - Ainda **não conectado à UI ou ao sessionStorage**: esta etapa valida a política de recuperação antes de integrar persistência e reconciliação autenticada. Não alegar que reload já está protegido em produção.
-- Pendente `npm run test:bid-journal` e `npm run typecheck`. Backend continua bloqueado.
+- Homologado em 2026-11-11: usuário executou `npm run test:bid-journal` (7/7 aprovados, 0 falhas) e `npm run typecheck` sem erros. Backend continua bloqueado.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
