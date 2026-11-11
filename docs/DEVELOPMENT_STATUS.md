@@ -146,7 +146,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Gravação preventiva do diário (2026-11-11)
 - Commits `0a3719e`, `37bf088`: função pura `persistPendingBid` recebe storage e estado, exige serialização válida, recusa sobrescrever chave pendente de outro usuário/leilão, bloqueia registro corrompido, confirma leitura após escrita e falha fechada em erro de armazenamento.
-- Sete novos testes em `tests/bidAttemptJournal.test.cjs`; total esperado no arquivo: 14 testes. Pendente execução `npm run test:bid-journal` e `npm run typecheck`.
+- Sete novos testes em `tests/bidAttemptJournal.test.cjs`; total esperado no arquivo: 14 testes. Usuário confirmou `npm run test:bid-journal` 14/14 PASS em 2026-11-11. `typecheck` inicialmente falhou por acesso a `key` em união com `idle`; corrigido no commit `8642565` com narrowing explícito. Pendente apenas nova execução de `npm run typecheck`.
 - **Não conectada ao POST financeiro**: esta função será chamada de forma síncrona antes de um eventual envio explicitamente habilitado; a página permanece somente leitura e o backend continua bloqueado.
 
 ## Próximo passo exato
