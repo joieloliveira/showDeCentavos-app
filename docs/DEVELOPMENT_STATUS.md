@@ -71,6 +71,13 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Usuário comprovou por captura a modal **Confirmação de lance — prévia** aberta com ferramentas fechadas; `npm run typecheck` (`tsc --noEmit`) sem erros. **Correção homologada**.
 - A modal é somente informativa, e lances reais continuam indisponíveis. Não repetir esse teste sem regressão.
 
+### Revisão mobile e segurança financeira isolada (2026-11-11)
+- Frontend: modal informativa revisada com bloqueio da rolagem do fundo, restauração de foco e limite de altura com rolagem interna; commits `bf4049f` e `c2f58bd`. Usuário confirmou captura mobile em 375 × 877 px com janela integralmente visível e `npm run typecheck` sem erros. Layout mobile aprovado; navegação por teclado ainda não foi verificada manualmente.
+- Backend: nome legado `marketplace-miniaturas-3d` corrigido para `show-de-centavos-api` em `package.json` e `package-lock.json`; commits `6e38a81` e `4cb611e`.
+- Ambiente atual validado pelo usuário: MongoDB replica set `walletTestRS` porta 27018; API completa porta 3001 com `AUCTION_BIDDING_ENABLED=false`; frontend porta 3000; login funcionando. O script de demonstração na porta 3002 não fornece autenticação e não deve substituir a API completa.
+- Usuário executou em 2026-11-11 três testes isolados, todos aprovados sem falhas: `auctionBidDisabled.test.js` (1/1), `auctionBidRollback.test.js` (1/1), `auctionBidFinishRace.test.js` (1/1). Confirmados bloqueio sem escrita, rollback de débito/lance/preço e rejeição de lance vencido durante encerramento. **Não repetir sem regressão.**
+- Próximo passo: revisar testes já existentes de concorrência/idempotência e cobertura residual antes de qualquer homologação financeira mais ampla. **Não habilitar lances reais na API principal sem autorização explícita.**
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
