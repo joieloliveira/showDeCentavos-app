@@ -118,7 +118,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Revisão de integridade da máquina de estados (2026-11-11)
 - Commits `4c4cefc`, `2f9df1a`: transição `begin` exige UUID v4 válido; transição `confirmed` exige ObjectId de 24 hexadecimais. Testes anteriores atualizados para ID realista e adicionados três cenários: UUID inválido, ID de lance inválido, respostas tardias após confirmação.
-- **Pendente:** usuário executar `npm run test:bid-attempt` (agora 10 testes) e `npm run typecheck`. Nenhum POST ou flag financeira alterado.
+- **Homologado 2026-11-11:** usuário executou `npm run test:bid-attempt`: 10/10 aprovados, 0 falhas; `npm run typecheck` sem erros. Nenhum POST ou flag financeira alterado.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
