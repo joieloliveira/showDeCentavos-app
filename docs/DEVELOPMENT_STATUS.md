@@ -144,6 +144,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - A gravação automática do diário **não foi conectada**: o fluxo de POST financeiro continua desabilitado e a escrita precisa ocorrer sincronamente antes de um futuro envio explícito para evitar perda em reload. Evitada escrita por efeito React, que poderia associar chave antiga a novo leilão.
 - `npm run typecheck` homologado pelo usuário em 2026-11-11, sem erros; teste visual leve de carregamento normal ainda não solicitado; sem novos testes automatizados nesta integração.
 
+### Gravação preventiva do diário (2026-11-11)
+- Commits `0a3719e`, `37bf088`: função pura `persistPendingBid` recebe storage e estado, exige serialização válida, recusa sobrescrever chave pendente de outro usuário/leilão, bloqueia registro corrompido, confirma leitura após escrita e falha fechada em erro de armazenamento.
+- Sete novos testes em `tests/bidAttemptJournal.test.cjs`; total esperado no arquivo: 14 testes. Pendente execução `npm run test:bid-journal` e `npm run typecheck`.
+- **Não conectada ao POST financeiro**: esta função será chamada de forma síncrona antes de um eventual envio explicitamente habilitado; a página permanece somente leitura e o backend continua bloqueado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
