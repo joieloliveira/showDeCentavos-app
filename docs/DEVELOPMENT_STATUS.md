@@ -89,6 +89,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Adicionado `npm run test:bids` em `package.json` (commit `bc68845`). **Executados pelo usuário em 2026-11-11: 7/7 aprovados, 0 falhas.**
 - Usuário confirmou `npm run typecheck` (`tsc --noEmit`) sem erros. Próximo passo: preparar interface de acompanhamento e reconciliação de tentativas sem envio financeiro; não habilitar lances reais.
 
+### Interface de recuperação de tentativas (2026-11-11)
+- Commit frontend `eca0945`: aprimoradas instruções da ferramenta de consulta por chave, adicionada opção `Limpar consulta`, explicitado resultado encontrado e ausência de qualquer envio financeiro. Consulta permanece somente GET.
+- Pendente: usuário executar `npm run typecheck` e conferir visualmente a área expandida no navegador. Não habilitar lances reais.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
