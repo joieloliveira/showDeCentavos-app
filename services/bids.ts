@@ -126,9 +126,11 @@ export function describeBidFailure(error: unknown): BidFailure {
   if (status === 409 && /chave já foi utilizada em outro leilão/i.test(serverMessage)) {
     return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
   }
-  if (status === 409 && /leilão|tempo para realizar lances|custo do lance inválido/i.test(serverMessage)) {
+  if (status === 409 && /^(Este leilão não está disponível para lances\.|Este leilão não está ativo\.|O leilão ainda não começou\.|O tempo para realizar lances terminou\.|Custo do lance inválido\.|O custo do lance está configurado incorretamente\.)$/i.test(serverMessage)) {
     return { kind: 'conflict', message: serverMessage, needsReconciliation: false };
   }
+  // A 409 after a transaction race or uncertain commit is NOT definitive.
+  // Reconcile the original key; never treat a generic 409 as a safe retry.
   // 5xx, unknown conflicts and unexpected responses must be reconciled.
   return {
     kind: 'uncertain',
