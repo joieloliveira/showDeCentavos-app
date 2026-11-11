@@ -18,18 +18,21 @@ export type BidAttemptEvent =
 
 /** Only a settled confirmed/rejected attempt may be cleared. A missing record
  * does not prove that an in-flight transaction can be safely retried. */
+const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const objectId = /^[0-9a-f]{24}$/i;
+
 export function transitionBidAttempt(state: BidAttemptState, event: BidAttemptEvent): BidAttemptState {
   if (event.type === 'reset') {
     return state.status === 'idle' || state.status === 'confirmed' || state.status === 'rejected'
       ? { status: 'idle' } : state;
   }
   if (event.type === 'begin') {
-    if (state.status !== 'idle' || !event.key) return state;
+    if (state.status !== 'idle' || !uuidV4.test(event.key)) return state;
     return { status: 'submitting', key: event.key };
   }
   if (state.status === 'idle' || state.key !== event.key) return state;
   if (event.type === 'confirmed' && (state.status === 'submitting' || state.status === 'reconciling')) {
-    return event.bidId ? { status: 'confirmed', key: state.key, bidId: event.bidId } : state;
+    return objectId.test(event.bidId) ? { status: 'confirmed', key: state.key, bidId: event.bidId } : state;
   }
   if (event.type === 'uncertain' && (state.status === 'submitting' || state.status === 'reconciling')) {
     return { status: 'uncertain', key: state.key, message: event.message };
