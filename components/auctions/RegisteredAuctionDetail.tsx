@@ -291,13 +291,17 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         </section>
         <section aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
-          <p style={{ margin: 0 }}>Consulta somente de leitura para verificar um lance anterior pela chave de idempotência. Não realiza nem repete lances.</p>
+          <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>Esta ferramenta apenas consulta o servidor (GET). Não envia lances, não debita a carteira e não gera uma chave nova.</p>
           <label htmlFor="bid-lookup-key">Chave da tentativa (UUID v4)</label>
           <input id="bid-lookup-key" type="text" autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
-          <button type="button" disabled={!user || authLoading || lookupPending} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <button type="button" disabled={!user || authLoading || lookupPending || !lookupKey.trim()} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
+            <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { setLookupKey(''); setLookupResult(null); setLookupError(''); }}>Limpar consulta</button>
+          </div>
           {!user && <p role="status">É necessário entrar na conta para consultar tentativas.</p>}
           {lookupError && <p role="alert">{lookupError}</p>}
-          {lookupResult?.status === 'found' && lookupResult.bid && <p role="status">Lance encontrado e registrado. ID: <strong>{lookupResult.bid._id}</strong>. Custo registrado: <strong>{money(lookupResult.bid.bidCostCents)}</strong>. Saldo após o lance: <strong>{money(lookupResult.bid.balanceAfterCents)}</strong>.</p>}
+          {lookupResult?.status === 'found' && lookupResult.bid && <p role="status"><strong>Registro confirmado.</strong> Não reenvie esta tentativa. ID: <strong>{lookupResult.bid._id}</strong>. Custo registrado: <strong>{money(lookupResult.bid.bidCostCents)}</strong>. Saldo após o lance: <strong>{money(lookupResult.bid.balanceAfterCents)}</strong>.</p>}
           {lookupResult?.status === 'not_found' && <p role="status">Nenhum lance encontrado para esta chave até o momento. Isso não autoriza reenviar automaticamente a tentativa.</p>}
           {lookupResult?.status === 'unavailable' && <p role="alert">Não foi possível confirmar o registro agora. Guarde a chave original e tente consultar novamente mais tarde.</p>}
         </section>
