@@ -161,7 +161,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Laboratório isolado de recuperação (2026-11-11)
 - Commit `dd13426`: rota `/auctions/demo-recovery` demonstra serialização e restauração de tentativa fictícia, somente em memória React. Não usa conta, API, carteira nem sessionStorage real. Não executa POST/GET.
-- A ação 'Simular atualização da página' invoca a função de restauração com o registro em memória; não é um reload verdadeiro. Reload real reinicia a demonstração. Pendente typecheck e inspeção visual.
+- A ação 'Simular atualização da página' invoca a função de restauração com o registro em memória; não é um reload verdadeiro. Reload real reinicia a demonstração. Homologado pelo usuário: `npm run typecheck` sem erros e três capturas demonstram `submitting` → `uncertain` com chave preservada → `idle` após limpar. A demonstração é somente em memória; não equivale a teste de reload real.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
