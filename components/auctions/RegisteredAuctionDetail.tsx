@@ -99,6 +99,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   useEffect(() => {
     if (!showBidInfo) return;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : bidInfoTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     bidInfoCloseRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -116,7 +118,11 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       }
     };
     document.addEventListener('keydown', onKeyDown);
-    return () => { document.removeEventListener('keydown', onKeyDown); previousFocus?.focus(); };
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [showBidInfo]);
   useEffect(() => { const tick = setInterval(() => setNow(Date.now() + serverOffsetMs.current), 1000); return () => clearInterval(tick); }, []);
   useEffect(() => {
