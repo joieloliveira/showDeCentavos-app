@@ -149,6 +149,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Sete novos testes em `tests/bidAttemptJournal.test.cjs`; total esperado no arquivo: 14 testes. Usuário confirmou `npm run test:bid-journal` 14/14 PASS em 2026-11-11. `typecheck` inicialmente falhou por acesso a `key` em união com `idle`; corrigido no commit `8642565` com narrowing explícito. Homologado em 2026-11-11: após correção adicional de narrowing de `restored.status` no commit `132e605`, usuário executou `npm run typecheck` sem erros; 14/14 testes do diário aprovados.
 - **Não conectada ao POST financeiro**: esta função será chamada de forma síncrona antes de um eventual envio explicitamente habilitado; a página permanece somente leitura e o backend continua bloqueado.
 
+### Reconciliação vinculada à identidade (2026-11-11)
+- Commits `75c5f21` e `9b008d9`: função pura `resolvePendingBid` aplica resultado GET somente ao estado `reconciling` e à chave, conta e leilão esperados. Resposta divergente, 404 ou falha mantém tentativa incerta; resposta atrasada não altera estado confirmado. Sem POST, sem efeitos colaterais.
+- Oito testes novos. Pendente `npm run test:bid-reconciliation` e `npm run typecheck`.
+- A função ainda não está conectada à UI; reconciliação manual existente continua somente leitura. Backend financeiro permanece bloqueado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
