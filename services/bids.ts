@@ -60,7 +60,17 @@ export async function findBidByKey(token: string, key: string) {
  * client release gate. Never auto-retry with a fresh key on timeout/503.
  * The backend is the sole authority for balances, timing and auction state.
  */
-export async function submitConfirmedBid(token: string, auctionId: string, key: string) {
+export async function submitConfirmedBid(
+  token: string,
+  auctionId: string,
+  key: string,
+  options: { financialBidsEnabled: boolean } = { financialBidsEnabled: false },
+) {
+  // Explicit client-side release gate. The server must independently authorize bids.
+  // This protects against accidental invocation while the UI is preview-only.
+  if (options.financialBidsEnabled !== true) {
+    throw new Error('Envio financeiro bloqueado no frontend.');
+  }
   if (!objectId.test(auctionId)) throw new Error('Identificador de leilão inválido.');
   assertBidKey(key);
   const { data } = await api.post<PlaceBidResponse>(
