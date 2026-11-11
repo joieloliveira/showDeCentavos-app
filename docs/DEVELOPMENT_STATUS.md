@@ -86,8 +86,8 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Testes isolados do cliente de lances (2026-11-11)
 - Criado `tests/bids.test.cjs` (commit `7ef428e`) com sete cenários simulados sem POST financeiro real: bloqueio por padrão, envio único sob liberação explícita, chave inválida, resposta inconsistente, consulta somente GET, consulta 404 e falha de rede incerta.
-- Adicionado `npm run test:bids` em `package.json` (commit `bc68845`). **Ainda não executados pelo usuário; aprovação pendente.**
-- Próximo passo: `git pull --ff-only origin feature/frontend-initial && npm run test:bids && npm run typecheck` no terminal frontend livre. Não habilitar lances reais.
+- Adicionado `npm run test:bids` em `package.json` (commit `bc68845`). **Executados pelo usuário em 2026-11-11: 7/7 aprovados, 0 falhas.**
+- Usuário confirmou `npm run typecheck` (`tsc --noEmit`) sem erros. Próximo passo: preparar interface de acompanhamento e reconciliação de tentativas sem envio financeiro; não habilitar lances reais.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
