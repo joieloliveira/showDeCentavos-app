@@ -120,6 +120,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commits `4c4cefc`, `2f9df1a`: transição `begin` exige UUID v4 válido; transição `confirmed` exige ObjectId de 24 hexadecimais. Testes anteriores atualizados para ID realista e adicionados três cenários: UUID inválido, ID de lance inválido, respostas tardias após confirmação.
 - **Homologado 2026-11-11:** usuário executou `npm run test:bid-attempt`: 10/10 aprovados, 0 falhas; `npm run typecheck` sem erros. Nenhum POST ou flag financeira alterado.
 
+### Revisão do contrato de erros HTTP de lances (2026-11-11)
+- Commits `06aadb0`, `c85c9fb`: classificador de `describeBidFailure` agora só trata 409 de estado de leilão explicitamente reconhecido como rejeição definitiva. Conflitos de transação, chave anterior incerta e erro de atualização do leilão exigem reconciliação pela chave original. 503 de commit incerto também exige reconciliação.
+- Adicionados três testes em `tests/bids.test.cjs` (total previsto: 10). Pendente execução pelo usuário de `npm run test:bids` e `npm run typecheck`.
+- Nenhum POST ligado à UI e flag financeira do backend permanece desativada.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
