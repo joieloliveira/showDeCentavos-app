@@ -107,6 +107,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Regra: resultado incerto ou 404 na consulta mantém a chave e bloqueia novo início automático. Ainda não integrado ao botão ou POST; nenhuma cobrança liberada.
 - Usuário executou em 2026-11-11: `npm run test:bid-attempt` **7/7 aprovados, 0 falhas**, e `npm run typecheck` sem erros. Próximo passo: integrar acompanhamento apenas informativo à interface; sem habilitar POST financeiro.
 
+### Painel informativo de acompanhamento de tentativas (2026-11-11)
+- Commits `541d227`, `72db24b`, `41c54b2`: criado `BidAttemptStatus.tsx`, inserido nas ferramentas de suporte e estilizado para mobile/desktop. Exibe os seis estados previstos, mensagens e chave original quando houver tentativa.
+- **Estado atual fixo `idle`**, pois não há POST financeiro nem evento de tentativa ligado à página. Não alegar que monitora tentativas reais nesta etapa.
+- Pendente: usuário executar `npm run typecheck` e conferir visualmente o painel. Próxima implementação: conectar estados apenas quando houver um fluxo controlado de tentativa, sem habilitar financeiro sem autorização.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
