@@ -9,7 +9,7 @@ import { fetchWalletBalance } from '@/services/wallet';
 import { reconcileBid, type BidRecord } from '@/services/bids';
 import { evaluateBidPreflight } from '@/services/bidPreflight';
 import type { BidAttemptState } from '@/services/bidAttemptState';
-import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid, serializePendingBid } from '@/services/bidAttemptJournal';
+import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid } from '@/services/bidAttemptJournal';
 import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
 
 type ProductImage = { key?: string; url?: string };
@@ -62,13 +62,6 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       if (restored) setAttemptState(restored);
     } catch { /* Storage can be unavailable in restricted browser contexts. */ }
   }, [authLoading, user?.id, id, getToken]);
-  useEffect(() => {
-    if (!user?.id || authLoading) return;
-    const serialized = serializePendingBid(attemptState, user.id, id, Date.now());
-    if (!serialized) return; // Idle/settled state must not erase an unresolved journal.
-    try { sessionStorage.setItem(BID_ATTEMPT_JOURNAL_KEY, serialized); }
-    catch { /* A storage failure never permits a new bid. */ }
-  }, [attemptState, authLoading, user?.id, id]);
   useEffect(() => {
     if (!user) { setBalance(null); setBalanceError(''); return; }
     const token = getToken();
