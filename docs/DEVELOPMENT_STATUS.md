@@ -139,6 +139,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Ainda **não conectado à UI ou ao sessionStorage**: esta etapa valida a política de recuperação antes de integrar persistência e reconciliação autenticada. Não alegar que reload já está protegido em produção.
 - Homologado em 2026-11-11: usuário executou `npm run test:bid-journal` (7/7 aprovados, 0 falhas) e `npm run typecheck` sem erros. Backend continua bloqueado.
 
+### Leitura do diário na página registrada (2026-11-11)
+- Commits `da413b2`, `06254a2`: `RegisteredAuctionDetail` lê `sessionStorage` somente após autenticação, restaura chave da mesma conta/leilão como `uncertain`, e reseta estado de apresentação ao trocar de usuário/leilão.
+- A gravação automática do diário **não foi conectada**: o fluxo de POST financeiro continua desabilitado e a escrita precisa ocorrer sincronamente antes de um futuro envio explícito para evitar perda em reload. Evitada escrita por efeito React, que poderia associar chave antiga a novo leilão.
+- Pendente `npm run typecheck` e teste visual leve de carregamento normal; sem novos testes automatizados nesta integração.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
