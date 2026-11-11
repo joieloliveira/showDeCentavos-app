@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:bids": "node --test tests/bids.test.cjs",
-    "test:bid-preflight": "node --test tests/bidPreflight.test.cjs"
+    "test:bid-preflight": "node --test tests/bidPreflight.test.cjs",
+    "test:bid-attempt": "node --test tests/bidAttemptState.test.cjs"
   },
   "dependencies": {
     "next": "^15.5.0",
