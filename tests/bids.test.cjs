@@ -84,3 +84,34 @@ test('network uncertainty requires reconciliation', () => {
   assert.equal(result.kind, 'uncertain');
   assert.equal(result.needsReconciliation, true);
 });
+
+function httpError(status, message) {
+  const axios = require('axios');
+  return new axios.AxiosError('HTTP ' + status, 'ERR_BAD_RESPONSE', undefined, undefined, {
+    status, data: { message }, headers: {}, config: { headers: {} }, statusText: 'Error',
+  });
+}
+test('ambiguous 409 transaction conflict requires reconciliation', () => {
+  const { service } = loadService();
+  for (const message of [
+    'Não foi possível confirmar o lance anterior.',
+    'Conflito ao registrar o lance. Consulte a tentativa antes de reenviar.',
+    'O leilão foi atualizado. Tente novamente.',
+  ]) {
+    const result = service.describeBidFailure(httpError(409, message));
+    assert.equal(result.kind, 'uncertain');
+    assert.equal(result.needsReconciliation, true);
+  }
+});
+test('definitive auction-state 409 does not require reconciliation', () => {
+  const { service } = loadService();
+  const result = service.describeBidFailure(httpError(409, 'Este leilão não está ativo.'));
+  assert.equal(result.kind, 'conflict');
+  assert.equal(result.needsReconciliation, false);
+});
+test('unexpected 503 response requires reconciliation', () => {
+  const { service } = loadService();
+  const result = service.describeBidFailure(httpError(503, 'Não foi possível confirmar o lance. Consulte novamente usando a mesma chave de idempotência.'));
+  assert.equal(result.kind, 'uncertain');
+  assert.equal(result.needsReconciliation, true);
+});
