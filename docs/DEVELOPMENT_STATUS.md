@@ -91,7 +91,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Interface de recuperação de tentativas (2026-11-11)
 - Commit frontend `eca0945`: aprimoradas instruções da ferramenta de consulta por chave, adicionada opção `Limpar consulta`, explicitado resultado encontrado e ausência de qualquer envio financeiro. Consulta permanece somente GET.
-- Pendente: usuário executar `npm run typecheck` e conferir visualmente a área expandida no navegador. Não habilitar lances reais.
+- Usuário confirmou `npm run typecheck` sem erros e enviou captura desktop da área expandida: textos, campo e botões de consulta/limpeza visíveis; botão financeiro continua desabilitado. **Homologação visual desktop aprovada.** Consulta manual com chave real não foi realizada. Não habilitar lances reais.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
