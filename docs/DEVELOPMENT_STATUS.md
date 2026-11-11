@@ -134,6 +134,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `1dd24db`: adicionados quatro testes isolados para indisponibilidade de reconciliação, pedidos de reconciliação duplicados, resposta 404 tardia após confirmação e eventos de chave estrangeira.
 - Total previsto: 14 testes em `npm run test:bid-attempt`. Homologado em 2026-11-11: usuário executou `npm run test:bid-attempt` (14/14 aprovados, 0 falhas) e `npm run typecheck` sem erros. Sem mudanças no backend ou habilitação financeira.
 
+### Preparação da recuperação após reload (2026-11-11)
+- Commits `605589d`, `560522d`: módulo puro `services/bidAttemptJournal.ts` para serializar tentativas pendentes sem token, isoladas por usuário e leilão, restaurando-as sempre como `uncertain`; sete testes isolados em `tests/bidAttemptJournal.test.cjs`.
+- Ainda **não conectado à UI ou ao sessionStorage**: esta etapa valida a política de recuperação antes de integrar persistência e reconciliação autenticada. Não alegar que reload já está protegido em produção.
+- Pendente `npm run test:bid-journal` e `npm run typecheck`. Backend continua bloqueado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
