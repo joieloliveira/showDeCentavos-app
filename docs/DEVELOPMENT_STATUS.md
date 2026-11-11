@@ -122,7 +122,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Revisão do contrato de erros HTTP de lances (2026-11-11)
 - Commits `06aadb0`, `c85c9fb`: classificador de `describeBidFailure` agora só trata 409 de estado de leilão explicitamente reconhecido como rejeição definitiva. Conflitos de transação, chave anterior incerta e erro de atualização do leilão exigem reconciliação pela chave original. 503 de commit incerto também exige reconciliação.
-- Adicionados três testes em `tests/bids.test.cjs` (total previsto: 10). Pendente execução pelo usuário de `npm run test:bids` e `npm run typecheck`.
+- Adicionados três testes em `tests/bids.test.cjs` (total previsto: 10). Homologado em 2026-11-11: usuário executou `npm run test:bids` (10/10 aprovados, 0 falhas) e `npm run typecheck` sem erros.
 - Nenhum POST ligado à UI e flag financeira do backend permanece desativada.
 
 ## Próximo passo exato
