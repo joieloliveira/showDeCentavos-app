@@ -99,7 +99,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Preflight informativo para confirmação de lance (2026-11-11)
 - Commits frontend `3e89549`, `3f6f536`: criado `services/bidPreflight.ts` e integrado à modal de prévia. Verifica autenticação, estado do leilão, disponibilidade do servidor, saldo e custo válido, sem autorizar operações financeiras.
-- Commits `bd99939`, `26d176c`: 10 testes isolados em `tests/bidPreflight.test.cjs`, comando `npm run test:bid-preflight`. **Ainda pendentes de execução e typecheck pelo usuário.**
+- Commits `bd99939`, `26d176c`: 10 testes isolados em `tests/bidPreflight.test.cjs`, comando `npm run test:bid-preflight`. **Usuário executou em 2026-11-11: 10/10 testes aprovados, 0 falhas e `npm run typecheck` sem erros.**
 - Próximo passo: executar testes do preflight e typecheck; nenhuma alteração em flags financeiras.
 
 ## Próximo passo exato
