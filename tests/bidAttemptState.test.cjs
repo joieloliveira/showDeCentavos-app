@@ -64,3 +64,33 @@ test('late responses cannot change an already confirmed attempt', () => {
   assert.equal(next(confirmed, { type: 'uncertain', key, message: 'late timeout' }), confirmed);
   assert.equal(next(confirmed, { type: 'rejected', key, message: 'late rejection' }), confirmed);
 });
+
+test('reconciliation outage returns to uncertain without permitting a new attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  const unavailable = next(reconciling, { type: 'uncertain', key, message: 'consulta indisponível' });
+  assert.equal(unavailable.status, 'uncertain');
+  assert.equal(unavailable.key, key);
+  assert.equal(next(unavailable, { type: 'reset' }), unavailable);
+  assert.equal(next(unavailable, { type: 'begin', key: other }), unavailable);
+});
+test('duplicate reconciliation requests do not start a second cycle', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  assert.equal(next(reconciling, { type: 'reconcile', key }), reconciling);
+  assert.equal(next(reconciling, { type: 'begin', key: other }), reconciling);
+});
+test('late 404 after confirmation cannot erase a confirmed bid', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  const confirmed = next(reconciling, { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
+  assert.equal(next(confirmed, { type: 'not_found', key }), confirmed);
+  assert.equal(next(confirmed, { type: 'uncertain', key, message: 'late error' }), confirmed);
+});
+test('foreign-key reconciliation cannot change the original attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  assert.equal(next(uncertain, { type: 'reconcile', key: other }), uncertain);
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  assert.equal(next(reconciling, { type: 'not_found', key: other }), reconciling);
+  assert.equal(next(reconciling, { type: 'confirmed', key: other, bidId: '507f1f77bcf86cd799439011' }), reconciling);
+});
