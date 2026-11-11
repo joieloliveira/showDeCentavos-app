@@ -130,6 +130,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Fixture dos testes atualizada para o contrato real e três cenários adicionados (13 testes previstos em `npm run test:bids`). **Homologado em 2026-11-11:** usuário executou `npm run test:bids` (13/13 aprovados, 0 falhas) e `npm run typecheck` sem erros.
 - Backend financeiro permanece bloqueado.
 
+### Auditoria de sequências da máquina de estados (2026-11-11)
+- Commit `1dd24db`: adicionados quatro testes isolados para indisponibilidade de reconciliação, pedidos de reconciliação duplicados, resposta 404 tardia após confirmação e eventos de chave estrangeira.
+- Total previsto: 14 testes em `npm run test:bid-attempt`. Pendente execução do usuário e `npm run typecheck`. Sem mudanças no backend ou habilitação financeira.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
