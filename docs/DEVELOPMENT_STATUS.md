@@ -116,6 +116,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commits `b1efea1`, `1af8d47`, `406d6b8`: painel mostra última consulta avulsa por UUID (checking, found, not_found, unavailable, mismatch), sem alterar o estado de tentativa real (`idle`). Chave não pode ser editada enquanto GET está pendente. Limpar consulta também limpa o resumo.
 - Nenhum POST, débito, retry automático ou ativação financeira. Homologado em 2026-11-11: usuário executou `npm run typecheck` sem erros e consultou UUID de teste; API retornou `not_found`, monitor exibiu resultado sem alterar `idle`, screenshot mobile 375×877 aprovado. Nenhum POST financeiro.
 
+### Revisão de integridade da máquina de estados (2026-11-11)
+- Commits `4c4cefc`, `2f9df1a`: transição `begin` exige UUID v4 válido; transição `confirmed` exige ObjectId de 24 hexadecimais. Testes anteriores atualizados para ID realista e adicionados três cenários: UUID inválido, ID de lance inválido, respostas tardias após confirmação.
+- **Pendente:** usuário executar `npm run test:bid-attempt` (agora 10 testes) e `npm run typecheck`. Nenhum POST ou flag financeira alterado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
