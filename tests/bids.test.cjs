@@ -26,7 +26,7 @@ function loadService() {
 }
 const auctionId = '6af23823b7a9e7e365c9e6e5';
 const key = '123e4567-e89b-42d3-a456-426614174000';
-const bid = { _id: '6af23823b7a9e7e365c9e6e6', auction: auctionId, idempotencyKey: key, bidCostCents: 50 };
+const bid = { _id: '6af23823b7a9e7e365c9e6e6', auction: auctionId, user: '6af23823b7a9e7e365c9e6e7', idempotencyKey: key, bidCostCents: 50, priceBeforeCents: 100, priceAfterCents: 101, balanceAfterCents: 500, expiresAt: '2026-11-11T23:00:00.000Z' };
 
 test('financial POST is blocked by default, even with valid credentials', async () => {
   const { service, calls } = loadService();
@@ -114,4 +114,23 @@ test('unexpected 503 response requires reconciliation', () => {
   const result = service.describeBidFailure(httpError(503, 'Não foi possível confirmar o lance. Consulte novamente usando a mesma chave de idempotência.'));
   assert.equal(result.kind, 'uncertain');
   assert.equal(result.needsReconciliation, true);
+});
+
+test('malformed financial fields in successful POST remain uncertain', async () => {
+  const { service, calls, setPost } = loadService();
+  setPost(async () => ({ data: { bid: { ...bid, balanceAfterCents: -50 } } }));
+  await assert.rejects(service.submitConfirmedBid('token', auctionId, key, { financialBidsEnabled: true }), /inconsistente/);
+  assert.equal(calls.filter(call => call[0] === 'POST').length, 1);
+});
+test('malformed GET record is unavailable rather than confirmed', async () => {
+  const { service, calls, setGet } = loadService();
+  setGet(async () => ({ data: { bid: { ...bid, bidCostCents: '50' } } }));
+  const result = await service.reconcileBid('token', key);
+  assert.equal(result.status, 'unavailable');
+  assert.equal(calls.filter(call => call[0] === 'GET').length, 1);
+});
+test('GET response with foreign idempotency key is unavailable', async () => {
+  const { service, setGet } = loadService();
+  setGet(async () => ({ data: { bid: { ...bid, idempotencyKey: '123e4567-e89b-42d3-a456-426614174001' } } }));
+  assert.equal((await service.reconcileBid('token', key)).status, 'unavailable');
 });
