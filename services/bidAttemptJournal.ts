@@ -36,6 +36,7 @@ export function persistPendingBid(
   auctionId: string,
   now: number,
 ): boolean {
+  if (state.status !== 'submitting' && state.status !== 'uncertain' && state.status !== 'reconciling') return false;
   const serialized = serializePendingBid(state, userId, auctionId, now);
   if (!serialized) return false;
   try {
