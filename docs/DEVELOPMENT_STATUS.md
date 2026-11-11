@@ -97,6 +97,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commits frontend `4d6e1dc` e `1b44806`: estilos responsivos para campo UUID, foco visível e botões de consulta/limpeza em coluna até 480 px; sem alterações no envio financeiro.
 - Usuário executou `npm run typecheck` sem erros e enviou captura da seção expandida em **desktop** (campo e botões com estilos aplicados). Usuário enviou captura em modo dispositivo **375 × 877 px**, confirmando campo UUID sem transbordamento e botões de consulta/limpeza empilhados e legíveis. **Homologação visual mobile aprovada**. Não repetir testes financeiros já aprovados sem regressão.
 
+### Preflight informativo para confirmação de lance (2026-11-11)
+- Commits frontend `3e89549`, `3f6f536`: criado `services/bidPreflight.ts` e integrado à modal de prévia. Verifica autenticação, estado do leilão, disponibilidade do servidor, saldo e custo válido, sem autorizar operações financeiras.
+- Commits `bd99939`, `26d176c`: 10 testes isolados em `tests/bidPreflight.test.cjs`, comando `npm run test:bid-preflight`. **Ainda pendentes de execução e typecheck pelo usuário.**
+- Próximo passo: executar testes do preflight e typecheck; nenhuma alteração em flags financeiras.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
