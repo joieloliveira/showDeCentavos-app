@@ -105,7 +105,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 ### Máquina de estados de tentativa de lance (2026-11-11)
 - Commits `c2e9799`, `2fab551`, `4b58d06`: criado `services/bidAttemptState.ts` (idle, submitting, uncertain, reconciling, confirmed, rejected) e sete testes isolados; comando `npm run test:bid-attempt`.
 - Regra: resultado incerto ou 404 na consulta mantém a chave e bloqueia novo início automático. Ainda não integrado ao botão ou POST; nenhuma cobrança liberada.
-- Pendente: usuário executar `npm run test:bid-attempt` e `npm run typecheck`. Depois avaliar integração apenas informativa.
+- Usuário executou em 2026-11-11: `npm run test:bid-attempt` **7/7 aprovados, 0 falhas**, e `npm run typecheck` sem erros. Próximo passo: integrar acompanhamento apenas informativo à interface; sem habilitar POST financeiro.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
