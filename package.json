@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:bids": "node --test tests/bids.test.cjs",
     "test:bid-preflight": "node --test tests/bidPreflight.test.cjs",
-    "test:bid-attempt": "node --test tests/bidAttemptState.test.cjs"
+    "test:bid-attempt": "node --test tests/bidAttemptState.test.cjs",
+    "test:bid-journal": "node --test tests/bidAttemptJournal.test.cjs"
   },
   "dependencies": {
     "next": "^15.5.0",
