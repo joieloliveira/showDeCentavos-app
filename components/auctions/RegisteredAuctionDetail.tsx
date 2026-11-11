@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchWalletBalance } from '@/services/wallet';
 import { reconcileBid, type BidRecord } from '@/services/bids';
 import { evaluateBidPreflight } from '@/services/bidPreflight';
+import type { BidAttemptState } from '@/services/bidAttemptState';
+import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
 
 type ProductImage = { key?: string; url?: string };
 type Auction = {
@@ -28,6 +30,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [lookupPending, setLookupPending] = useState(false);
   const [lookupResult, setLookupResult] = useState<{ status: 'found' | 'not_found' | 'unavailable'; bid?: BidRecord } | null>(null);
   const [lookupError, setLookupError] = useState('');
+  // No financial attempt is initiated by this page while bidding is disabled.
+  const [attemptState] = useState<BidAttemptState>({ status: 'idle' });
   const [showSimulation, setShowSimulation] = useState(false);
   const [simulatedBids, setSimulatedBids] = useState(0);
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -297,6 +301,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
+        <BidAttemptStatus attempt={attemptState} />
         <section className="registered-bid-lookup" aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
