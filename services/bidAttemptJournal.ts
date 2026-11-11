@@ -27,3 +27,25 @@ export function restorePendingBid(raw: string | null, userId: string, auctionId:
     return { status: 'uncertain', key: value.key, message: 'Tentativa pendente recuperada após atualização da página. Consulte a chave original antes de qualquer novo lance.' };
   } catch { return null; }
 }
+
+/** Persist before any future POST. Refuses to overwrite a different unresolved key. */
+export function persistPendingBid(
+  storage: Pick<Storage, 'getItem' | 'setItem'>,
+  state: BidAttemptState,
+  userId: string,
+  auctionId: string,
+  now: number,
+): boolean {
+  const serialized = serializePendingBid(state, userId, auctionId, now);
+  if (!serialized) return false;
+  try {
+    const existing = storage.getItem(BID_ATTEMPT_JOURNAL_KEY);
+    if (existing !== null) {
+      // Fail closed for corrupt records, other accounts, auctions or keys.
+      const restored = restorePendingBid(existing, userId, auctionId);
+      if (!restored || restored.key !== state.key) return false;
+    }
+    storage.setItem(BID_ATTEMPT_JOURNAL_KEY, serialized);
+    return storage.getItem(BID_ATTEMPT_JOURNAL_KEY) === serialized;
+  } catch { return false; }
+}
