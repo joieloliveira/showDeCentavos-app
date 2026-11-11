@@ -125,6 +125,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Adicionados três testes em `tests/bids.test.cjs` (total previsto: 10). Homologado em 2026-11-11: usuário executou `npm run test:bids` (10/10 aprovados, 0 falhas) e `npm run typecheck` sem erros.
 - Nenhum POST ligado à UI e flag financeira do backend permanece desativada.
 
+### Validação do contrato de registros financeiros (2026-11-11)
+- Commits `0b5f8cb`, `1eca5af`: `services/bids.ts` valida campos obrigatórios de BidRecord em POST e GET (ObjectIds, chave, inteiros monetários não negativos, data de expiração); GET inconsistente resulta em `unavailable` e POST inconsistente lança erro sem retry.
+- Fixture dos testes atualizada para o contrato real e três cenários adicionados (13 testes previstos em `npm run test:bids`). **Pendente execução do usuário** de `npm run test:bids` e `npm run typecheck`.
+- Backend financeiro permanece bloqueado.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
