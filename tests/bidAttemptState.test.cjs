@@ -35,9 +35,9 @@ test('reconciliation 404 stays uncertain and never permits automatic new attempt
 });
 test('successful reconciliation confirms the original attempt', () => {
   const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
-  const confirmed = next(next(uncertain, { type: 'reconcile', key }), { type: 'confirmed', key, bidId: 'bid1' });
+  const confirmed = next(next(uncertain, { type: 'reconcile', key }), { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
   assert.equal(confirmed.status, 'confirmed');
-  assert.equal(confirmed.bidId, 'bid1');
+  assert.equal(confirmed.bidId, '507f1f77bcf86cd799439011');
   assert.equal(next(confirmed, { type: 'reset' }).status, 'idle');
 });
 test('definitive rejection can be cleared for a new attempt', () => {
@@ -51,4 +51,16 @@ test('stale or foreign-key events cannot change the attempt', () => {
 });
 test('submitting cannot be reset while outcome is pending', () => {
   assert.equal(next(submitting, { type: 'reset' }), submitting);
+});
+
+test('invalid UUID cannot initiate an attempt', () => {
+  assert.equal(next(idle, { type: 'begin', key: 'not-a-uuid' }).status, 'idle');
+});
+test('invalid bid ID cannot confirm a transaction', () => {
+  assert.equal(next(submitting, { type: 'confirmed', key, bidId: 'fake' }), submitting);
+});
+test('late responses cannot change an already confirmed attempt', () => {
+  const confirmed = next(submitting, { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
+  assert.equal(next(confirmed, { type: 'uncertain', key, message: 'late timeout' }), confirmed);
+  assert.equal(next(confirmed, { type: 'rejected', key, message: 'late rejection' }), confirmed);
 });
