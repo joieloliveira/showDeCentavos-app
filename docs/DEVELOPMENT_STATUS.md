@@ -84,6 +84,11 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Pendente: usuário executar `npm run typecheck` após atualizar frontend. Não foi executado teste de runtime desta alteração.
 - Próximo passo: validar typecheck, depois preparar testes de unidade do serviço do cliente e fluxo de reconciliação sem liberar pagamentos.
 
+### Testes isolados do cliente de lances (2026-11-11)
+- Criado `tests/bids.test.cjs` (commit `7ef428e`) com sete cenários simulados sem POST financeiro real: bloqueio por padrão, envio único sob liberação explícita, chave inválida, resposta inconsistente, consulta somente GET, consulta 404 e falha de rede incerta.
+- Adicionado `npm run test:bids` em `package.json` (commit `bc68845`). **Ainda não executados pelo usuário; aprovação pendente.**
+- Próximo passo: `git pull --ff-only origin feature/frontend-initial && npm run test:bids && npm run typecheck` no terminal frontend livre. Não habilitar lances reais.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
