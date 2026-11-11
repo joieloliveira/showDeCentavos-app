@@ -93,6 +93,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit frontend `eca0945`: aprimoradas instruções da ferramenta de consulta por chave, adicionada opção `Limpar consulta`, explicitado resultado encontrado e ausência de qualquer envio financeiro. Consulta permanece somente GET.
 - Usuário confirmou `npm run typecheck` sem erros e enviou captura desktop da área expandida: textos, campo e botões de consulta/limpeza visíveis; botão financeiro continua desabilitado. **Homologação visual desktop aprovada.** Consulta manual com chave real não foi realizada. Não habilitar lances reais.
 
+### Consulta de tentativas responsiva (2026-11-11)
+- Commits frontend `4d6e1dc` e `1b44806`: estilos responsivos para campo UUID, foco visível e botões de consulta/limpeza em coluna até 480 px; sem alterações no envio financeiro.
+- Pendente: usuário executar `npm run typecheck` e conferir captura mobile da seção expandida. Não repetir testes financeiros já aprovados sem regressão.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
