@@ -30,6 +30,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [lookupPending, setLookupPending] = useState(false);
   const [lookupResult, setLookupResult] = useState<{ status: 'found' | 'not_found' | 'unavailable'; bid?: BidRecord } | null>(null);
   const [lookupError, setLookupError] = useState('');
+  const [lookupSummary, setLookupSummary] = useState<{ status: 'checking' | 'found' | 'not_found' | 'unavailable' | 'mismatch'; key: string } | null>(null);
   // No financial attempt is initiated by this page while bidding is disabled.
   const [attemptState] = useState<BidAttemptState>({ status: 'idle' });
   const [showSimulation, setShowSimulation] = useState(false);
@@ -73,16 +74,20 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       setLookupError('Informe uma chave UUID v4 válida.');
       return;
     }
+    setLookupSummary({ status: 'checking', key });
     setLookupPending(true);
     try {
       const result = await reconcileBid(getToken()!, key);
       if (result.status === 'found' && String(result.bid.auction).toLowerCase() !== id.toLowerCase()) {
         setLookupError('Esta chave pertence a outro leilão da sua conta.');
+        setLookupSummary({ status: 'mismatch', key });
       } else {
         setLookupResult(result);
+        setLookupSummary({ status: result.status, key });
       }
     } catch {
       setLookupResult({ status: 'unavailable' });
+      setLookupSummary({ status: 'unavailable', key });
     } finally {
       setLookupPending(false);
     }
@@ -301,16 +306,16 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
-        <BidAttemptStatus attempt={attemptState} />
+        <BidAttemptStatus attempt={attemptState} lookup={lookupSummary} />
         <section className="registered-bid-lookup" aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
           <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>Esta ferramenta apenas consulta o servidor (GET). Não envia lances, não debita a carteira e não gera uma chave nova.</p>
           <label htmlFor="bid-lookup-key">Chave da tentativa (UUID v4)</label>
-          <input id="bid-lookup-key" type="text" autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
+          <input id="bid-lookup-key" type="text" autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); setLookupSummary(null); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
           <div className="registered-bid-lookup-actions">
             <button type="button" disabled={!user || authLoading || lookupPending || !lookupKey.trim()} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
-            <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { setLookupKey(''); setLookupResult(null); setLookupError(''); }}>Limpar consulta</button>
+            <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { setLookupKey(''); setLookupResult(null); setLookupError(''); setLookupSummary(null); }}>Limpar consulta</button>
           </div>
           {!user && <p role="status">É necessário entrar na conta para consultar tentativas.</p>}
           {lookupError && <p role="alert">{lookupError}</p>}
