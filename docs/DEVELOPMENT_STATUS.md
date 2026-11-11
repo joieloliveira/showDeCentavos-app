@@ -114,7 +114,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Integração de consulta GET ao monitor (2026-11-11)
 - Commits `b1efea1`, `1af8d47`, `406d6b8`: painel mostra última consulta avulsa por UUID (checking, found, not_found, unavailable, mismatch), sem alterar o estado de tentativa real (`idle`). Chave não pode ser editada enquanto GET está pendente. Limpar consulta também limpa o resumo.
-- Nenhum POST, débito, retry automático ou ativação financeira. Pendente: usuário rodar `npm run typecheck` e validar interface com consulta real ou UUID inexistente.
+- Nenhum POST, débito, retry automático ou ativação financeira. Homologado em 2026-11-11: usuário executou `npm run typecheck` sem erros e consultou UUID de teste; API retornou `not_found`, monitor exibiu resultado sem alterar `idle`, screenshot mobile 375×877 aprovado. Nenhum POST financeiro.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
