@@ -289,13 +289,13 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
-        <section aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
+        <section className="registered-bid-lookup" aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
           <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>Esta ferramenta apenas consulta o servidor (GET). Não envia lances, não debita a carteira e não gera uma chave nova.</p>
           <label htmlFor="bid-lookup-key">Chave da tentativa (UUID v4)</label>
           <input id="bid-lookup-key" type="text" autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div className="registered-bid-lookup-actions">
             <button type="button" disabled={!user || authLoading || lookupPending || !lookupKey.trim()} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
             <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { setLookupKey(''); setLookupResult(null); setLookupError(''); }}>Limpar consulta</button>
           </div>
