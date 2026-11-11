@@ -112,6 +112,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - **Estado atual fixo `idle`**, pois não há POST financeiro nem evento de tentativa ligado à página. Não alegar que monitora tentativas reais nesta etapa.
 - Usuário confirmou em 2026-11-11: `npm run typecheck` sem erros; captura mobile 375×877 aprovada, painel `idle` visível, sem overflow, botão financeiro bloqueado. Próxima implementação: conectar estados apenas quando houver um fluxo controlado de tentativa, sem habilitar financeiro sem autorização.
 
+### Integração de consulta GET ao monitor (2026-11-11)
+- Commits `b1efea1`, `1af8d47`, `406d6b8`: painel mostra última consulta avulsa por UUID (checking, found, not_found, unavailable, mismatch), sem alterar o estado de tentativa real (`idle`). Chave não pode ser editada enquanto GET está pendente. Limpar consulta também limpa o resumo.
+- Nenhum POST, débito, retry automático ou ativação financeira. Pendente: usuário rodar `npm run typecheck` e validar interface com consulta real ou UUID inexistente.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
