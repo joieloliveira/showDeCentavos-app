@@ -78,6 +78,12 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Usuário executou em 2026-11-11 três testes isolados, todos aprovados sem falhas: `auctionBidDisabled.test.js` (1/1), `auctionBidRollback.test.js` (1/1), `auctionBidFinishRace.test.js` (1/1). Confirmados bloqueio sem escrita, rollback de débito/lance/preço e rejeição de lance vencido durante encerramento. **Não repetir sem regressão.**
 - Próximo passo: revisar testes já existentes de concorrência/idempotência e cobertura residual antes de qualquer homologação financeira mais ampla. **Não habilitar lances reais na API principal sem autorização explícita.**
 
+### Proteção adicional no cliente de lances (2026-11-11)
+- Revisados `services/bids.ts`, `RegisteredAuctionDetail.tsx`, testes de concorrência e integração da API. A interface permanece apenas informativa, sem chamadas POST de lance.
+- Commit frontend `1d5631d`: `submitConfirmedBid` agora exige opção explícita `financialBidsEnabled: true` para efetuar POST; padrão bloqueado. A flag de backend `AUCTION_BIDDING_ENABLED=false` continua obrigatória na homologação atual.
+- Pendente: usuário executar `npm run typecheck` após atualizar frontend. Não foi executado teste de runtime desta alteração.
+- Próximo passo: validar typecheck, depois preparar testes de unidade do serviço do cliente e fluxo de reconciliação sem liberar pagamentos.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
