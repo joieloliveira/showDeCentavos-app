@@ -9,6 +9,7 @@ import { fetchWalletBalance } from '@/services/wallet';
 import { reconcileBid, type BidRecord } from '@/services/bids';
 import { evaluateBidPreflight } from '@/services/bidPreflight';
 import type { BidAttemptState } from '@/services/bidAttemptState';
+import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid, serializePendingBid } from '@/services/bidAttemptJournal';
 import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
 
 type ProductImage = { key?: string; url?: string };
@@ -32,7 +33,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [lookupError, setLookupError] = useState('');
   const [lookupSummary, setLookupSummary] = useState<{ status: 'checking' | 'found' | 'not_found' | 'unavailable' | 'mismatch'; key: string } | null>(null);
   // No financial attempt is initiated by this page while bidding is disabled.
-  const [attemptState] = useState<BidAttemptState>({ status: 'idle' });
+  const [attemptState, setAttemptState] = useState<BidAttemptState>({ status: 'idle' });
   const [showSimulation, setShowSimulation] = useState(false);
   const [simulatedBids, setSimulatedBids] = useState(0);
   const [auction, setAuction] = useState<Auction | null>(null);
@@ -52,6 +53,22 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const latestRequestRef = useRef(0);
   const latestAppliedRef = useRef(0);
   const latestLiveRef = useRef<Pick<Auction, 'status' | 'currentPriceCents' | 'bidCount' | 'startsAt' | 'endsAt' | 'bidCostCents' | 'winnerNickname'> | null>(null);
+  // Read-only recovery: never creates a new financial request. Authentication is verified first.
+  useEffect(() => {
+    setAttemptState({ status: 'idle' });
+    if (authLoading || !user?.id || !getToken()) return;
+    try {
+      const restored = restorePendingBid(sessionStorage.getItem(BID_ATTEMPT_JOURNAL_KEY), user.id, id);
+      if (restored) setAttemptState(restored);
+    } catch { /* Storage can be unavailable in restricted browser contexts. */ }
+  }, [authLoading, user?.id, id, getToken]);
+  useEffect(() => {
+    if (!user?.id || authLoading) return;
+    const serialized = serializePendingBid(attemptState, user.id, id, Date.now());
+    if (!serialized) return; // Idle/settled state must not erase an unresolved journal.
+    try { sessionStorage.setItem(BID_ATTEMPT_JOURNAL_KEY, serialized); }
+    catch { /* A storage failure never permits a new bid. */ }
+  }, [attemptState, authLoading, user?.id, id]);
   useEffect(() => {
     if (!user) { setBalance(null); setBalanceError(''); return; }
     const token = getToken();
