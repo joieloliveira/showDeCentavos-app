@@ -110,7 +110,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 ### Painel informativo de acompanhamento de tentativas (2026-11-11)
 - Commits `541d227`, `72db24b`, `41c54b2`: criado `BidAttemptStatus.tsx`, inserido nas ferramentas de suporte e estilizado para mobile/desktop. Exibe os seis estados previstos, mensagens e chave original quando houver tentativa.
 - **Estado atual fixo `idle`**, pois não há POST financeiro nem evento de tentativa ligado à página. Não alegar que monitora tentativas reais nesta etapa.
-- Pendente: usuário executar `npm run typecheck` e conferir visualmente o painel. Próxima implementação: conectar estados apenas quando houver um fluxo controlado de tentativa, sem habilitar financeiro sem autorização.
+- Usuário confirmou em 2026-11-11: `npm run typecheck` sem erros; captura mobile 375×877 aprovada, painel `idle` visível, sem overflow, botão financeiro bloqueado. Próxima implementação: conectar estados apenas quando houver um fluxo controlado de tentativa, sem habilitar financeiro sem autorização.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
