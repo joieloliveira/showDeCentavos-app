@@ -30,6 +30,21 @@ export type PlaceBidResponse = {
 const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const objectId = /^[0-9a-f]{24}$/i;
 
+/** Validate untrusted JSON before displaying it as a confirmed financial record. */
+function isBidRecord(value: unknown, expectedKey: string): value is BidRecord {
+  if (!value || typeof value !== 'object') return false;
+  const bid = value as Partial<BidRecord>;
+  return typeof bid._id === 'string' && objectId.test(bid._id) &&
+    typeof bid.auction === 'string' && objectId.test(bid.auction) &&
+    typeof bid.user === 'string' && objectId.test(bid.user) &&
+    bid.idempotencyKey === expectedKey &&
+    Number.isSafeInteger(bid.bidCostCents) && bid.bidCostCents! > 0 &&
+    Number.isSafeInteger(bid.priceBeforeCents) && bid.priceBeforeCents! >= 0 &&
+    Number.isSafeInteger(bid.priceAfterCents) && bid.priceAfterCents! >= bid.priceBeforeCents! &&
+    Number.isSafeInteger(bid.balanceAfterCents) && bid.balanceAfterCents! >= 0 &&
+    typeof bid.expiresAt === 'string' && !Number.isNaN(Date.parse(bid.expiresAt));
+}
+
 function assertBidKey(key: string) {
   if (!uuidV4.test(key)) throw new Error('Chave de idempotência inválida.');
 }
@@ -52,6 +67,7 @@ export async function findBidByKey(token: string, key: string) {
   const { data } = await api.get<{ bid: BidRecord }>(
     `/auctions/bids/by-key/${encodeURIComponent(key)}`, auth(token),
   );
+  if (!isBidRecord(data?.bid, key)) throw new Error('Registro de lance inconsistente.');
   return data.bid;
 }
 
@@ -78,8 +94,8 @@ export async function submitConfirmedBid(
     { idempotencyKey: key },
     auth(token),
   );
-  if (!data?.bid?._id || data.bid.idempotencyKey !== key ||
-      String(data.bid.auction).toLowerCase() !== auctionId.toLowerCase()) {
+  if (!isBidRecord(data?.bid, key) ||
+      data.bid.auction.toLowerCase() !== auctionId.toLowerCase()) {
     throw new Error('Resposta do lance inconsistente. Consulte a chave antes de tentar novamente.');
   }
   return data;
