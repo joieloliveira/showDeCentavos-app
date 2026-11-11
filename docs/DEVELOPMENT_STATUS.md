@@ -95,7 +95,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Consulta de tentativas responsiva (2026-11-11)
 - Commits frontend `4d6e1dc` e `1b44806`: estilos responsivos para campo UUID, foco visível e botões de consulta/limpeza em coluna até 480 px; sem alterações no envio financeiro.
-- Pendente: usuário executar `npm run typecheck` e conferir captura mobile da seção expandida. Não repetir testes financeiros já aprovados sem regressão.
+- Usuário executou `npm run typecheck` sem erros e enviou captura da seção expandida em **desktop** (campo e botões com estilos aplicados). A responsividade em viewport de 375 px ainda **não foi comprovada**; solicitar somente captura em modo dispositivo. Não repetir testes financeiros já aprovados sem regressão.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
