@@ -11,7 +11,7 @@ import { evaluateBidPreflight } from '@/services/bidPreflight';
 import { transitionBidAttempt } from '@/services/bidAttemptState';
 import { resolvePendingBid } from '@/services/bidAttemptReconciliation';
 import type { BidAttemptState } from '@/services/bidAttemptState';
-import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid } from '@/services/bidAttemptJournal';
+import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid, clearConfirmedBidJournal } from '@/services/bidAttemptJournal';
 import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
 
 type ProductImage = { key?: string; url?: string };
@@ -125,7 +125,13 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     try {
       const result = await reconcileBid(token, key);
       if (generation !== recoveryGeneration.current || recoveryContext.current.userId !== userId || recoveryContext.current.auctionId !== auctionId || getToken() !== token) return;
-      setAttemptState(resolvePendingBid(reconciling, key, userId, auctionId, result));
+      const resolved = resolvePendingBid(reconciling, key, userId, auctionId, result);
+      setAttemptState(resolved);
+      if (resolved.status === 'confirmed') {
+        // Remove only the matching confirmed journal. Never clear uncertain or foreign records.
+        try { clearConfirmedBidJournal(sessionStorage, resolved, userId, auctionId); }
+        catch { /* Storage errors must not affect the verified result. */ }
+      }
     } catch {
       if (generation === recoveryGeneration.current && recoveryContext.current.userId === userId && recoveryContext.current.auctionId === auctionId && getToken() === token) {
         setAttemptState(resolvePendingBid(reconciling, key, userId, auctionId, { status: 'unavailable' }));
@@ -351,7 +357,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         <BidAttemptStatus attempt={attemptState} lookup={lookupSummary} />
         {attemptState.status === 'uncertain' && <button type="button" disabled={recoveryPending || authLoading || !user} onClick={() => { void reconcileRecoveredAttempt(); }}>Consultar tentativa recuperada (somente GET)</button>}
         {attemptState.status === 'reconciling' && <p role="status">Verificando a chave original no servidor...</p>}
-        {attemptState.status === 'confirmed' && <p role="status">Registro recuperado e confirmado. O diário permanece preservado para conferência.</p>}
+        {attemptState.status === 'confirmed' && <p role="status">Registro recuperado e confirmado. O diário correspondente pode ser removido com segurança.</p>}
         <section className="registered-bid-lookup" aria-label="Consultar tentativa de lance" style={{ padding: 16, border: '1px solid #cbd5e1', borderRadius: 12, display: 'grid', gap: 10 }}>
           <strong>Consultar tentativa de lance</strong>
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
