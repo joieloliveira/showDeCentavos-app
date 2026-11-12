@@ -13,7 +13,8 @@
     "test:bid-attempt": "node --test tests/bidAttemptState.test.cjs",
     "test:bid-journal": "node --test tests/bidAttemptJournal.test.cjs",
     "test:bid-reconciliation": "node --test tests/bidAttemptReconciliation.test.cjs",
-    "test:bid-recovery-lifecycle": "node --test tests/bidRecoveryLifecycle.test.cjs"
+    "test:bid-recovery-lifecycle": "node --test tests/bidRecoveryLifecycle.test.cjs",
+    "test:bid-lookup-race": "node --test tests/bidLookupRace.test.cjs"
   },
   "dependencies": {
     "next": "^15.5.0",
