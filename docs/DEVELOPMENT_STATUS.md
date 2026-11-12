@@ -171,6 +171,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `d995326`: helper puro `clearConfirmedBidJournal` remove registro apenas se estado confirmado, bidId válido e identidade (conta, leilão e chave) corresponderem ao diário pendente. Sem integração automática à UI; não executa POST.
 - Commit `95e3229`: seis testes adicionais, incluindo chave/conta/leilão divergentes, estado incerto, corrupção e exceções. Homologado pelo usuário em 2026-11-11: `npm run test:bid-journal` 20/20 PASS e `npm run typecheck` sem erros. Total de 65 testes frontend homologados nesta fase.
 
+### Limpeza vinculada à reconciliação GET (2026-11-11)
+- Commit `bee5d22`: após consulta GET de tentativa recuperada, a página chama `clearConfirmedBidJournal` somente quando `resolvePendingBid` retorna `confirmed`, com conta/leilão/chave correspondentes. Falha de storage não altera confirmação, e 404/indisponibilidade/divergência não limpam o diário. Não há POST.
+- Pendente `npm run typecheck`; teste de fluxo real exige registro legítimo de tentativa, não deve ser forjado para homologação financeira.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
