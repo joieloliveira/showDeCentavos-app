@@ -183,6 +183,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `5177315`: consultas manuais por chave agora capturam token/usuário/leilão e geração; resultados atrasados são ignorados se identidade, rota, token ou chave consultada mudaram. Alteração da chave ou limpeza da consulta invalida o pedido anterior; efeito de autenticação invalida consultas e tentativas recuperadas ao trocar conta/leilão.
 - Sem POST ou alteração no backend. `npm run typecheck` homologado pelo usuário em 2026-11-11 sem erros. Pendente validação específica de corrida de respostas assíncronas.
 
+### Testes de corrida das consultas GET (2026-11-11)
+- Commits `d329233`, `e1843cf`, `4128c2c`: guarda pura `isCurrentLookup` integrada à consulta manual; 10 testes novos incluindo respostas fora de ordem, logout e troca de leilão, sem chamadas financeiras.
+- Pendente `npm run test:bid-lookup-race` (esperado 10/10) e `npm run typecheck`.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
