@@ -2,6 +2,13 @@
 
 Aplicação Next.js (App Router), React e TypeScript para a plataforma Show de Centavos. **Em desenvolvimento e homologação; não está autorizada para operação financeira pública.**
 
+## Manual e tutoriais
+
+- **[Guia funcional e tutorial de uso](docs/GUIA_FUNCIONAL.md)**: visão do site, mapa das funcionalidades, consulta de tentativas, segurança e inicialização dos quatro terminais.
+- **[Estado do desenvolvimento](docs/DEVELOPMENT_STATUS.md)**: histórico de implementações, homologações e pendências.
+
+Os guias são documentação viva: devem ser atualizados junto com as funcionalidades e confrontados com o código antes de uso em produção.
+
 ## Tecnologias
 - Next.js 15, React 19, TypeScript, Tailwind CSS
 - Axios, React Context API, React Hook Form e Zod
@@ -26,10 +33,10 @@ npm run dev
 O frontend usa `NEXT_PUBLIC_API_URL` para apontar à API. Exemplo **somente para homologação isolada** no Git Bash:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://127.0.0.1:3002/api npm run dev
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api npm run dev
 ```
 
-O script demonstrativo da API roda na porta 3002 com MongoDB local de testes; consulte o documento de continuidade antes de iniciar o ambiente. **Não utilizar banco de produção na demonstração.**
+A API completa de homologação utiliza a porta 3001. O laboratório SSE isolado pode usar a porta 3002, mas não deve ser confundido com a API completa. Consulte o guia funcional para iniciar cada terminal. **Não utilizar banco de produção na demonstração.**
 
 ## Verificações
 ```bash
