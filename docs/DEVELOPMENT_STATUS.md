@@ -169,7 +169,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Limpeza segura do diário confirmado (2026-11-11)
 - Commit `d995326`: helper puro `clearConfirmedBidJournal` remove registro apenas se estado confirmado, bidId válido e identidade (conta, leilão e chave) corresponderem ao diário pendente. Sem integração automática à UI; não executa POST.
-- Commit `95e3229`: seis testes adicionais, incluindo chave/conta/leilão divergentes, estado incerto, corrupção e exceções. Pendente `npm run test:bid-journal` (esperado 20/20) e `npm run typecheck`.
+- Commit `95e3229`: seis testes adicionais, incluindo chave/conta/leilão divergentes, estado incerto, corrupção e exceções. Homologado pelo usuário em 2026-11-11: `npm run test:bid-journal` 20/20 PASS e `npm run typecheck` sem erros. Total de 65 testes frontend homologados nesta fase.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
