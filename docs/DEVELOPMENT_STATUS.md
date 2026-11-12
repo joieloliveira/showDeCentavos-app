@@ -179,6 +179,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `7f08fbf`: 7 cenários integrando os módulos reais de estado, diário e reconciliação com respostas GET simuladas e storage em memória: confirmação limpa; 404, indisponibilidade e divergências preservam; resposta atrasada não apaga registro substituído.
 - Nenhum backend, token, carteira ou POST financeiro é acessado. Homologado pelo usuário em 2026-11-11: `npm run test:bid-recovery-lifecycle` 7/7 PASS e `npm run typecheck` sem erros. Total acumulado: 72 testes frontend aprovados.
 
+### Proteção contra consultas GET antigas (2026-11-11)
+- Commit `5177315`: consultas manuais por chave agora capturam token/usuário/leilão e geração; resultados atrasados são ignorados se identidade, rota, token ou chave consultada mudaram. Alteração da chave ou limpeza da consulta invalida o pedido anterior; efeito de autenticação invalida consultas e tentativas recuperadas ao trocar conta/leilão.
+- Sem POST ou alteração no backend. Pendente `npm run typecheck` e validação específica de corrida de respostas assíncronas.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
