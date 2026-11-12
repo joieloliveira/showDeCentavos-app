@@ -177,7 +177,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Testes de integração controlada do ciclo de recuperação (2026-11-11)
 - Commit `7f08fbf`: 7 cenários integrando os módulos reais de estado, diário e reconciliação com respostas GET simuladas e storage em memória: confirmação limpa; 404, indisponibilidade e divergências preservam; resposta atrasada não apaga registro substituído.
-- Nenhum backend, token, carteira ou POST financeiro é acessado. Pendente `npm run test:bid-recovery-lifecycle` e `npm run typecheck`.
+- Nenhum backend, token, carteira ou POST financeiro é acessado. Homologado pelo usuário em 2026-11-11: `npm run test:bid-recovery-lifecycle` 7/7 PASS e `npm run typecheck` sem erros. Total acumulado: 72 testes frontend aprovados.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
