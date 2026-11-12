@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../services/bidAttemptJourn
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const mod = { exports: {} };
 vm.runInNewContext(js, { module: mod, exports: mod.exports });
-const { serializePendingBid: save, restorePendingBid: restore, persistPendingBid: persist, BID_ATTEMPT_JOURNAL_KEY: storageKey } = mod.exports;
+const { serializePendingBid: save, restorePendingBid: restore, persistPendingBid: persist, clearConfirmedBidJournal: clearConfirmed, BID_ATTEMPT_JOURNAL_KEY: storageKey } = mod.exports;
 const user = '507f1f77bcf86cd799439011';
 const auction = '507f1f77bcf86cd799439012';
 const key = '123e4567-e89b-42d3-a456-426614174000';
@@ -90,4 +90,46 @@ test('invalid or settled state cannot create a journal', () => {
   const storage = memoryStorage();
   assert.equal(persist(storage, { status: 'idle' }, user, auction, 100), false);
   assert.equal(storage.getItem(storageKey), null);
+});
+
+function removableStorage() {
+  const storage = memoryStorage();
+  storage.removeItem = k => { storage.setItem(k, null); };
+  const originalGet = storage.getItem;
+  storage.getItem = k => originalGet(k) === null ? null : originalGet(k);
+  return storage;
+}
+test('confirmed matching attempt clears the journal', () => {
+  const storage = removableStorage();
+  persist(storage, pending, user, auction, 100);
+  assert.equal(clearConfirmed(storage, { status: 'confirmed', key, bidId: user }, user, auction), true);
+  assert.equal(storage.getItem(storageKey), null);
+});
+test('uncertain attempt cannot clear journal', () => {
+  const storage = removableStorage();
+  persist(storage, pending, user, auction, 100);
+  assert.equal(clearConfirmed(storage, { status: 'uncertain', key, message: 'timeout' }, user, auction), false);
+  assert.ok(storage.getItem(storageKey));
+});
+test('other key cannot clear confirmed journal', () => {
+  const storage = removableStorage();
+  persist(storage, pending, user, auction, 100);
+  assert.equal(clearConfirmed(storage, { status: 'confirmed', key: '123e4567-e89b-42d3-a456-426614174001', bidId: user }, user, auction), false);
+  assert.ok(storage.getItem(storageKey));
+});
+test('other account or auction cannot clear journal', () => {
+  const storage = removableStorage();
+  persist(storage, pending, user, auction, 100);
+  assert.equal(clearConfirmed(storage, { status: 'confirmed', key, bidId: user }, '507f1f77bcf86cd799439013', auction), false);
+  assert.equal(clearConfirmed(storage, { status: 'confirmed', key, bidId: user }, user, '507f1f77bcf86cd799439013'), false);
+  assert.ok(storage.getItem(storageKey));
+});
+test('corrupt record is never cleared', () => {
+  const storage = removableStorage();
+  storage.setItem(storageKey, '{bad');
+  assert.equal(clearConfirmed(storage, { status: 'confirmed', key, bidId: user }, user, auction), false);
+  assert.equal(storage.getItem(storageKey), '{bad');
+});
+test('storage exceptions fail closed on cleanup', () => {
+  assert.equal(clearConfirmed({ getItem: () => { throw Error('blocked'); }, removeItem: () => {} }, { status: 'confirmed', key, bidId: user }, user, auction), false);
 });
