@@ -173,7 +173,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Limpeza vinculada à reconciliação GET (2026-11-11)
 - Commit `bee5d22`: após consulta GET de tentativa recuperada, a página chama `clearConfirmedBidJournal` somente quando `resolvePendingBid` retorna `confirmed`, com conta/leilão/chave correspondentes. Falha de storage não altera confirmação, e 404/indisponibilidade/divergência não limpam o diário. Não há POST.
-- Pendente `npm run typecheck`; teste de fluxo real exige registro legítimo de tentativa, não deve ser forjado para homologação financeira.
+- `npm run typecheck` homologado pelo usuário em 2026-11-11 sem erros; teste de fluxo real exige registro legítimo de tentativa, não deve ser forjado para homologação financeira.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
