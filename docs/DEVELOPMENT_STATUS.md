@@ -165,7 +165,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Laboratório com recarga real isolada (2026-11-11)
 - Commit `b5059f4`: botões estilizados; gravação de dados fictícios sob chave independente `showdecentavos:demo-recovery:isolated:v1` em sessionStorage; restauração automática após F5 para `uncertain`; limpeza manual. Não lê/escreve chave de diário real, não consulta API, não movimenta carteira.
-- Pendente: `npm run typecheck` e teste visual F5 pelo usuário. Este é um teste de persistência da demonstração, não uma confirmação financeira.
+- Homologado pelo usuário em 2026-11-11: `npm run typecheck` sem erros; quatro capturas comprovam `idle` → `submitting` → F5 → `uncertain` com mesma chave UUID → limpar → `idle`. Teste isolado sem API/POST financeiro. Este é um teste de persistência da demonstração, não uma confirmação financeira.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
