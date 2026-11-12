@@ -220,4 +220,4 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 ### Homologação de API indisponível em consulta GET (2026-11-12)
 - API local temporariamente interrompida no Terminal 2; MongoDB e Next.js permaneceram ativos.
 - Captura confirmou: consulta manual da mesma chave fictícia mostrou `Consulta indisponível`, preservou UUID e orientou a consultar mais tarde; não confundiu falha de rede com registro ausente.
-- Sem POST, débito ou movimentação financeira. **Pendente:** reiniciar API na porta 3001 e verificar nova consulta da mesma chave sem recarregar página.
+- Sem POST, débito ou movimentação financeira. **Concluído:** API reiniciada com MongoDB conectado e servidor na porta 3001. Usuário consultou novamente a mesma chave na mesma página sem F5; captura mostrou registro não encontrado e aviso de não reenviar. Ciclo disponível → indisponível → restaurado homologado apenas para GET, sem POST financeiro.
