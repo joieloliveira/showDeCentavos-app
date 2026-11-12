@@ -221,3 +221,8 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - API local temporariamente interrompida no Terminal 2; MongoDB e Next.js permaneceram ativos.
 - Captura confirmou: consulta manual da mesma chave fictícia mostrou `Consulta indisponível`, preservou UUID e orientou a consultar mais tarde; não confundiu falha de rede com registro ausente.
 - Sem POST, débito ou movimentação financeira. **Concluído:** API reiniciada com MongoDB conectado e servidor na porta 3001. Usuário consultou novamente a mesma chave na mesma página sem F5; captura mostrou registro não encontrado e aviso de não reenviar. Ciclo disponível → indisponível → restaurado homologado apenas para GET, sem POST financeiro.
+
+### Endurecimento da reconciliação de tentativas pendentes (2026-11-12)
+- Revisado `services/bidAttemptReconciliation.ts`: respostas GET marcadas como `found` mas com `bid` ausente, nulo ou campos de identidade malformados passam a manter a tentativa `uncertain`, sem lançar exceção por acesso a propriedades inválidas.
+- Acrescentados dois testes em `tests/bidAttemptReconciliation.test.cjs` (resposta malformada e preservação da chave). **Pendente homologação local:** `npm run test:bid-reconciliation` (esperado 10/10) e `npm run typecheck`.
+- Nenhum POST financeiro, flag ou banco alterado.
