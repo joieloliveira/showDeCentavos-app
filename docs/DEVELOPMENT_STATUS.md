@@ -224,5 +224,5 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 
 ### Endurecimento da reconciliação de tentativas pendentes (2026-11-12)
 - Revisado `services/bidAttemptReconciliation.ts`: respostas GET marcadas como `found` mas com `bid` ausente, nulo ou campos de identidade malformados passam a manter a tentativa `uncertain`, sem lançar exceção por acesso a propriedades inválidas.
-- Acrescentados dois testes em `tests/bidAttemptReconciliation.test.cjs` (resposta malformada e preservação da chave). **Pendente homologação local:** `npm run test:bid-reconciliation` (esperado 10/10) e `npm run typecheck`.
+- Acrescentados dois testes em `tests/bidAttemptReconciliation.test.cjs` (resposta malformada e preservação da chave). **Homologado pelo usuário em 2026-11-12:** `npm run test:bid-reconciliation` 10/10 PASS e `npm run typecheck` sem erros. Total acumulado frontend: 84 testes aprovados.
 - Nenhum POST financeiro, flag ou banco alterado.
