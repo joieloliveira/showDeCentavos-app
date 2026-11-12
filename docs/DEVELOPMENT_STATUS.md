@@ -209,3 +209,10 @@ curl -X POST http://127.0.0.1:3002/demo/schedule
 ## Protocolo para nova conversa
 Pedir: **"Continue o Show de Centavos. Leia `docs/DEVELOPMENT_STATUS.md` na branch `feature/frontend-initial` do GitHub e confirme o próximo passo antes de implementar."**
 Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo está atualizado se houver commits posteriores. Evitar recapitulações extensas e testes já aprovados, salvo regressão concreta.
+
+### Homologação GET autenticado e limpeza visual (2026-11-12)
+- Ambiente local: MongoDB replica set `walletTestRS` porta 27018, API completa porta 3001 e Next.js porta 3000; `AUCTION_BIDDING_ENABLED=false`.
+- GET sem token retornou HTTP 401 com `Token não informado.`.
+- Usuário autenticado consultou chave UUID v4 fictícia em leilão cadastrado: interface exibiu registro não encontrado, sem iniciar tentativa ou autorizar novo envio.
+- Capturas antes/depois de **Limpar consulta** confirmaram campo UUID vazio, remoção da última consulta avulsa no monitor e retorno a `Nenhuma tentativa em andamento`.
+- Sem POST de lance nem movimentação financeira. Testes de consulta autenticada e limpeza visual homologados; não repetir sem regressão.
