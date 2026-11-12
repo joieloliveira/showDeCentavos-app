@@ -175,6 +175,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `bee5d22`: após consulta GET de tentativa recuperada, a página chama `clearConfirmedBidJournal` somente quando `resolvePendingBid` retorna `confirmed`, com conta/leilão/chave correspondentes. Falha de storage não altera confirmação, e 404/indisponibilidade/divergência não limpam o diário. Não há POST.
 - `npm run typecheck` homologado pelo usuário em 2026-11-11 sem erros; teste de fluxo real exige registro legítimo de tentativa, não deve ser forjado para homologação financeira.
 
+### Testes de integração controlada do ciclo de recuperação (2026-11-11)
+- Commit `7f08fbf`: 7 cenários integrando os módulos reais de estado, diário e reconciliação com respostas GET simuladas e storage em memória: confirmação limpa; 404, indisponibilidade e divergências preservam; resposta atrasada não apaga registro substituído.
+- Nenhum backend, token, carteira ou POST financeiro é acessado. Pendente `npm run test:bid-recovery-lifecycle` e `npm run typecheck`.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
