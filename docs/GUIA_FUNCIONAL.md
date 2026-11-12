@@ -31,7 +31,7 @@
 4. Em **Consultar tentativa de lance**, informe uma chave UUID v4. Uma chave fictícia usada nos testes é `123e4567-e89b-42d3-a456-426614174000`.
 5. Clique em **Consultar registro**. A consulta usa GET e exige autenticação; não realiza cobrança.
 6. Se aparecer **registro não encontrado**, isso **não autoriza reenviar** uma tentativa financeira.
-7. Clique em **Limpar consulta** para remover o resultado exibido. A limpeza visual não é exclusão de lance no banco.
+7. Clique em **Limpar consulta** para remover o resultado exibido. A limpeza visual não é exclusão de lance no banco. **Homologado em 2026-11-12:** capturas antes/depois confirmaram campo vazio, remoção do resultado no formulário e da seção de última consulta no monitor, mantendo “Nenhuma tentativa em andamento”.
 
 O monitor distingue a consulta manual de uma tentativa realmente iniciada pela página. A recuperação de uma tentativa pendente só pode ser confirmada se a chave, a conta e o leilão corresponderem ao registro retornado. Respostas atrasadas após troca de conta, token, leilão ou consulta são ignoradas.
 
