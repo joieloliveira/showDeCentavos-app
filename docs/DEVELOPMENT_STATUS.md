@@ -216,3 +216,8 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - Usuário autenticado consultou chave UUID v4 fictícia em leilão cadastrado: interface exibiu registro não encontrado, sem iniciar tentativa ou autorizar novo envio.
 - Capturas antes/depois de **Limpar consulta** confirmaram campo UUID vazio, remoção da última consulta avulsa no monitor e retorno a `Nenhuma tentativa em andamento`.
 - Sem POST de lance nem movimentação financeira. Testes de consulta autenticada e limpeza visual homologados; não repetir sem regressão.
+
+### Homologação de API indisponível em consulta GET (2026-11-12)
+- API local temporariamente interrompida no Terminal 2; MongoDB e Next.js permaneceram ativos.
+- Captura confirmou: consulta manual da mesma chave fictícia mostrou `Consulta indisponível`, preservou UUID e orientou a consultar mais tarde; não confundiu falha de rede com registro ausente.
+- Sem POST, débito ou movimentação financeira. **Pendente:** reiniciar API na porta 3001 e verificar nova consulta da mesma chave sem recarregar página.
