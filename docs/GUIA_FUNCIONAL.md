@@ -41,7 +41,7 @@ O monitor distingue a consulta manual de uma tentativa realmente iniciada pela p
 
 - **Idempotência:** cada tentativa financeira usa uma chave UUID v4; uma resposta perdida não deve resultar em novo POST com chave diferente.
 - **Transações no backend:** débito da carteira, registro do lance, atualização do leilão e lançamento contábil devem permanecer consistentes.
-- **Reconciliação:** consultar por GET a chave original antes de qualquer decisão após timeout ou resultado incerto.
+- **Reconciliação:** consultar por GET a chave original antes de qualquer decisão após timeout ou resultado incerto. Respostas com identidade ou estrutura inválida devem manter a tentativa incerta, sem confirmação nem limpeza do diário.
 - **Diário de sessão:** um registro pendente pode sobreviver ao F5 na mesma aba via `sessionStorage`. Isso não garante recuperação após fechamento da aba ou perda dos dados do navegador.
 - **Limpeza segura:** o diário só pode ser removido após confirmação compatível com conta, leilão e chave.
 - **Bloqueio de lançamento:** `AUCTION_BIDDING_ENABLED=false` na API e a interface de prévia não permitem lances financeiros nesta fase.
