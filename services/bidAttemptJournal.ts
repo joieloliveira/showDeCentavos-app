@@ -50,3 +50,24 @@ export function persistPendingBid(
     return storage.getItem(BID_ATTEMPT_JOURNAL_KEY) === serialized;
   } catch { return false; }
 }
+
+/** Clear only a journal proven to belong to the same settled attempt.
+ * Never remove a different, corrupt or still-uncertain record. */
+export function clearConfirmedBidJournal(
+  storage: Pick<Storage, 'getItem' | 'removeItem'>,
+  state: BidAttemptState,
+  userId: string,
+  auctionId: string,
+): boolean {
+  if (state.status !== 'confirmed' || !objectId.test(state.bidId)) return false;
+  if (!objectId.test(userId) || !objectId.test(auctionId)) return false;
+  try {
+    const raw = storage.getItem(BID_ATTEMPT_JOURNAL_KEY);
+    const restored = restorePendingBid(raw, userId, auctionId);
+    if (!restored || restored.status !== 'uncertain' || restored.key !== state.key) return false;
+    // Re-read immediately before removal; avoid deleting a record replaced in between.
+    if (storage.getItem(BID_ATTEMPT_JOURNAL_KEY) !== raw) return false;
+    storage.removeItem(BID_ATTEMPT_JOURNAL_KEY);
+    return storage.getItem(BID_ATTEMPT_JOURNAL_KEY) === null;
+  } catch { return false; }
+}
