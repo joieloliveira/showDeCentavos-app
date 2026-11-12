@@ -46,3 +46,14 @@ test('stale response does not overwrite a confirmed attempt', () => {
 test('foreign key response does not affect active reconciliation', () => {
   assert.equal(resolve(reconciling, '123e4567-e89b-42d3-a456-426614174001', user, auction, { status: 'found', bid }), reconciling);
 });
+
+test('malformed found result never crashes or confirms an attempt', () => {
+  for (const invalid of [null, undefined, {}, { ...bid, user: null }, { ...bid, auction: 17 }, { ...bid, _id: {} }, { ...bid, user: 'not-an-object-id' }]) {
+    assert.equal(resolve(reconciling, key, user, auction, { status: 'found', bid: invalid }).status, 'uncertain');
+  }
+});
+test('malformed found result preserves original key', () => {
+  const state = resolve(reconciling, key, user, auction, { status: 'found', bid: { ...bid, auction: null } });
+  assert.equal(state.status, 'uncertain');
+  assert.equal(state.key, key);
+});
