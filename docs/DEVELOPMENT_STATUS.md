@@ -163,6 +163,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `dd13426`: rota `/auctions/demo-recovery` demonstra serialização e restauração de tentativa fictícia, somente em memória React. Não usa conta, API, carteira nem sessionStorage real. Não executa POST/GET.
 - A ação 'Simular atualização da página' invoca a função de restauração com o registro em memória; não é um reload verdadeiro. Reload real reinicia a demonstração. Homologado pelo usuário: `npm run typecheck` sem erros e três capturas demonstram `submitting` → `uncertain` com chave preservada → `idle` após limpar. A demonstração é somente em memória; não equivale a teste de reload real.
 
+### Laboratório com recarga real isolada (2026-11-11)
+- Commit `b5059f4`: botões estilizados; gravação de dados fictícios sob chave independente `showdecentavos:demo-recovery:isolated:v1` em sessionStorage; restauração automática após F5 para `uncertain`; limpeza manual. Não lê/escreve chave de diário real, não consulta API, não movimenta carteira.
+- Pendente: `npm run typecheck` e teste visual F5 pelo usuário. Este é um teste de persistência da demonstração, não uma confirmação financeira.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
