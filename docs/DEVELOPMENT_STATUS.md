@@ -181,7 +181,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Proteção contra consultas GET antigas (2026-11-11)
 - Commit `5177315`: consultas manuais por chave agora capturam token/usuário/leilão e geração; resultados atrasados são ignorados se identidade, rota, token ou chave consultada mudaram. Alteração da chave ou limpeza da consulta invalida o pedido anterior; efeito de autenticação invalida consultas e tentativas recuperadas ao trocar conta/leilão.
-- Sem POST ou alteração no backend. Pendente `npm run typecheck` e validação específica de corrida de respostas assíncronas.
+- Sem POST ou alteração no backend. `npm run typecheck` homologado pelo usuário em 2026-11-11 sem erros. Pendente validação específica de corrida de respostas assíncronas.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
