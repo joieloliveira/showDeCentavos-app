@@ -25,8 +25,14 @@ export function resolvePendingBid(
   if (result.status === 'unavailable') {
     return transitionBidAttempt(state, { type: 'uncertain', key, message: 'Não foi possível verificar o registro. Preserve a chave original.' });
   }
+  // Treat API data as untrusted even when callers provide a typed result.
+  // A malformed response must never crash reconciliation or confirm a bid.
   const bid = result.bid;
-  if (bid.idempotencyKey !== key || bid.user.toLowerCase() !== userId.toLowerCase() ||
+  if (!bid || typeof bid !== 'object' ||
+      typeof bid.idempotencyKey !== 'string' || typeof bid.user !== 'string' ||
+      typeof bid.auction !== 'string' || typeof bid._id !== 'string' ||
+      bid.idempotencyKey !== key || !objectId.test(bid.user) || !objectId.test(bid.auction) ||
+      bid.user.toLowerCase() !== userId.toLowerCase() ||
       bid.auction.toLowerCase() !== auctionId.toLowerCase() || !objectId.test(bid._id)) {
     return transitionBidAttempt(state, { type: 'uncertain', key, message: 'Registro divergente da conta ou do leilão. Não reenvie a tentativa.' });
   }
