@@ -185,7 +185,7 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 
 ### Testes de corrida das consultas GET (2026-11-11)
 - Commits `d329233`, `e1843cf`, `4128c2c`: guarda pura `isCurrentLookup` integrada à consulta manual; 10 testes novos incluindo respostas fora de ordem, logout e troca de leilão, sem chamadas financeiras.
-- Pendente `npm run test:bid-lookup-race` (esperado 10/10) e `npm run typecheck`.
+- Homologado pelo usuário em 2026-11-11: `npm run test:bid-lookup-race` 10/10 PASS e `npm run typecheck` sem erros. Total acumulado: 82 testes frontend aprovados.
 
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
