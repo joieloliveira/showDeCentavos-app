@@ -167,6 +167,10 @@ Atualizado em: 2026-11-09 (America/Sao_Paulo)
 - Commit `b5059f4`: botões estilizados; gravação de dados fictícios sob chave independente `showdecentavos:demo-recovery:isolated:v1` em sessionStorage; restauração automática após F5 para `uncertain`; limpeza manual. Não lê/escreve chave de diário real, não consulta API, não movimenta carteira.
 - Homologado pelo usuário em 2026-11-11: `npm run typecheck` sem erros; quatro capturas comprovam `idle` → `submitting` → F5 → `uncertain` com mesma chave UUID → limpar → `idle`. Teste isolado sem API/POST financeiro. Este é um teste de persistência da demonstração, não uma confirmação financeira.
 
+### Limpeza segura do diário confirmado (2026-11-11)
+- Commit `d995326`: helper puro `clearConfirmedBidJournal` remove registro apenas se estado confirmado, bidId válido e identidade (conta, leilão e chave) corresponderem ao diário pendente. Sem integração automática à UI; não executa POST.
+- Commit `95e3229`: seis testes adicionais, incluindo chave/conta/leilão divergentes, estado incerto, corrupção e exceções. Pendente `npm run test:bid-journal` (esperado 20/20) e `npm run typecheck`.
+
 ## Próximo passo exato
 1. **Não repetir** a homologação SSE do backend, o ciclo agendamento/encerramento ou a correção de Ganhadores sem mudança que justifique regressão.
 2. **Painel de elegibilidade aprovado**. Próximo passo: revisar consistência visual e acessibilidade, depois planejar testes financeiros isolados sem habilitar lances reais.
