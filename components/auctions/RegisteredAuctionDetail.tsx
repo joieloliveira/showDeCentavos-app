@@ -38,6 +38,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   const [attemptState, setAttemptState] = useState<BidAttemptState>({ status: 'idle' });
   const [recoveryPending, setRecoveryPending] = useState(false);
   const recoveryGeneration = useRef(0);
+  const lookupGeneration = useRef(0);
   const recoveryContext = useRef({ userId: user?.id ?? '', auctionId: id });
   recoveryContext.current = { userId: user?.id ?? '', auctionId: id };
   const [showSimulation, setShowSimulation] = useState(false);
@@ -62,6 +63,11 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
   // Read-only recovery: never creates a new financial request. Authentication is verified first.
   useEffect(() => {
     ++recoveryGeneration.current;
+    ++lookupGeneration.current;
+    setLookupPending(false);
+    setLookupResult(null);
+    setLookupSummary(null);
+    setLookupError('');
     setRecoveryPending(false);
     setAttemptState({ status: 'idle' });
     if (authLoading || !user?.id || !getToken()) return;
@@ -69,6 +75,7 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       const restored = restorePendingBid(sessionStorage.getItem(BID_ATTEMPT_JOURNAL_KEY), user.id, id);
       if (restored) setAttemptState(restored);
     } catch { /* Storage can be unavailable in restricted browser contexts. */ }
+    return () => { ++recoveryGeneration.current; ++lookupGeneration.current; };
   }, [authLoading, user?.id, id, getToken]);
   useEffect(() => {
     if (!user) { setBalance(null); setBalanceError(''); return; }
@@ -83,7 +90,8 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     if (lookupPending) return;
     setLookupResult(null);
     setLookupError('');
-    if (!user || !getToken()) {
+    const token = getToken();
+    if (!user?.id || !token || authLoading) {
       setLookupError('Entre na sua conta para consultar suas tentativas.');
       return;
     }
@@ -92,11 +100,17 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
       setLookupError('Informe uma chave UUID v4 válida.');
       return;
     }
+    const userId = user.id;
+    const auctionId = id;
+    const generation = ++lookupGeneration.current;
+    const isCurrent = () => generation === lookupGeneration.current &&
+      recoveryContext.current.userId === userId && recoveryContext.current.auctionId === auctionId && getToken() === token;
     setLookupSummary({ status: 'checking', key });
     setLookupPending(true);
     try {
-      const result = await reconcileBid(getToken()!, key);
-      if (result.status === 'found' && String(result.bid.auction).toLowerCase() !== id.toLowerCase()) {
+      const result = await reconcileBid(token, key);
+      if (!isCurrent()) return;
+      if (result.status === 'found' && String(result.bid.auction).toLowerCase() !== auctionId.toLowerCase()) {
         setLookupError('Esta chave pertence a outro leilão da sua conta.');
         setLookupSummary({ status: 'mismatch', key });
       } else {
@@ -104,10 +118,11 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         setLookupSummary({ status: result.status, key });
       }
     } catch {
+      if (!isCurrent()) return;
       setLookupResult({ status: 'unavailable' });
       setLookupSummary({ status: 'unavailable', key });
     } finally {
-      setLookupPending(false);
+      if (isCurrent()) setLookupPending(false);
     }
   };
   const reconcileRecoveredAttempt = async () => {
@@ -363,10 +378,10 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
           <p style={{ margin: 0 }}>Se a conexão cair após uma tentativa de lance, o resultado pode ser desconhecido. Guarde a chave original e consulte o registro antes de considerar qualquer nova ação.</p>
           <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>Esta ferramenta apenas consulta o servidor (GET). Não envia lances, não debita a carteira e não gera uma chave nova.</p>
           <label htmlFor="bid-lookup-key">Chave da tentativa (UUID v4)</label>
-          <input id="bid-lookup-key" type="text" disabled={lookupPending} autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); setLookupSummary(null); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
+          <input id="bid-lookup-key" type="text" disabled={lookupPending} autoComplete="off" spellCheck={false} value={lookupKey} onChange={event => { ++lookupGeneration.current; setLookupPending(false); setLookupKey(event.target.value); setLookupResult(null); setLookupError(''); setLookupSummary(null); }} placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" />
           <div className="registered-bid-lookup-actions">
             <button type="button" disabled={!user || authLoading || lookupPending || !lookupKey.trim()} onClick={() => { void lookupBid(); }}>{lookupPending ? 'Consultando...' : 'Consultar registro'}</button>
-            <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { setLookupKey(''); setLookupResult(null); setLookupError(''); setLookupSummary(null); }}>Limpar consulta</button>
+            <button type="button" disabled={lookupPending || (!lookupKey && !lookupResult && !lookupError)} onClick={() => { ++lookupGeneration.current; setLookupPending(false); setLookupKey(''); setLookupResult(null); setLookupError(''); setLookupSummary(null); }}>Limpar consulta</button>
           </div>
           {!user && <p role="status">É necessário entrar na conta para consultar tentativas.</p>}
           {lookupError && <p role="alert">{lookupError}</p>}
