@@ -10,6 +10,7 @@ import { reconcileBid, type BidRecord } from '@/services/bids';
 import { evaluateBidPreflight } from '@/services/bidPreflight';
 import { transitionBidAttempt } from '@/services/bidAttemptState';
 import { resolvePendingBid } from '@/services/bidAttemptReconciliation';
+import { isCurrentLookup } from '@/services/bidLookupGuard';
 import type { BidAttemptState } from '@/services/bidAttemptState';
 import { BID_ATTEMPT_JOURNAL_KEY, restorePendingBid, clearConfirmedBidJournal } from '@/services/bidAttemptJournal';
 import { BidAttemptStatus } from '@/components/auctions/BidAttemptStatus';
@@ -103,8 +104,11 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     const userId = user.id;
     const auctionId = id;
     const generation = ++lookupGeneration.current;
-    const isCurrent = () => generation === lookupGeneration.current &&
-      recoveryContext.current.userId === userId && recoveryContext.current.auctionId === auctionId && getToken() === token;
+    const isCurrent = () => isCurrentLookup(
+      { generation, userId, auctionId, token },
+      { generation: lookupGeneration.current, userId: recoveryContext.current.userId,
+        auctionId: recoveryContext.current.auctionId, token: getToken() ?? '' },
+    );
     setLookupSummary({ status: 'checking', key });
     setLookupPending(true);
     try {
