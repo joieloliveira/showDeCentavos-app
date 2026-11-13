@@ -137,13 +137,18 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     const userId = user.id;
     const auctionId = id;
     const generation = ++recoveryGeneration.current;
+    const isCurrent = () => isCurrentLookup(
+      { generation, userId, auctionId, token },
+      { generation: recoveryGeneration.current, userId: recoveryContext.current.userId,
+        auctionId: recoveryContext.current.auctionId, token: getToken() ?? '' },
+    );
     const reconciling = transitionBidAttempt(attemptState, { type: 'reconcile', key });
     if (reconciling.status !== 'reconciling') return;
     setAttemptState(reconciling);
     setRecoveryPending(true);
     try {
       const result = await reconcileBid(token, key);
-      if (generation !== recoveryGeneration.current || recoveryContext.current.userId !== userId || recoveryContext.current.auctionId !== auctionId || getToken() !== token) return;
+      if (!isCurrent()) return;
       const resolved = resolvePendingBid(reconciling, key, userId, auctionId, result);
       setAttemptState(resolved);
       if (resolved.status === 'confirmed') {
@@ -152,11 +157,11 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
         catch { /* Storage errors must not affect the verified result. */ }
       }
     } catch {
-      if (generation === recoveryGeneration.current && recoveryContext.current.userId === userId && recoveryContext.current.auctionId === auctionId && getToken() === token) {
+      if (isCurrent()) {
         setAttemptState(resolvePendingBid(reconciling, key, userId, auctionId, { status: 'unavailable' }));
       }
     } finally {
-      if (generation === recoveryGeneration.current) setRecoveryPending(false);
+      if (isCurrent()) setRecoveryPending(false);
     }
   };
   const refreshBalance = async () => {
