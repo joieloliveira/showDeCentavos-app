@@ -231,3 +231,9 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - `RegisteredAuctionDetail.tsx`: a reconciliação recuperada passou a utilizar a mesma `isCurrentLookup` já aplicada às consultas GET avulsas, verificando geração da requisição, conta, leilão e token antes de atualizar estado ou limpar o diário.
 - Também protege o encerramento assíncrono (`finally`) para que resposta de consulta anterior não altere o indicador de espera de outra sessão.
 - Alteração sem POST financeiro ou mudança de feature flag. **Homologado pelo usuário em 2026-11-12:** `npm run typecheck` (`tsc --noEmit`) sem erros. Testes da guarda já homologados anteriormente (10/10), não repetir sem regressão.
+
+### Homologação manual: navegação entre leilões (2026-11-12)
+- Usuário consultou UUID fictício `123e4567-e89b-42d3-a456-426614174000` no leilão `6af23823b7a9e7e365c9e6e5`, recebendo GET 404 e aviso de não reenvio.
+- Navegou pela interface para o leilão `6af107aae81b50a2c2787816` sem limpar a consulta anterior. Capturas confirmam monitor sem tentativa em andamento, ausência do resumo anterior e campo UUID vazio, com botões desabilitados.
+- **Aprovado:** isolamento visual de consulta entre leilões em navegação normal. **Não demonstrado neste teste:** resposta GET em voo chegando depois da troca; proteção implementada e coberta por testes de guarda anteriores.
+- Nenhum POST financeiro ou alteração de saldo.
