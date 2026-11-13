@@ -230,4 +230,4 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 ### Guarda compartilhada para reconciliação de tentativa pendente (2026-11-12)
 - `RegisteredAuctionDetail.tsx`: a reconciliação recuperada passou a utilizar a mesma `isCurrentLookup` já aplicada às consultas GET avulsas, verificando geração da requisição, conta, leilão e token antes de atualizar estado ou limpar o diário.
 - Também protege o encerramento assíncrono (`finally`) para que resposta de consulta anterior não altere o indicador de espera de outra sessão.
-- Alteração sem POST financeiro ou mudança de feature flag. **Pendente homologação local:** `npm run typecheck`. Testes da guarda já homologados anteriormente (10/10), não repetir sem regressão.
+- Alteração sem POST financeiro ou mudança de feature flag. **Homologado pelo usuário em 2026-11-12:** `npm run typecheck` (`tsc --noEmit`) sem erros. Testes da guarda já homologados anteriormente (10/10), não repetir sem regressão.
