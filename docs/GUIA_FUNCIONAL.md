@@ -103,3 +103,9 @@ Sem token, o resultado esperado é **401 Unauthorized**, o que confirma que a ro
 Este é o primeiro capítulo do manual. Os próximos capítulos devem detalhar **cada tela e endpoint**, incluindo campos, permissões, regras, mensagens de erro, exemplos de uso e testes. Em particular: administração de produtos/leilões, depósitos PIX, conciliação financeira, histórico, vitórias, entrega e incidentes. Confirmar cada capítulo no código atual antes de marcá-lo como completo.
 
 **Regra de manutenção:** ao concluir uma funcionalidade, atualizar este guia (ou um tutorial específico em `docs/`) e registrar a homologação em `DEVELOPMENT_STATUS.md`. Nunca descrever como liberado algo apenas implementado ou testado em laboratório.
+
+### Simulador local: preço de referência fixo
+
+Ao abrir **Ferramentas de demonstração e suporte → Abrir simulação**, a interface registra localmente o preço atual, o incremento e o custo do lance como referência daquela simulação. O **preço hipotético** é calculado com esses valores fixos, mesmo que o preço real seja atualizado pelo SSE/polling. A tela identifica o preço real no início da simulação e explica que a projeção é independente. **Fechar simulação** e abrir novamente captura uma nova referência; mudar de leilão também descarta a simulação anterior. O simulador não faz POST nem debita carteira. O botão de simular continua habilitado somente quando o leilão está ativo.
+
+**Validação pendente:** executar `npm run typecheck` e verificar visualmente a abertura/reabertura do simulador. Não confundir a projeção com o preço oficial do servidor.
