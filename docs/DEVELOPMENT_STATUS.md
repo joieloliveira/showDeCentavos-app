@@ -241,4 +241,4 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 ### Proteção adicional na troca de conta/leilão (2026-11-15)
 - Revisão de `RegisteredAuctionDetail.tsx` identificou que a consulta e o resumo eram limpos quando mudava o usuário/leilão, mas o campo `lookupKey` continuava com o UUID digitado anteriormente.
 - Ajustado o efeito de mudança de contexto para limpar também o UUID manual. Consultas GET em voo continuam protegidas por `isCurrentLookup`; o diário de tentativas legítimas não é apagado por esta mudança.
-- **Pendente validação local:** `npm run typecheck` e inspeção visual após navegação/troca de conta. Lances financeiros seguem desabilitados.
+- **Typecheck homologado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. **Pendente:** inspeção visual após troca de conta. Lances financeiros seguem desabilitados.
