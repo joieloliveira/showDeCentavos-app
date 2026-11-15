@@ -242,3 +242,10 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - Revisão de `RegisteredAuctionDetail.tsx` identificou que a consulta e o resumo eram limpos quando mudava o usuário/leilão, mas o campo `lookupKey` continuava com o UUID digitado anteriormente.
 - Ajustado o efeito de mudança de contexto para limpar também o UUID manual. Consultas GET em voo continuam protegidas por `isCurrentLookup`; o diário de tentativas legítimas não é apagado por esta mudança.
 - **Typecheck homologado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. **Pendente:** inspeção visual após troca de conta. Lances financeiros seguem desabilitados.
+
+### Homologação manual de logout e retorno à conta (2026-11-15)
+- Usuário inseriu UUID fictício `123e4567-e89b-42d3-a456-426614174000` no campo de consulta, sem necessidade de GET.
+- Captura após logout confirmou campo UUID vazio, botões desabilitados, mensagem exigindo login e monitor sem tentativa em andamento.
+- Captura após novo login confirmou usuário autenticado, campo UUID ainda vazio, ausência de resultado anterior e monitor sem tentativa em andamento.
+- **Aprovado:** isolamento visual do formulário no ciclo logout/login. **Não coberto nesta homologação manual:** resposta GET pendente que conclui durante a troca de conta, cenário coberto por testes de guarda anteriores.
+- Lances financeiros permaneceram desabilitados; nenhum POST financeiro realizado.
