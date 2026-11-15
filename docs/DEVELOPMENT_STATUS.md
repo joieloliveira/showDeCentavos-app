@@ -253,4 +253,4 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 ### Referência estável do simulador (2026-11-15)
 - `RegisteredAuctionDetail.tsx`: ao abrir a simulação, fixa preço, incremento e custo por lance como valores de referência locais. SSE/polling continuam atualizando o preço real, sem deslocar o preço hipotético já iniciado.
 - Interface informa preço real no início da simulação e esclarece a diferença entre preço oficial e projeção. Fechar/reabrir captura novos valores; navegar para outro leilão descarta a simulação.
-- Nenhum POST financeiro. **Pendente homologação:** `npm run typecheck` e inspeção visual do simulador.
+- Nenhum POST financeiro. **Typecheck aprovado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. **Pendente:** inspeção visual do simulador.
