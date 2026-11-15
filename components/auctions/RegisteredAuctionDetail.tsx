@@ -66,6 +66,9 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
     ++recoveryGeneration.current;
     ++lookupGeneration.current;
     setLookupPending(false);
+    // A manually entered UUID belongs to the previous viewing context.
+    // Never carry it across account changes or auction navigation.
+    setLookupKey('');
     setLookupResult(null);
     setLookupSummary(null);
     setLookupError('');
