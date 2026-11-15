@@ -237,3 +237,8 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - Navegou pela interface para o leilão `6af107aae81b50a2c2787816` sem limpar a consulta anterior. Capturas confirmam monitor sem tentativa em andamento, ausência do resumo anterior e campo UUID vazio, com botões desabilitados.
 - **Aprovado:** isolamento visual de consulta entre leilões em navegação normal. **Não demonstrado neste teste:** resposta GET em voo chegando depois da troca; proteção implementada e coberta por testes de guarda anteriores.
 - Nenhum POST financeiro ou alteração de saldo.
+
+### Proteção adicional na troca de conta/leilão (2026-11-15)
+- Revisão de `RegisteredAuctionDetail.tsx` identificou que a consulta e o resumo eram limpos quando mudava o usuário/leilão, mas o campo `lookupKey` continuava com o UUID digitado anteriormente.
+- Ajustado o efeito de mudança de contexto para limpar também o UUID manual. Consultas GET em voo continuam protegidas por `isCurrentLookup`; o diário de tentativas legítimas não é apagado por esta mudança.
+- **Pendente validação local:** `npm run typecheck` e inspeção visual após navegação/troca de conta. Lances financeiros seguem desabilitados.
