@@ -254,3 +254,9 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - `RegisteredAuctionDetail.tsx`: ao abrir a simulação, fixa preço, incremento e custo por lance como valores de referência locais. SSE/polling continuam atualizando o preço real, sem deslocar o preço hipotético já iniciado.
 - Interface informa preço real no início da simulação e esclarece a diferença entre preço oficial e projeção. Fechar/reabrir captura novos valores; navegar para outro leilão descarta a simulação.
 - Nenhum POST financeiro. **Typecheck aprovado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. **Pendente:** inspeção visual do simulador.
+
+### Homologação manual do cálculo no simulador (2026-11-15)
+- Captura do navegador no leilão `6af23823b7a9e7e365c9e6e5`: preço inicial R$ 0,00, 3 lances simulados de incremento R$ 0,01, preço hipotético R$ 0,03 e custo hipotético acumulado R$ 1,50 (R$ 0,50 por lance).
+- **Aprovado:** cálculo local de incremento/custo e manutenção do preço inicial fixo durante três cliques. Typecheck aprovado anteriormente.
+- **Não testado nesta rodada:** alteração simultânea do preço oficial via SSE durante simulação, fechamento/reabertura e isolamento após troca de leilão.
+- Sem POST financeiro ou débito de carteira pelo simulador.
