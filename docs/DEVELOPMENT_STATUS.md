@@ -249,3 +249,8 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - Captura após novo login confirmou usuário autenticado, campo UUID ainda vazio, ausência de resultado anterior e monitor sem tentativa em andamento.
 - **Aprovado:** isolamento visual do formulário no ciclo logout/login. **Não coberto nesta homologação manual:** resposta GET pendente que conclui durante a troca de conta, cenário coberto por testes de guarda anteriores.
 - Lances financeiros permaneceram desabilitados; nenhum POST financeiro realizado.
+
+### Referência estável do simulador (2026-11-15)
+- `RegisteredAuctionDetail.tsx`: ao abrir a simulação, fixa preço, incremento e custo por lance como valores de referência locais. SSE/polling continuam atualizando o preço real, sem deslocar o preço hipotético já iniciado.
+- Interface informa preço real no início da simulação e esclarece a diferença entre preço oficial e projeção. Fechar/reabrir captura novos valores; navegar para outro leilão descarta a simulação.
+- Nenhum POST financeiro. **Pendente homologação:** `npm run typecheck` e inspeção visual do simulador.
