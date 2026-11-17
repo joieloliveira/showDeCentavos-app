@@ -260,3 +260,7 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 - **Aprovado:** cálculo local de incremento/custo e manutenção do preço inicial fixo durante três cliques. Typecheck aprovado anteriormente.
 - **Não testado nesta rodada:** alteração simultânea do preço oficial via SSE durante simulação, fechamento/reabertura e isolamento após troca de leilão.
 - Sem POST financeiro ou débito de carteira pelo simulador.
+
+### Destaque visual do incremento e custo do lance (2026-11-17)
+- No simulador, incremento do preço e custo por lance passam a aparecer em cartões distintos, com descrições explícitas. O botão foi renomeado para **Simular próximo lance** para não sugerir que o incremento é o custo da operação.
+- A regra de cálculo local e a flag de lances financeiros não foram alteradas. **Pendente:** `npm run typecheck` e homologação visual no navegador.
