@@ -381,12 +381,24 @@ export function RegisteredAuctionDetail({ id }: { id: string }) {
             setSimulatedBids(0);
           }}>{showSimulation ? 'Fechar simulação' : 'Abrir simulação'}</button>
           {showSimulation && <div style={{ display: 'grid', gap: 8 }} role="region" aria-label="Resultado da simulação">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: 8 }}>
+              <div style={{ padding: 12, border: '1px solid #bfdbfe', borderRadius: 10, background: '#eff6ff', color: '#1e3a8a', display: 'grid', gap: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>Aumento no preço</span>
+                <strong style={{ fontSize: 20 }}>{money(simulationBase?.incrementCents ?? bidIncrementCents)}</strong>
+                <small>Valor acrescentado ao preço por lance.</small>
+              </div>
+              <div style={{ padding: 12, border: '1px solid #fed7aa', borderRadius: 10, background: '#fff7ed', color: '#9a3412', display: 'grid', gap: 4 }}>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>Custo por lance</span>
+                <strong style={{ fontSize: 20 }}>{money(simulationBase?.costCents ?? auction.bidCostCents)}</strong>
+                <small>Valor hipotético pago pelo participante.</small>
+              </div>
+            </div>
             <span>Preço real no início da simulação: <strong>{money(simulationBase?.priceCents ?? auction.currentPriceCents)}</strong></span>
             <span>Preço hipotético: <strong>{money(simulatedPriceCents)}</strong></span>
             <small style={{ color: '#64748b' }}>Projeção fixa desde a abertura. O preço real do leilão continua sendo atualizado separadamente.</small>
             <span>Lances simulados: <strong>{simulatedBids}</strong></span>
-            <span>Custo hipotético dos lances: <strong>{money(simulatedBids * (simulationBase?.costCents ?? auction.bidCostCents))}</strong></span>
-            <button type="button" disabled={!canSimulate} onClick={() => setSimulatedBids(previous => previous + 1)}>{canSimulate ? `Simular lance de ${money(simulationBase?.incrementCents ?? bidIncrementCents)}` : 'Simulação disponível apenas durante leilão ativo'}</button>
+            <span>Custo hipotético acumulado: <strong>{money(simulatedBids * (simulationBase?.costCents ?? auction.bidCostCents))}</strong></span>
+            <button type="button" disabled={!canSimulate} onClick={() => setSimulatedBids(previous => previous + 1)}>{canSimulate ? 'Simular próximo lance' : 'Simulação disponível apenas durante leilão ativo'}</button>
             <button type="button" disabled={simulatedBids === 0} onClick={() => setSimulatedBids(0)}>Reiniciar simulação</button>
           </div>}
         </section>
