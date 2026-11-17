@@ -55,3 +55,11 @@ npm run build
 
 ## Segurança e lançamento
 Lances financeiros devem permanecer desativados durante a homologação, até revisão técnica e autorização explícita. Pagamentos, concorrência, autorização, observabilidade e obrigações jurídicas/publicitárias exigem validação antes de qualquer lançamento comercial.
+
+## Continuidade entre conversas e agentes (MCP / RAG / Codex)
+
+- [AGENTS.md](AGENTS.md): instruções de segurança e trabalho para agentes de programação.
+- [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md): índice de contexto para recuperação documental e retomada em novo chat.
+- [docs/DEVELOPMENT_STATUS.md](docs/DEVELOPMENT_STATUS.md): histórico de homologação e pendências.
+
+A integração GitHub permite acesso às fontes (MCP); a busca direcionada nesses arquivos é um fluxo RAG leve, **não** um serviço vetorial automático. Para tarefas Codex, conectar o repositório no ambiente Codex e conferir branch, permissões e mudanças locais. Nenhum agente tem autorização implícita para habilitar operações financeiras.
