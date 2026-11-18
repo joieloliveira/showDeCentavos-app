@@ -32,8 +32,9 @@ Este índice permite **recuperação documental sob demanda** (padrão RAG leve)
 - Segurança de consulta GET e recuperação após F5 implementada e testada em laboratório. Troca de leilão e logout/login homologados visualmente; não equivalem a testes financeiros reais.
 - 84 testes frontend previamente homologados (até 2026-11-12), sem contar alterações posteriores não testadas automaticamente. Não presumir execução nova.
 - Simulador educativo com preço-base fixado ao abrir, incremento e custo por lance distintos. Em 2026-11-15 foram homologados três lances hipotéticos: aumento R$ 0,03, custo total R$ 1,50.
-- Em 2026-11-17 foram adicionados cartões visuais para incremento e custo, commit `fd2350b`. `npm run typecheck` aprovado pelo usuário; **homologação visual dos novos cartões ainda pendente**.
-- Próxima ação: verificar visualmente os novos cartões no navegador e prosseguir com melhorias de UX, sem operações financeiras.
+- Em 2026-11-17 foram adicionados cartões visuais para incremento e custo, commit `fd2350b`. `npm run typecheck` aprovado pelo usuário; cartões aprovados em captura desktop de 2026-11-17.
+- Simulador validado em 2026-11-17 no Chrome headless com leilões fictícios. A referência permaneceu fixa durante atualização por SSE e por polling com SSE interrompido. Reabrir capturou o novo preço, e trocar de leilão descartou a simulação. Cartões verificados no desktop e em 375 × 877 px. Fluxo via Tab e Enter verificado a partir do painel de ferramentas. Ver detalhes em DEVELOPMENT_STATUS.md.
+- Administração de leilões em 2026-11-17: cadastro valida os centavos e exibe erros da API; confirmação de início da espera permanece visível; estados da lista e dos detalhes foram alinhados. O histórico de auditoria atualiza com os detalhes abertos, e mudanças na contagem atualizam o histórico de lances e o resumo de conciliação. Falhas ao trocar o filtro não exibem linhas de outra consulta. TypeScript, ESLint dos componentes e cenários no Chrome com API fictícia aprovados. Ver detalhes em DEVELOPMENT_STATUS.md.
 
 ## Como retomar em novo chat ou Codex
 1. Ler `AGENTS.md` e este documento.

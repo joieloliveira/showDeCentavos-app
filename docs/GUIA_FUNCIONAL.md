@@ -108,8 +108,18 @@ Este é o primeiro capítulo do manual. Os próximos capítulos devem detalhar *
 
 Ao abrir **Ferramentas de demonstração e suporte → Abrir simulação**, a interface registra localmente o preço atual, o incremento e o custo do lance como referência daquela simulação. O **preço hipotético** é calculado com esses valores fixos, mesmo que o preço real seja atualizado pelo SSE/polling. A tela identifica o preço real no início da simulação e explica que a projeção é independente. **Fechar simulação** e abrir novamente captura uma nova referência; mudar de leilão também descarta a simulação anterior. O simulador não faz POST nem debita carteira. O botão de simular continua habilitado somente quando o leilão está ativo.
 
-**Validação pendente:** executar `npm run typecheck` e verificar visualmente a abertura/reabertura do simulador. Não confundir a projeção com o preço oficial do servidor.
+**Validação em 2026-11-17:** no Chrome headless com leilões fictícios, o preço oficial foi atualizado por SSE e por polling quando o SSE caiu. Nos dois casos, a projeção manteve a base da abertura. Reabrir capturou o preço atualizado, e trocar de leilão descartou a simulação em curso.
 
 ### Entenda o incremento e o custo do lance
 
-No simulador, **Aumento no preço** indica quantos centavos cada lance acrescentaria ao preço de arremate. **Custo por lance** é o valor hipotético cobrado do participante para enviar um lance; não é o mesmo valor do incremento. Os dois indicadores aparecem em cartões separados. Por exemplo, com incremento de R$ 0,01 e custo de R$ 0,50, três lances simulados aumentam o preço hipotético em R$ 0,03 e representam custo hipotético acumulado de R$ 1,50. O botão **Simular próximo lance** não faz requisição financeira e a projeção permanece separada do preço oficial do servidor. **Pendente:** homologação visual e `npm run typecheck` da nova apresentação.
+No simulador, **Aumento no preço** indica quantos centavos cada lance acrescentaria ao preço de arremate. **Custo por lance** é o valor hipotético cobrado do participante para enviar um lance; não é o mesmo valor do incremento. Os dois indicadores aparecem em cartões separados. Por exemplo, com incremento de R$ 0,01 e custo de R$ 0,50, três lances simulados aumentam o preço hipotético em R$ 0,03 e representam custo hipotético acumulado de R$ 1,50. O botão **Simular próximo lance** não faz requisição financeira e a projeção permanece separada do preço oficial do servidor. **Verificado:** `npm run typecheck` aprovado no registro `6f72a4f` e cartões aprovados no desktop e em tela emulada de 375 × 877 px em 2026-11-17. A partir do painel de ferramentas, use Tab para navegar e Enter para abrir, simular, reiniciar ou fechar.
+
+### Cadastrar um leilão na administração
+
+Em **Gerenciar leilões**, selecione um produto ativo, informe o preço inicial em centavos inteiros (zero é permitido) e escolha o custo por lance. **Cadastrar sem iniciar** cria o leilão agendado. Para programar o início, abra **Detalhes**, informe de 1 a 10.080 minutos inteiros e confirme **Iniciar contagem de espera**. A confirmação fica visível após os detalhes fecharem. Reabra os detalhes para acompanhar a contagem. Se a API recusar o cadastro, a mensagem aparece abaixo do botão e os dados preenchidos são preservados.
+
+Nos **Detalhes** do leilão, use **Copiar ID do leilão** para levar o identificador a uma consulta ou a um chamado de suporte. Se o navegador bloquear a cópia, selecione o ID exibido e copie manualmente.
+
+Em **Buscar nesta página**, cole o ID do leilão ou digite o nome do produto. A busca é aplicada aos registros da página carregada e respeita o filtro de situação selecionado.
+
+A contagem indica quantos leilões da página correspondem ao termo. Use **Limpar busca** para restaurar a lista e manter a situação selecionada.

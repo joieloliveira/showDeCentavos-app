@@ -46,10 +46,11 @@ for (const [filename, exportName, endpoint] of [
       if (name === 'next/link') return { default: () => null };
       if (name === 'lucide-react') return new Proxy({}, { get: () => () => null });
       if (name === './WinShippingAddressForm') return { WinShippingAddressForm: () => null };
+      if (name === './WinPaymentPreview') return { WinPaymentPreview: () => null };
       throw new Error('Unexpected dependency: ' + name);
     };
     vm.runInNewContext(compiled, {
-      exports, require: requireStub, AbortController, queueMicrotask, console
+      exports, require: requireStub, AbortController, queueMicrotask, console, process: { env: { NODE_ENV: 'test' } }
     });
     return {
       calls,

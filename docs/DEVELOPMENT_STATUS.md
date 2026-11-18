@@ -253,7 +253,7 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 ### Referência estável do simulador (2026-11-15)
 - `RegisteredAuctionDetail.tsx`: ao abrir a simulação, fixa preço, incremento e custo por lance como valores de referência locais. SSE/polling continuam atualizando o preço real, sem deslocar o preço hipotético já iniciado.
 - Interface informa preço real no início da simulação e esclarece a diferença entre preço oficial e projeção. Fechar/reabrir captura novos valores; navegar para outro leilão descarta a simulação.
-- Nenhum POST financeiro. **Typecheck aprovado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. **Pendente:** inspeção visual do simulador.
+- Nenhum POST financeiro. **Typecheck aprovado pelo usuário em 2026-11-15:** `npm run typecheck` sem erros. A inspeção visual foi registrada nas homologações seguintes.
 
 ### Homologação manual do cálculo no simulador (2026-11-15)
 - Captura do navegador no leilão `6af23823b7a9e7e365c9e6e5`: preço inicial R$ 0,00, 3 lances simulados de incremento R$ 0,01, preço hipotético R$ 0,03 e custo hipotético acumulado R$ 1,50 (R$ 0,50 por lance).
@@ -263,4 +263,129 @@ Conferir ambos os repositórios nas branches acima. Não presumir que o arquivo 
 
 ### Destaque visual do incremento e custo do lance (2026-11-17)
 - No simulador, incremento do preço e custo por lance passam a aparecer em cartões distintos, com descrições explícitas. O botão foi renomeado para **Simular próximo lance** para não sugerir que o incremento é o custo da operação.
-- A regra de cálculo local e a flag de lances financeiros não foram alteradas. **Typecheck homologado pelo usuário em 2026-11-17:** `npm run typecheck` sem erros. **Pendente:** homologação visual no navegador.
+- A regra de cálculo local e a flag de lances financeiros não foram alteradas. **Typecheck homologado pelo usuário em 2026-11-17:** `npm run typecheck` sem erros. A aprovação visual está registrada nas seções de desktop e tela móvel abaixo.
+
+
+### SSE com o simulador aberto (2026-11-17)
+
+- Cartões de incremento e custo aprovados em captura desktop. O registro da aprovação anterior do typecheck está em `6f72a4f`.
+- Teste isolado com o serviço SSE via HTTP, estado de leilão fictício e polling suspenso. O evento acionou GET de `/live` e mudou o preço oficial de R$ 0,00 para R$ 0,10. Três lances simulados conservaram a base de R$ 0,00, a projeção de R$ 0,03 e o custo acumulado de R$ 1,50. Reabrir capturou a base de R$ 0,10.
+- Validação no Chrome headless aprovada com o frontend local e o serviço SSE da API servindo um leilão fictício. Com o polling suspenso, o GET de `/live` disparado pelo evento atualizou o preço oficial para R$ 0,10. A simulação aberta manteve a base, a projeção e o custo acumulado. Reabrir capturou R$ 0,10 e zerou a contagem. O botão financeiro permaneceu desabilitado e o servidor de teste recebeu apenas GET, sem banco nem carteira.
+
+
+### Isolamento da simulação na troca de leilão (2026-11-17)
+
+- Aprovado no Chrome headless com navegação interna entre dois leilões fictícios. A troca descartou a simulação do primeiro leilão. Ao abrir no segundo, a base foi R$ 2,50 e a contagem começou em zero. Um lance simulado produziu preço de R$ 2,52 e custo acumulado de R$ 0,75. O retorno ao primeiro leilão também apresentou o simulador fechado.
+- O botão de lances financeiros permaneceu desabilitado. O servidor de teste recebeu apenas GET, sem banco nem carteira.
+
+
+### Polling com SSE interrompido durante a simulação (2026-11-17)
+
+- Aprovado no Chrome headless com leilão fictício. Após interromper o SSE, a página exibiu “Canal em reconexão” e a consulta periódica GET de /live atualizou o preço oficial de R$ 0,00 para R$ 0,10.
+- A simulação manteve a base de R$ 0,00, o preço hipotético de R$ 0,03 e o custo acumulado de R$ 1,50. Reabrir capturou R$ 0,10 e zerou a contagem. O botão financeiro permaneceu desabilitado. O teste não envolveu banco nem carteira.
+
+
+### Cartões do simulador em tela móvel (2026-11-17)
+
+- Verificação de layout aprovada no Chrome headless em viewport emulado de 375 × 877 px, com leilão fictício. Após rolar até o simulador, os cartões “Aumento no preço” (R$ 0,01) e “Custo por lance” (R$ 0,50) ficaram integralmente visíveis lado a lado, sem corte de texto ou rolagem horizontal.
+
+
+### Operação do simulador pelo teclado (2026-11-17)
+
+- Aprovado no Chrome headless com um leilão fictício. Com foco inicial programático no resumo de Ferramentas de demonstração e suporte, Tab e Enter permitiram expandir as ferramentas, abrir a simulação, simular um lance, reiniciar e fechar.
+- Um lance elevou a projeção para R$ 0,01. Reiniciar zerou a contagem e o custo. Ao fechar, o foco permaneceu no botão, rotulado “Abrir simulação”. O servidor de teste recebeu apenas GET.
+
+### Validação do cadastro administrativo de leilões (2026-11-17)
+
+- O formulário exige preço inicial inteiro e não negativo, aceita zero explícito, distingue falhas na carga dos produtos e exibe a mensagem da API em caso de erro. Cadastro e início da espera continuam separados.
+- TypeScript aprovado. Teste isolado do componente com serviços simulados cobriu valores inválidos, zero, resposta de erro e atualização da lista após sucesso. Homologação aprovada no Chrome headless com sessão e API fictícias. Preço vazio, negativo e fracionário bloquearam o envio. A resposta 404 exibiu o motivo e manteve os campos. O envio de zero explícito foi aceito e a lista atualizada exibiu o leilão como Agendado. Nenhum cadastro foi gravado em banco.
+
+
+### Confirmação de início da espera na administração (2026-11-17)
+
+- O painel mantém o resultado visível após fechar os detalhes e valida novamente a duração e o estado antes do envio.
+- TypeScript aprovado. No Chrome com API e sessão fictícias, durações inválidas e confirmação recusada não enviaram POST. O conflito 409 ficou visível. Após sucesso, a confirmação permaneceu visível, a lista atualizou e os detalhes passaram a mostrar a contagem. Nenhuma operação usou o banco.
+
+
+### Andamento dos leilões no painel administrativo (2026-11-17)
+
+- Lista e detalhes mostram “Aguardando ativação” quando o horário previsto chega e o servidor ainda mantém o leilão agendado. Um início programado aparece mesmo em registros sem data de início da espera. Leilão ativo sem lances e sem término exibe “Aguardando o primeiro lance”. Estados desconhecidos têm indicação própria.
+- TypeScript aprovado. No Chrome com sessão e API fictícias, sete estados da lista e o detalhe de uma espera já vencida exibiram os rótulos esperados. O teste não enviou POST.
+
+
+### Atualização do histórico de auditoria no painel (2026-11-17)
+
+- O histórico é consultado a cada 10 segundos enquanto os detalhes estão abertos e a aba está visível. Ao fechar os detalhes, a consulta periódica termina.
+- TypeScript aprovado. No Chrome com sessão e API fictícias e intervalo reduzido para o teste, uma falha 503 apareceu na interface. A consulta seguinte removeu o aviso e exibiu a ativação sem reabrir os detalhes. A verificação também confirmou que fechar os detalhes encerra as consultas ao histórico. O teste usou apenas GET.
+
+
+### Resultados ao trocar o filtro de leilões (2026-11-17)
+
+- Lista, paginação e horário da última atualização só são exibidos quando pertencem à página e à situação selecionadas. Se a atualização da mesma consulta falhar, o painel mantém a última lista disponível e sinaliza isso no aviso.
+- TypeScript aprovado. No Chrome com sessão e API fictícias, a falha ao trocar para Ativos ocultou os resultados anteriores, a nova tentativa exibiu os leilões ativos, e uma falha posterior no mesmo filtro manteve a lista com o aviso. O teste usou apenas GET.
+
+
+### Atualização de lances e conciliação nos detalhes (2026-11-17)
+
+- Quando a consulta da lista detecta mudança na quantidade de lances do leilão aberto, o painel consulta novamente o histórico e o resumo de conciliação. A atualização preserva a página atual do histórico.
+- TypeScript aprovado. No Chrome com API fictícia e intervalo de consulta reduzido para o teste, o histórico e o resumo permaneceram estáveis enquanto a contagem era zero e foram atualizados quando mudou para um. O teste usou apenas GET.
+
+
+### Copiar o ID do leilão na administração (2026-11-17)
+
+- Os detalhes oferecem o botão “Copiar ID do leilão” e exibem o resultado da cópia. Se o navegador bloquear a operação, o ID permanece disponível para seleção manual.
+- TypeScript e ESLint aprovados. No Chrome com sessão e API fictícias, a área de transferência recebeu o ID esperado, e a recusa simulada exibiu a orientação de cópia manual. O teste não enviou POST.
+
+
+### Buscar leilão por ID na administração (2026-11-17)
+
+- A busca da página carregada aceita o nome do produto ou o ID do leilão. Ignora espaços nas pontas e diferenças entre maiúsculas e minúsculas.
+- TypeScript e ESLint aprovados. No Chrome com API fictícia, nome e ID localizaram o leilão, consultas sem correspondência deixaram a tabela vazia, e limpar a busca restaurou a lista. A digitação não disparou requisições adicionais.
+
+
+### Contagem e limpeza da busca na página de leilões (2026-11-17)
+
+- A busca informa quantos registros da página correspondem ao termo e avisa quando não há resultados. “Limpar busca” restaura a lista e preserva o filtro de situação.
+- TypeScript e ESLint aprovados. No Chrome com uma API fictícia, a busca mostrou uma correspondência em dois registros, informou ausência de resultados e restaurou os dois leilões do filtro Ativos sem requisições adicionais.
+
+
+### Reexecução da suíte automatizada do frontend (2026-11-17)
+
+- Suíte completa executada com node --test 'tests/*.test.cjs'. Resultado final de 103 testes aprovados, sem falhas.
+- Dois testes de cancelamento de requisição em Minhas vitórias estavam falhando ao carregar o componente no ambiente simulado. O teste passou a fornecer o componente de prévia de pagamento simulado e NODE_ENV=test. As verificações de cancelamento foram preservadas.
+- TypeScript e ESLint dos componentes administrativos alterados também passaram. A API e o banco não foram usados pela suíte.
+
+
+### Reexecução dos testes da API para administração de leilões (2026-11-17)
+
+- Seis testes direcionados aprovados: cadastro e início da espera com auditoria, acesso administrativo ao histórico, auditoria do agendador, histórico de lances, resumo de conciliação e resumo operacional.
+- Cinco testes de integração usaram bancos dedicados no MongoDB local; o resumo operacional usou dados simulados. A execução manteve AUCTION_BIDDING_ENABLED=false. O Mongoose emitiu um aviso de depreciação da opção new de findOneAndUpdate.
+
+
+### Homologação integrada do cadastro e início da espera (2026-11-17)
+
+- Chrome headless com frontend local, rotas reais da API em instância separada e banco dedicado no MongoDB local. O cadastro criou um leilão agendado com preço inicial de R$ 0,00 e sem horário de início. A espera de 10 minutos foi gravada e passou a aparecer na lista.
+- Histórico do painel e registros no banco confirmaram os eventos de cadastro e início da espera. Os únicos POSTs foram os dois comandos administrativos. AUCTION_BIDDING_ENABLED permaneceu false. Os registros criados para o teste foram removidos ao final.
+
+
+### Homologação integrada da ativação automática (2026-11-17)
+
+- No Chrome headless com as rotas reais da API e banco isolado, o agendador manteve o leilão agendado antes do horário. O horário do registro fictício foi ajustado para representar uma espera vencida. A execução do agendador ativou o leilão, com zero lances e sem horário de término. Uma segunda execução não duplicou o evento de ativação.
+- Com os detalhes abertos, a consulta periódica do painel exibiu “Aguardando o primeiro lance” e a auditoria mostrou “Leilão ativado (automático)”. Os lances financeiros ficaram desabilitados e os registros de teste foram removidos.
+
+
+### Homologação integrada do encerramento automático (2026-11-17)
+
+- Chrome headless com rotas reais da API e MongoDB isolado. Um estado de lance fictício foi inserido diretamente no registro do leilão. Antes do prazo, o agendador manteve o estado Ativo e o painel exibiu a contagem. Com prazo vencido, o agendador encerrou o leilão, persistiu o vencedor fictício e preservou o preço final de R$ 0,01.
+- O painel aberto exibiu Encerrado e o evento de auditoria, registrado uma única vez mesmo com duas execuções do agendador. Lances financeiros permaneceram desabilitados. Os únicos POSTs foram cadastro e início da espera, e os registros de teste foram removidos.
+
+
+### Testes permanentes do cadastro administrativo (2026-11-17)
+
+- tests/adminAuctionCreateForm.test.cjs cobre bloqueio de preço inicial inválido, aceitação de zero explícito com atualização da lista e preservação dos campos quando a API recusa o cadastro.
+- Suíte completa do frontend aprovada com 106 testes e nenhuma falha ou teste pulado. Os novos testes usam serviços simulados.
+
+
+### Comando da suíte completa do frontend (2026-11-17)
+
+- Na raiz do frontend, npm test executa a suíte completa. Validação da primeira execução: 106 testes passaram, sem falhas nem testes pulados. Os comandos por área continuam disponíveis em package.json.
