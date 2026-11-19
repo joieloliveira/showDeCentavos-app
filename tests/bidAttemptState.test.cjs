@@ -1,0 +1,96 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const ts = require('typescript');
+const source = fs.readFileSync(path.join(__dirname, '../services/bidAttemptState.ts'), 'utf8');
+const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+const mod = { exports: {} };
+vm.runInNewContext(js, { module: mod, exports: mod.exports });
+const { transitionBidAttempt: next } = mod.exports;
+const key = '123e4567-e89b-42d3-a456-426614174000';
+const other = '123e4567-e89b-42d3-a456-426614174001';
+const idle = { status: 'idle' };
+const submitting = next(idle, { type: 'begin', key });
+
+test('begin creates exactly one submitting attempt', () => {
+  assert.equal(submitting.status, 'submitting');
+  assert.equal(next(submitting, { type: 'begin', key: other }), submitting);
+});
+test('uncertain outcome retains original key and blocks reset or new attempt', () => {
+  const state = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  assert.equal(state.key, key);
+  assert.equal(next(state, { type: 'reset' }), state);
+  assert.equal(next(state, { type: 'begin', key: other }), state);
+});
+test('reconciliation 404 stays uncertain and never permits automatic new attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  const missing = next(reconciling, { type: 'not_found', key });
+  assert.equal(reconciling.status, 'reconciling');
+  assert.equal(missing.status, 'uncertain');
+  assert.equal(missing.key, key);
+  assert.equal(next(missing, { type: 'begin', key: other }), missing);
+});
+test('successful reconciliation confirms the original attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const confirmed = next(next(uncertain, { type: 'reconcile', key }), { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
+  assert.equal(confirmed.status, 'confirmed');
+  assert.equal(confirmed.bidId, '507f1f77bcf86cd799439011');
+  assert.equal(next(confirmed, { type: 'reset' }).status, 'idle');
+});
+test('definitive rejection can be cleared for a new attempt', () => {
+  const rejected = next(submitting, { type: 'rejected', key, message: 'saldo insuficiente' });
+  assert.equal(rejected.status, 'rejected');
+  assert.equal(next(rejected, { type: 'reset' }).status, 'idle');
+});
+test('stale or foreign-key events cannot change the attempt', () => {
+  assert.equal(next(submitting, { type: 'confirmed', key: other, bidId: 'bid2' }), submitting);
+  assert.equal(next(submitting, { type: 'rejected', key: other, message: 'erro' }), submitting);
+});
+test('submitting cannot be reset while outcome is pending', () => {
+  assert.equal(next(submitting, { type: 'reset' }), submitting);
+});
+
+test('invalid UUID cannot initiate an attempt', () => {
+  assert.equal(next(idle, { type: 'begin', key: 'not-a-uuid' }).status, 'idle');
+});
+test('invalid bid ID cannot confirm a transaction', () => {
+  assert.equal(next(submitting, { type: 'confirmed', key, bidId: 'fake' }), submitting);
+});
+test('late responses cannot change an already confirmed attempt', () => {
+  const confirmed = next(submitting, { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
+  assert.equal(next(confirmed, { type: 'uncertain', key, message: 'late timeout' }), confirmed);
+  assert.equal(next(confirmed, { type: 'rejected', key, message: 'late rejection' }), confirmed);
+});
+
+test('reconciliation outage returns to uncertain without permitting a new attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  const unavailable = next(reconciling, { type: 'uncertain', key, message: 'consulta indisponível' });
+  assert.equal(unavailable.status, 'uncertain');
+  assert.equal(unavailable.key, key);
+  assert.equal(next(unavailable, { type: 'reset' }), unavailable);
+  assert.equal(next(unavailable, { type: 'begin', key: other }), unavailable);
+});
+test('duplicate reconciliation requests do not start a second cycle', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  assert.equal(next(reconciling, { type: 'reconcile', key }), reconciling);
+  assert.equal(next(reconciling, { type: 'begin', key: other }), reconciling);
+});
+test('late 404 after confirmation cannot erase a confirmed bid', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  const confirmed = next(reconciling, { type: 'confirmed', key, bidId: '507f1f77bcf86cd799439011' });
+  assert.equal(next(confirmed, { type: 'not_found', key }), confirmed);
+  assert.equal(next(confirmed, { type: 'uncertain', key, message: 'late error' }), confirmed);
+});
+test('foreign-key reconciliation cannot change the original attempt', () => {
+  const uncertain = next(submitting, { type: 'uncertain', key, message: 'timeout' });
+  assert.equal(next(uncertain, { type: 'reconcile', key: other }), uncertain);
+  const reconciling = next(uncertain, { type: 'reconcile', key });
+  assert.equal(next(reconciling, { type: 'not_found', key: other }), reconciling);
+  assert.equal(next(reconciling, { type: 'confirmed', key: other, bidId: '507f1f77bcf86cd799439011' }), reconciling);
+});
